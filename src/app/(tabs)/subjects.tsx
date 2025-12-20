@@ -1,212 +1,272 @@
 import { useEffect, useState } from "react";
-import {
-    View,
-    Text,
-    ScrollView,
-    TouchableOpacity,
-    TextInput,
-    Modal,
-    Alert,
-    StyleSheet,
-    RefreshControl,
-} from "react-native";
+import { View, ScrollView, RefreshControl, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
+import { Card, Text, Portal, Modal, TextInput, Button, useTheme, TouchableRipple, Chip } from "react-native-paper";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSubjectStore } from "../../store/subjectStore";
-import { colors, spacing, borderRadius, fontSize, fontWeight, shadows } from "../../constants/theme";
+import { SubjectHealth, getAllSubjectHealthScores, getHealthColor, getHealthLabel } from "../../utils/healthScore";
 
-const SUBJECT_COLORS = ["#38BDF8", "#22C55E", "#FACC15", "#EF4444", "#A855F7", "#EC4899"];
-const SUBJECT_ICONS = ["📚", "🧮", "🔬", "📖", "🎨", "🌍", "💻", "🎵"];
+const SUBJECT_COLORS = ["#38BDF8", "#22C55E", "#FACC15", "#EF4444", "#A855F7", "#EC4899", "#F97316", "#14B8A6"];
+const SUBJECT_ICONS = ["📚", "🧮", "🔬", "📖", "🎨", "🌍", "💻", "🎵", "🏃", "📐"];
 
 export default function SubjectsScreen() {
+    const theme = useTheme();
     const router = useRouter();
-    const { subjects, fetchSubjects, createSubject, deleteSubject, isLoading } = useSubjectStore();
+    const { subjects, fetchSubjects, createSubject, isLoading } = useSubjectStore();
     const [refreshing, setRefreshing] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
     const [newSubjectName, setNewSubjectName] = useState("");
     const [selectedColor, setSelectedColor] = useState(SUBJECT_COLORS[0]);
     const [selectedIcon, setSelectedIcon] = useState(SUBJECT_ICONS[0]);
+    const [isCreating, setIsCreating] = useState(false);
+
+    // Health scores
+    const [healthScores, setHealthScores] = useState<SubjectHealth[]>([]);
+    const [loadingHealth, setLoadingHealth] = useState(true);
 
     useEffect(() => {
         fetchSubjects();
+        fetchHealthScores();
     }, []);
+
+    const fetchHealthScores = async () => {
+        setLoadingHealth(true);
+        const scores = await getAllSubjectHealthScores();
+        setHealthScores(scores);
+        setLoadingHealth(false);
+    };
+
+    const getHealthForSubject = (subjectId: string): SubjectHealth | undefined => {
+        return healthScores.find(h => h.subjectId === subjectId);
+    };
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await fetchSubjects();
+        await Promise.all([fetchSubjects(), fetchHealthScores()]);
         setRefreshing(false);
     };
 
     const handleCreateSubject = async () => {
-        if (!newSubjectName.trim()) {
-            Alert.alert("Error", "Please enter a subject name");
-            return;
-        }
-
+        if (!newSubjectName.trim()) return;
+        setIsCreating(true);
         try {
-            await createSubject({
-                name: newSubjectName.trim(),
-                color: selectedColor,
-                icon: selectedIcon,
-            });
+            await createSubject({ name: newSubjectName.trim(), color: selectedColor, icon: selectedIcon });
             setModalVisible(false);
             setNewSubjectName("");
-        } catch (error: any) {
-            Alert.alert("Error", error.message);
+            setSelectedColor(SUBJECT_COLORS[0]);
+            setSelectedIcon(SUBJECT_ICONS[0]);
+            await fetchHealthScores();
+        } catch (error) {
+            console.error(error);
         }
+        setIsCreating(false);
     };
 
-    const handleDeleteSubject = (id: string, name: string) => {
-        Alert.alert("Delete Subject", `Delete "${name}" and all its topics?`, [
-            { text: "Cancel", style: "cancel" },
-            { text: "Delete", style: "destructive", onPress: () => deleteSubject(id) },
-        ]);
-    };
+    // Find weakest subject
+    const weakestSubject = healthScores.length > 0
+        ? healthScores.reduce((min, curr) => curr.score < min.score ? curr : min, healthScores[0])
+        : null;
+
+    if (isLoading && subjects.length === 0) {
+        return (
+            <View style={[styles.container, styles.centered, { backgroundColor: theme.colors.background }]}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}>Loading subjects...</Text>
+            </View>
+        );
+    }
 
     return (
-        <View style={styles.container}>
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary[400]} />
-                }
-            >
-                {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.title}>Subjects</Text>
-                    <Text style={styles.subtitle}>Organize your learning</Text>
-                </View>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+                >
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <Text variant="headlineLarge" style={styles.title}>Subjects</Text>
+                        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                            {subjects.length} {subjects.length === 1 ? "subject" : "subjects"}
+                        </Text>
+                    </View>
 
-                {/* Subjects Grid */}
-                <View style={styles.grid}>
-                    {subjects.map((subject) => (
-                        <TouchableOpacity
-                            key={subject.id}
-                            onPress={() => router.push(`/subject/${subject.id}`)}
-                            onLongPress={() => handleDeleteSubject(subject.id, subject.name)}
-                            style={[styles.subjectCard, { borderColor: subject.color + '40' }]}
-                        >
-                            <View style={[styles.iconContainer, { backgroundColor: subject.color + '20' }]}>
-                                <Text style={styles.subjectIcon}>{subject.icon}</Text>
-                            </View>
-                            <Text style={styles.subjectName}>{subject.name}</Text>
-                            <Text style={styles.topicCount}>Tap to view topics</Text>
-                        </TouchableOpacity>
-                    ))}
+                    {/* Weakest Subject Alert */}
+                    {weakestSubject && weakestSubject.level === 'needs_attention' && (
+                        <Card style={styles.alertCard} mode="outlined">
+                            <Card.Content style={styles.alertContent}>
+                                <Ionicons name="alert-circle" size={20} color="#FACC15" />
+                                <View style={styles.alertInfo}>
+                                    <Text variant="bodyMedium" style={{ color: "#E5E7EB" }}>
+                                        {weakestSubject.subjectName} needs attention
+                                    </Text>
+                                    <Text variant="bodySmall" style={{ color: "#9CA3AF" }}>
+                                        Score: {weakestSubject.score}% • {weakestSubject.missedCount} missed tasks
+                                    </Text>
+                                </View>
+                            </Card.Content>
+                        </Card>
+                    )}
 
-                    {/* Add Subject Card */}
-                    <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addCard}>
-                        <Text style={styles.addIcon}>+</Text>
-                        <Text style={styles.addText}>Add Subject</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+                    {/* Subjects Grid */}
+                    {subjects.length === 0 ? (
+                        <Card style={styles.emptyCard}>
+                            <Card.Content style={styles.emptyContent}>
+                                <Ionicons name="book-outline" size={48} color="#9CA3AF" />
+                                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", marginTop: 12 }}>
+                                    No subjects yet.{"\n"}Start by adding your first subject.
+                                </Text>
+                                <Button mode="contained" onPress={() => setModalVisible(true)} style={{ marginTop: 20 }}>
+                                    Add Subject
+                                </Button>
+                            </Card.Content>
+                        </Card>
+                    ) : (
+                        <View style={styles.grid}>
+                            {subjects.map((subject) => {
+                                const health = getHealthForSubject(subject.id);
+                                return (
+                                    <TouchableRipple
+                                        key={subject.id}
+                                        onPress={() => router.push(`/subject/${subject.id}`)}
+                                        style={styles.cardWrapper}
+                                    >
+                                        <Card style={[styles.subjectCard, { borderLeftColor: subject.color, borderLeftWidth: 4 }]} mode="outlined">
+                                            <Card.Content>
+                                                <View style={styles.cardHeader}>
+                                                    <View style={[styles.iconContainer, { backgroundColor: subject.color + "20" }]}>
+                                                        <Text style={styles.subjectIcon}>{subject.icon}</Text>
+                                                    </View>
+                                                    {health && (
+                                                        <Chip
+                                                            compact
+                                                            style={{ backgroundColor: getHealthColor(health.level) + "20" }}
+                                                            textStyle={{ color: getHealthColor(health.level), fontSize: 10 }}
+                                                        >
+                                                            {health.score}%
+                                                        </Chip>
+                                                    )}
+                                                </View>
+                                                <Text variant="titleMedium" style={styles.subjectName} numberOfLines={1}>{subject.name}</Text>
 
-            {/* Create Subject Modal */}
-            <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>New Subject</Text>
-                            <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Text style={styles.closeButton}>✕</Text>
-                            </TouchableOpacity>
+                                                {health ? (
+                                                    <View style={styles.healthMeta}>
+                                                        <View style={[styles.healthDot, { backgroundColor: getHealthColor(health.level) }]} />
+                                                        <Text variant="bodySmall" style={{ color: getHealthColor(health.level) }}>
+                                                            {getHealthLabel(health.level)}
+                                                        </Text>
+                                                    </View>
+                                                ) : (
+                                                    <View style={styles.subjectMeta}>
+                                                        <Ionicons name="layers-outline" size={14} color="#9CA3AF" />
+                                                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, marginLeft: 4 }}>
+                                                            Tap to view
+                                                        </Text>
+                                                    </View>
+                                                )}
+                                            </Card.Content>
+                                        </Card>
+                                    </TouchableRipple>
+                                );
+                            })}
+
+                            {/* Add Card */}
+                            <TouchableRipple onPress={() => setModalVisible(true)} style={styles.cardWrapper}>
+                                <Card style={styles.addCard} mode="outlined">
+                                    <Card.Content style={styles.addCardContent}>
+                                        <Ionicons name="add-circle-outline" size={32} color={theme.colors.primary} />
+                                        <Text variant="bodyMedium" style={{ color: theme.colors.primary, marginTop: 8 }}>Add Subject</Text>
+                                    </Card.Content>
+                                </Card>
+                            </TouchableRipple>
                         </View>
+                    )}
+                </ScrollView>
+
+                {/* Modal */}
+                <Portal>
+                    <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modal}>
+                        <Text variant="titleLarge" style={styles.modalTitle}>New Subject</Text>
 
                         <TextInput
-                            style={styles.input}
-                            placeholder="Subject name"
-                            placeholderTextColor={colors.text.muted}
+                            label="Subject name"
                             value={newSubjectName}
                             onChangeText={setNewSubjectName}
+                            mode="outlined"
+                            style={styles.modalInput}
+                            placeholder="e.g. Mathematics, Physics"
                         />
 
-                        <Text style={styles.label}>Color</Text>
-                        <View style={styles.colorPicker}>
+                        <Text variant="labelMedium" style={styles.label}>Color</Text>
+                        <View style={styles.colorRow}>
                             {SUBJECT_COLORS.map((color) => (
-                                <TouchableOpacity
-                                    key={color}
-                                    onPress={() => setSelectedColor(color)}
-                                    style={[
-                                        styles.colorOption,
-                                        { backgroundColor: color },
-                                        selectedColor === color && styles.colorSelected,
-                                    ]}
-                                />
+                                <TouchableRipple key={color} onPress={() => setSelectedColor(color)}>
+                                    <View style={[styles.colorOption, { backgroundColor: color }, selectedColor === color && styles.colorSelected]} />
+                                </TouchableRipple>
                             ))}
                         </View>
 
-                        <Text style={styles.label}>Icon</Text>
-                        <View style={styles.iconPicker}>
+                        <Text variant="labelMedium" style={styles.label}>Icon</Text>
+                        <View style={styles.iconRow}>
                             {SUBJECT_ICONS.map((icon) => (
-                                <TouchableOpacity
-                                    key={icon}
-                                    onPress={() => setSelectedIcon(icon)}
-                                    style={[styles.iconOption, selectedIcon === icon && styles.iconSelected]}
-                                >
-                                    <Text style={styles.iconText}>{icon}</Text>
-                                </TouchableOpacity>
+                                <TouchableRipple key={icon} onPress={() => setSelectedIcon(icon)}>
+                                    <View style={[styles.iconOption, selectedIcon === icon && styles.iconSelected]}>
+                                        <Text style={styles.iconOptionText}>{icon}</Text>
+                                    </View>
+                                </TouchableRipple>
                             ))}
                         </View>
 
-                        <TouchableOpacity onPress={handleCreateSubject} style={styles.createButton}>
-                            <Text style={styles.createButtonText}>Create Subject</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-        </View>
+                        <Button
+                            mode="contained"
+                            onPress={handleCreateSubject}
+                            style={styles.createButton}
+                            loading={isCreating}
+                            disabled={isCreating || !newSubjectName.trim()}
+                        >
+                            Create Subject
+                        </Button>
+                    </Modal>
+                </Portal>
+            </View>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollView: { flex: 1 },
+    container: { flex: 1 },
+    centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
-    header: { paddingHorizontal: spacing.xxl, paddingTop: 60, paddingBottom: spacing.xxl },
-    title: { fontSize: fontSize.xxxl, fontWeight: fontWeight.bold, color: colors.text.primary },
-    subtitle: { fontSize: fontSize.md, color: colors.text.muted, marginTop: spacing.xs },
-    grid: { paddingHorizontal: spacing.xxl, flexDirection: "row", flexWrap: "wrap", gap: spacing.lg },
-    subjectCard: {
-        width: "47%",
-        backgroundColor: colors.card,
-        borderRadius: borderRadius.xxl,
-        padding: spacing.lg,
-        borderWidth: 1,
-        ...shadows.sm,
-    },
-    iconContainer: { width: 48, height: 48, borderRadius: borderRadius.lg, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
-    subjectIcon: { fontSize: 24 },
-    subjectName: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text.primary, marginBottom: spacing.xs },
-    topicCount: { fontSize: fontSize.sm, color: colors.text.muted },
-    addCard: {
-        width: "47%",
-        backgroundColor: colors.card,
-        borderRadius: borderRadius.xxl,
-        padding: spacing.lg,
-        borderWidth: 1,
-        borderColor: colors.cardBorder,
-        borderStyle: "dashed",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: 140,
-    },
-    addIcon: { fontSize: fontSize.xxxl, color: colors.primary[400], marginBottom: spacing.sm },
-    addText: { fontSize: fontSize.md, color: colors.primary[400], fontWeight: fontWeight.medium },
-    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
-    modalContent: { backgroundColor: colors.dark[900], borderTopLeftRadius: borderRadius.xxl, borderTopRightRadius: borderRadius.xxl, padding: spacing.xxl },
-    modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xxl },
-    modalTitle: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text.primary },
-    closeButton: { fontSize: fontSize.xxl, color: colors.text.muted },
-    input: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder, borderRadius: borderRadius.lg, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, fontSize: fontSize.md, color: colors.text.primary, marginBottom: spacing.lg },
-    label: { fontSize: fontSize.sm, fontWeight: fontWeight.medium, color: colors.text.muted, marginBottom: spacing.sm },
-    colorPicker: { flexDirection: "row", gap: spacing.md, marginBottom: spacing.lg },
-    colorOption: { width: 40, height: 40, borderRadius: borderRadius.full },
-    colorSelected: { borderWidth: 3, borderColor: colors.white },
-    iconPicker: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md, marginBottom: spacing.xxl },
-    iconOption: { width: 44, height: 44, borderRadius: borderRadius.lg, backgroundColor: colors.card, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: colors.cardBorder },
-    iconSelected: { borderColor: colors.primary[400], backgroundColor: colors.primary[400] + '20' },
-    iconText: { fontSize: 20 },
-    createButton: { backgroundColor: colors.primary[400], borderRadius: borderRadius.lg, paddingVertical: spacing.lg, alignItems: "center" },
-    createButtonText: { color: colors.white, fontSize: fontSize.lg, fontWeight: fontWeight.bold },
+    header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 20 },
+    title: { color: "#E5E7EB", fontWeight: "bold" },
+    alertCard: { marginHorizontal: 24, marginBottom: 20, backgroundColor: "#FACC1520", borderColor: "#FACC15" },
+    alertContent: { flexDirection: "row", alignItems: "center" },
+    alertInfo: { marginLeft: 12, flex: 1 },
+    emptyCard: { marginHorizontal: 24, backgroundColor: "#1E293B" },
+    emptyContent: { alignItems: "center", paddingVertical: 48 },
+    grid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 16 },
+    cardWrapper: { width: "50%", padding: 8 },
+    subjectCard: { backgroundColor: "#1E293B", minHeight: 150 },
+    cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
+    iconContainer: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+    subjectIcon: { fontSize: 22 },
+    subjectName: { color: "#E5E7EB", fontWeight: "600", marginBottom: 8 },
+    subjectMeta: { flexDirection: "row", alignItems: "center" },
+    healthMeta: { flexDirection: "row", alignItems: "center" },
+    healthDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+    addCard: { backgroundColor: "#1E293B", borderStyle: "dashed", minHeight: 150 },
+    addCardContent: { alignItems: "center", justifyContent: "center", flex: 1, paddingVertical: 40 },
+    modal: { backgroundColor: "#1E293B", margin: 20, padding: 24, borderRadius: 16 },
+    modalTitle: { color: "#E5E7EB", fontWeight: "bold", marginBottom: 20 },
+    modalInput: { marginBottom: 16, backgroundColor: "#0F172A" },
+    label: { color: "#9CA3AF", marginBottom: 12, marginTop: 8 },
+    colorRow: { flexDirection: "row", gap: 12, marginBottom: 16, flexWrap: "wrap" },
+    colorOption: { width: 36, height: 36, borderRadius: 18 },
+    colorSelected: { borderWidth: 3, borderColor: "#FFFFFF" },
+    iconRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
+    iconOption: { width: 44, height: 44, borderRadius: 8, backgroundColor: "#0F172A", alignItems: "center", justifyContent: "center" },
+    iconSelected: { borderWidth: 2, borderColor: "#38BDF8" },
+    iconOptionText: { fontSize: 20 },
+    createButton: { marginTop: 8, borderRadius: 12 },
 });

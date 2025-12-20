@@ -26,9 +26,19 @@ export interface Topic {
     created_at: string;
 }
 
-export interface Task {
+export interface SubTopic {
     id: string;
     topic_id: string;
+    user_id: string;
+    name: string;
+    order_index: number;
+    created_at: string;
+}
+
+export interface Task {
+    id: string;
+    topic_id?: string; // Legacy, kept for compatibility
+    sub_topic_id: string;
     user_id: string;
     title: string;
     is_completed: boolean;
@@ -86,6 +96,14 @@ export interface SubjectWithTopics extends Subject {
     topics: Topic[];
 }
 
+export interface TopicWithSubTopics extends Topic {
+    sub_topics: SubTopic[];
+}
+
+export interface SubTopicWithTasks extends SubTopic {
+    tasks: Task[];
+}
+
 export interface TopicWithTasks extends Topic {
     tasks: Task[];
 }
@@ -106,8 +124,13 @@ export interface CreateTopicInput {
     name: string;
 }
 
-export interface CreateTaskInput {
+export interface CreateSubTopicInput {
     topic_id: string;
+    name: string;
+}
+
+export interface CreateTaskInput {
+    sub_topic_id: string;
     title: string;
     due_date?: string;
     priority?: 'low' | 'medium' | 'high';

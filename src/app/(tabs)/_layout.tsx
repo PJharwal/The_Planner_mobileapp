@@ -1,11 +1,20 @@
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-import { colors, fontSize, fontWeight } from "../../constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+import {
+    colors
+} from "../../constants/theme";
 
-function TabIcon({ focused, icon, label }: { focused: boolean; icon: string; label: string }) {
+type IoniconsName = keyof typeof Ionicons.glyphMap;
+
+function TabIcon({ focused, icon, iconFocused, label }: { focused: boolean; icon: IoniconsName; iconFocused: IoniconsName; label: string }) {
     return (
         <View style={styles.tabIconContainer}>
-            <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>{icon}</Text>
+            <Ionicons
+                name={focused ? iconFocused : icon}
+                size={22}
+                color={focused ? colors.primary[400] : "#64748B"}
+            />
             <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>{label}</Text>
         </View>
     );
@@ -18,8 +27,8 @@ export default function TabLayout() {
                 headerShown: false,
                 tabBarStyle: styles.tabBar,
                 tabBarShowLabel: false,
-                tabBarActiveTintColor: colors.primary[500],
-                tabBarInactiveTintColor: colors.dark[500],
+                tabBarActiveTintColor: colors.primary[400],
+                tabBarInactiveTintColor: "#64748B",
             }}
         >
             <Tabs.Screen
@@ -27,7 +36,7 @@ export default function TabLayout() {
                 options={{
                     title: "Home",
                     tabBarIcon: ({ focused }) => (
-                        <TabIcon focused={focused} icon="🏠" label="Home" />
+                        <TabIcon focused={focused} icon="home-outline" iconFocused="home" label="Home" />
                     ),
                 }}
             />
@@ -36,7 +45,7 @@ export default function TabLayout() {
                 options={{
                     title: "Subjects",
                     tabBarIcon: ({ focused }) => (
-                        <TabIcon focused={focused} icon="📚" label="Subjects" />
+                        <TabIcon focused={focused} icon="book-outline" iconFocused="book" label="Subjects" />
                     ),
                 }}
             />
@@ -45,7 +54,7 @@ export default function TabLayout() {
                 options={{
                     title: "Notes",
                     tabBarIcon: ({ focused }) => (
-                        <TabIcon focused={focused} icon="📝" label="Notes" />
+                        <TabIcon focused={focused} icon="document-text-outline" iconFocused="document-text" label="Notes" />
                     ),
                 }}
             />
@@ -54,7 +63,7 @@ export default function TabLayout() {
                 options={{
                     title: "Analytics",
                     tabBarIcon: ({ focused }) => (
-                        <TabIcon focused={focused} icon="📊" label="Stats" />
+                        <TabIcon focused={focused} icon="stats-chart-outline" iconFocused="stats-chart" label="Stats" />
                     ),
                 }}
             />
@@ -63,7 +72,7 @@ export default function TabLayout() {
                 options={{
                     title: "Profile",
                     tabBarIcon: ({ focused }) => (
-                        <TabIcon focused={focused} icon="👤" label="Profile" />
+                        <TabIcon focused={focused} icon="person-outline" iconFocused="person" label="Profile" />
                     ),
                 }}
             />
@@ -73,30 +82,28 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
     tabBar: {
-        backgroundColor: colors.dark[900],
-        borderTopColor: colors.dark[800],
+        backgroundColor: "#0F172A",
+        borderTopColor: "#1E293B",
         borderTopWidth: 1,
-        height: 80,
-        paddingBottom: 10,
-        paddingTop: 10,
+        height: 70,
+        paddingBottom: 8,
+        paddingTop: 8,
+        elevation: 0,
+        shadowOpacity: 0,
     },
     tabIconContainer: {
         alignItems: "center",
         justifyContent: "center",
-    },
-    tabIcon: {
-        fontSize: 24,
-        marginBottom: 4,
-    },
-    tabIconFocused: {
-        transform: [{ scale: 1.1 }],
+        paddingTop: 4,
     },
     tabLabel: {
-        fontSize: fontSize.xs,
-        color: colors.dark[500],
+        fontSize: 10,
+        color: "#64748B",
+        marginTop: 4,
+        fontWeight: "500",
     },
     tabLabelFocused: {
         color: colors.primary[400],
-        fontWeight: fontWeight.medium,
+        fontWeight: "600",
     },
 });

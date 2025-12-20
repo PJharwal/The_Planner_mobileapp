@@ -1,151 +1,280 @@
-import { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Modal, StyleSheet } from "react-native";
+import { useState, useEffect } from "react";
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, RefreshControl, ActivityIndicator } from "react-native";
+import { Card, Text, Button, Portal, Modal, TextInput, useTheme, TouchableRipple } from "react-native-paper";
+import { Ionicons } from "@expo/vector-icons";
 import { format, addDays, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from "date-fns";
-import { colors, spacing, borderRadius, fontSize, fontWeight } from "../../constants/theme";
+import { supabase } from "../../lib/supabase";
+import { useAuthStore } from "../../store/authStore";
+
+interface Note {
+    id: string;
+    title: string;
+    content: string;
+    note_date: string;
+    created_at: string;
+}
 
 export default function NotesScreen() {
+    const theme = useTheme();
+    const { user } = useAuthStore();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [modalVisible, setModalVisible] = useState(false);
     const [noteTitle, setNoteTitle] = useState("");
     const [noteContent, setNoteContent] = useState("");
-    const [notes] = useState<{ id: string; title: string; date: Date }[]>([]);
+    const [notes, setNotes] = useState<Note[]>([]);
+    const [dailyNotes, setDailyNotes] = useState<Note[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     const monthStart = startOfMonth(selectedDate);
     const monthEnd = endOfMonth(selectedDate);
     const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
     const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
 
+    const fetchNotes = async () => {
+        if (!user) return;
+        try {
+            const { data, error } = await supabase
+                .from("task_notes")
+                .select("*")
+                .order("created_at", { ascending: false });
+            if (error) {
+                // Table might not exist yet - silently fail
+                setNotes([]);
+            } else {
+                setNotes(data || []);
+            }
+        } catch (error) {
+            setNotes([]);
+        }
+        setIsLoading(false);
+    };
+
+    const fetchDailyNotes = () => {
+        const dateStr = format(selectedDate, "yyyy-MM-dd");
+        const filtered = notes.filter(note => note.note_date === dateStr);
+        setDailyNotes(filtered);
+    };
+
+    useEffect(() => {
+        fetchNotes();
+    }, [user]);
+
+    useEffect(() => {
+        fetchDailyNotes();
+    }, [selectedDate, notes]);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        await fetchNotes();
+        setRefreshing(false);
+    };
+
+    const handleSaveNote = async () => {
+        if (!noteTitle.trim() || !user) return;
+        setIsSaving(true);
+        try {
+            const { data, error } = await supabase
+                .from("task_notes")
+                .insert({
+                    user_id: user.id,
+                    title: noteTitle.trim(),
+                    content: noteContent.trim(),
+                    note_date: format(selectedDate, "yyyy-MM-dd"),
+                })
+                .select()
+                .single();
+            if (error) {
+                // Table might not exist
+                console.warn("Notes table not found - run schema_v2.sql");
+            } else if (data) {
+                setNotes([data, ...notes]);
+                setModalVisible(false);
+                setNoteTitle("");
+                setNoteContent("");
+            }
+        } catch (error) {
+            console.warn("Could not save note");
+        }
+        setIsSaving(false);
+    };
+
+    const hasNotesOnDate = (date: Date) => {
+        const dateStr = format(date, "yyyy-MM-dd");
+        return notes.some(note => note.note_date === dateStr);
+    };
+
+    if (isLoading) {
+        return (
+            <View style={[styles.container, styles.centered, { backgroundColor: theme.colors.background }]}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}>Loading notes...</Text>
+            </View>
+        );
+    }
+
     return (
-        <View style={styles.container}>
-            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <Text style={styles.title}>Notes</Text>
-                    <Text style={styles.subtitle}>Your study journal</Text>
-                </View>
-
-                {/* Month Navigation */}
-                <View style={styles.monthNav}>
-                    <TouchableOpacity onPress={() => setSelectedDate(subDays(selectedDate, 30))} style={styles.navButton}>
-                        <Text style={styles.navText}>‹</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.monthText}>{format(selectedDate, "MMMM yyyy")}</Text>
-                    <TouchableOpacity onPress={() => setSelectedDate(addDays(selectedDate, 30))} style={styles.navButton}>
-                        <Text style={styles.navText}>›</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Calendar Grid */}
-                <View style={styles.calendarCard}>
-                    <View style={styles.weekDaysRow}>
-                        {weekDays.map((day, i) => (
-                            <Text key={i} style={styles.weekDayText}>{day}</Text>
-                        ))}
-                    </View>
-                    <View style={styles.daysGrid}>
-                        {daysInMonth.map((day, index) => {
-                            const isToday = isSameDay(day, new Date());
-                            const isSelected = isSameDay(day, selectedDate);
-                            return (
-                                <TouchableOpacity
-                                    key={index}
-                                    onPress={() => setSelectedDate(day)}
-                                    style={[styles.dayCell, isSelected && styles.dayCellSelected, isToday && !isSelected && styles.dayCellToday]}
-                                >
-                                    <Text style={[styles.dayText, isSelected && styles.dayTextSelected, isToday && !isSelected && styles.dayTextToday]}>
-                                        {format(day, "d")}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </View>
-                </View>
-
-                {/* Selected Date Notes */}
-                <View style={styles.notesSection}>
-                    <View style={styles.notesSectionHeader}>
-                        <Text style={styles.sectionTitle}>{format(selectedDate, "MMMM d, yyyy")}</Text>
-                        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.addButton}>
-                            <Text style={styles.addButtonText}>+ Add Note</Text>
-                        </TouchableOpacity>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+                >
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <Text variant="headlineLarge" style={styles.title}>Notes</Text>
+                        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>Your study journal</Text>
                     </View>
 
-                    {notes.length === 0 ? (
-                        <View style={styles.emptyState}>
-                            <Text style={styles.emptyEmoji}>📝</Text>
-                            <Text style={styles.emptyText}>No notes for this day</Text>
-                        </View>
-                    ) : (
-                        notes.map((note) => (
-                            <View key={note.id} style={styles.noteCard}>
-                                <Text style={styles.noteTitle}>{note.title}</Text>
+                    {/* Month Navigation */}
+                    <View style={styles.monthNav}>
+                        <TouchableRipple onPress={() => setSelectedDate(subDays(selectedDate, 30))} style={styles.navButton}>
+                            <Ionicons name="chevron-back" size={24} color={theme.colors.primary} />
+                        </TouchableRipple>
+                        <Text variant="titleMedium" style={styles.monthText}>{format(selectedDate, "MMMM yyyy")}</Text>
+                        <TouchableRipple onPress={() => setSelectedDate(addDays(selectedDate, 30))} style={styles.navButton}>
+                            <Ionicons name="chevron-forward" size={24} color={theme.colors.primary} />
+                        </TouchableRipple>
+                    </View>
+
+                    {/* Calendar */}
+                    <Card style={styles.calendarCard} mode="outlined">
+                        <Card.Content>
+                            <View style={styles.weekDaysRow}>
+                                {weekDays.map((day, i) => (
+                                    <View key={i} style={styles.weekDay}>
+                                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{day}</Text>
+                                    </View>
+                                ))}
                             </View>
-                        ))
-                    )}
-                </View>
-            </ScrollView>
+                            <View style={styles.daysGrid}>
+                                {daysInMonth.map((day, index) => {
+                                    const isToday = isSameDay(day, new Date());
+                                    const isSelected = isSameDay(day, selectedDate);
+                                    const hasNotes = hasNotesOnDate(day);
+                                    return (
+                                        <TouchableRipple key={index} onPress={() => setSelectedDate(day)} style={styles.dayWrapper}>
+                                            <View style={[styles.dayCell, isSelected && styles.daySelected, isToday && !isSelected && styles.dayToday]}>
+                                                <Text variant="bodyMedium" style={[styles.dayText, isSelected && styles.dayTextSelected, isToday && !isSelected && styles.dayTextToday]}>
+                                                    {format(day, "d")}
+                                                </Text>
+                                                {hasNotes && <View style={styles.noteDot} />}
+                                            </View>
+                                        </TouchableRipple>
+                                    );
+                                })}
+                            </View>
+                        </Card.Content>
+                    </Card>
 
-            {/* Create Note Modal */}
-            <Modal visible={modalVisible} animationType="slide" transparent>
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>New Note</Text>
-                            <TouchableOpacity onPress={() => setModalVisible(false)}>
-                                <Text style={styles.closeButton}>✕</Text>
-                            </TouchableOpacity>
+                    {/* Notes Section */}
+                    <View style={styles.notesSection}>
+                        <View style={styles.notesSectionHeader}>
+                            <View>
+                                <Text variant="titleMedium" style={{ color: "#E5E7EB" }}>{format(selectedDate, "MMMM d, yyyy")}</Text>
+                                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{dailyNotes.length} notes</Text>
+                            </View>
+                            <Button mode="contained" compact onPress={() => setModalVisible(true)} icon={() => <Ionicons name="add" size={16} color="#FFF" />}>
+                                Add
+                            </Button>
                         </View>
-                        <TextInput style={styles.input} placeholder="Note title" placeholderTextColor={colors.text.muted} value={noteTitle} onChangeText={setNoteTitle} />
-                        <TextInput style={[styles.input, styles.textArea]} placeholder="Write your note..." placeholderTextColor={colors.text.muted} value={noteContent} onChangeText={setNoteContent} multiline numberOfLines={4} />
-                        <TouchableOpacity style={styles.createButton}>
-                            <Text style={styles.createButtonText}>Save Note</Text>
-                        </TouchableOpacity>
+
+                        {dailyNotes.length === 0 ? (
+                            <Card style={styles.emptyCard}>
+                                <Card.Content style={styles.emptyContent}>
+                                    <Ionicons name="document-text-outline" size={48} color="#9CA3AF" />
+                                    <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", marginTop: 12 }}>
+                                        No notes for this day.{"\n"}Tap "Add" to create one.
+                                    </Text>
+                                </Card.Content>
+                            </Card>
+                        ) : (
+                            dailyNotes.map((note) => (
+                                <Card key={note.id} style={styles.noteCard} mode="outlined">
+                                    <Card.Content>
+                                        <Text variant="titleMedium" style={{ color: "#E5E7EB" }}>{note.title}</Text>
+                                        {note.content && (
+                                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 8 }} numberOfLines={3}>
+                                                {note.content}
+                                            </Text>
+                                        )}
+                                    </Card.Content>
+                                </Card>
+                            ))
+                        )}
                     </View>
-                </View>
-            </Modal>
-        </View>
+                </ScrollView>
+
+                {/* Modal */}
+                <Portal>
+                    <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modal}>
+                        <View style={styles.modalHeader}>
+                            <Text variant="titleLarge" style={styles.modalTitle}>New Note</Text>
+                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>{format(selectedDate, "MMMM d, yyyy")}</Text>
+                        </View>
+                        <TextInput
+                            label="Title"
+                            value={noteTitle}
+                            onChangeText={setNoteTitle}
+                            mode="outlined"
+                            style={styles.modalInput}
+                        />
+                        <TextInput
+                            label="Content (optional)"
+                            value={noteContent}
+                            onChangeText={setNoteContent}
+                            mode="outlined"
+                            multiline
+                            numberOfLines={4}
+                            style={styles.modalInput}
+                        />
+                        <Button
+                            mode="contained"
+                            onPress={handleSaveNote}
+                            style={styles.createButton}
+                            loading={isSaving}
+                            disabled={isSaving || !noteTitle.trim()}
+                        >
+                            Save Note
+                        </Button>
+                    </Modal>
+                </Portal>
+            </View>
+        </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scrollView: { flex: 1 },
+    container: { flex: 1 },
+    centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
-    header: { paddingHorizontal: spacing.xxl, paddingTop: 60, paddingBottom: spacing.lg },
-    title: { fontSize: fontSize.xxxl, fontWeight: fontWeight.bold, color: colors.text.primary },
-    subtitle: { fontSize: fontSize.md, color: colors.text.muted, marginTop: spacing.xs },
-    monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: spacing.lg },
-    navButton: { padding: spacing.md },
-    navText: { fontSize: fontSize.xxl, color: colors.primary[400] },
-    monthText: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text.primary, marginHorizontal: spacing.xl },
-    calendarCard: { marginHorizontal: spacing.xxl, backgroundColor: colors.card, borderRadius: borderRadius.xxl, padding: spacing.lg, marginBottom: spacing.xxl, borderWidth: 1, borderColor: colors.cardBorder },
-    weekDaysRow: { flexDirection: "row", marginBottom: spacing.sm },
-    weekDayText: { flex: 1, textAlign: "center", fontSize: fontSize.sm, color: colors.text.muted, fontWeight: fontWeight.medium },
+    header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 16 },
+    title: { color: "#E5E7EB", fontWeight: "bold" },
+    monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 16 },
+    navButton: { padding: 12 },
+    monthText: { color: "#E5E7EB", fontWeight: "600", marginHorizontal: 20 },
+    calendarCard: { marginHorizontal: 24, marginBottom: 24, backgroundColor: "#1E293B" },
+    weekDaysRow: { flexDirection: "row", marginBottom: 8 },
+    weekDay: { flex: 1, alignItems: "center" },
     daysGrid: { flexDirection: "row", flexWrap: "wrap" },
-    dayCell: { width: "14.28%", aspectRatio: 1, alignItems: "center", justifyContent: "center", borderRadius: borderRadius.full },
-    dayCellSelected: { backgroundColor: colors.primary[400] },
-    dayCellToday: { borderWidth: 1, borderColor: colors.primary[400] },
-    dayText: { fontSize: fontSize.md, color: colors.text.primary },
-    dayTextSelected: { color: colors.white, fontWeight: fontWeight.bold },
-    dayTextToday: { color: colors.primary[400] },
-    notesSection: { paddingHorizontal: spacing.xxl },
-    notesSectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.lg },
-    sectionTitle: { fontSize: fontSize.lg, fontWeight: fontWeight.semibold, color: colors.text.primary },
-    addButton: { backgroundColor: colors.primary[400], paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: borderRadius.lg },
-    addButtonText: { color: colors.white, fontWeight: fontWeight.medium, fontSize: fontSize.sm },
-    emptyState: { alignItems: "center", paddingVertical: spacing.xxxl, backgroundColor: colors.card, borderRadius: borderRadius.xxl },
-    emptyEmoji: { fontSize: 48, marginBottom: spacing.md },
-    emptyText: { fontSize: fontSize.md, color: colors.text.muted },
-    noteCard: { backgroundColor: colors.card, padding: spacing.lg, borderRadius: borderRadius.lg, marginBottom: spacing.md, borderWidth: 1, borderColor: colors.cardBorder },
-    noteTitle: { fontSize: fontSize.md, color: colors.text.primary, fontWeight: fontWeight.medium },
-    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "flex-end" },
-    modalContent: { backgroundColor: colors.dark[900], borderTopLeftRadius: borderRadius.xxl, borderTopRightRadius: borderRadius.xxl, padding: spacing.xxl },
-    modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.xxl },
-    modalTitle: { fontSize: fontSize.xl, fontWeight: fontWeight.bold, color: colors.text.primary },
-    closeButton: { fontSize: fontSize.xxl, color: colors.text.muted },
-    input: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder, borderRadius: borderRadius.lg, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, fontSize: fontSize.md, color: colors.text.primary, marginBottom: spacing.lg },
-    textArea: { height: 120, textAlignVertical: "top" },
-    createButton: { backgroundColor: colors.primary[400], borderRadius: borderRadius.lg, paddingVertical: spacing.lg, alignItems: "center" },
-    createButtonText: { color: colors.white, fontSize: fontSize.lg, fontWeight: fontWeight.bold },
+    dayWrapper: { width: "14.28%" },
+    dayCell: { aspectRatio: 1, alignItems: "center", justifyContent: "center", borderRadius: 999, position: "relative" },
+    daySelected: { backgroundColor: "#38BDF8" },
+    dayToday: { borderWidth: 1, borderColor: "#38BDF8" },
+    dayText: { color: "#E5E7EB" },
+    dayTextSelected: { color: "#FFFFFF", fontWeight: "bold" },
+    dayTextToday: { color: "#38BDF8" },
+    noteDot: { position: "absolute", bottom: 4, width: 4, height: 4, borderRadius: 2, backgroundColor: "#22C55E" },
+    notesSection: { paddingHorizontal: 24 },
+    notesSectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+    emptyCard: { backgroundColor: "#1E293B" },
+    emptyContent: { alignItems: "center", paddingVertical: 40 },
+    noteCard: { marginBottom: 12, backgroundColor: "#1E293B" },
+    modal: { backgroundColor: "#1E293B", margin: 20, padding: 24, borderRadius: 16 },
+    modalHeader: { marginBottom: 20 },
+    modalTitle: { color: "#E5E7EB", fontWeight: "bold" },
+    modalInput: { marginBottom: 16, backgroundColor: "#0F172A" },
+    createButton: { marginTop: 8, borderRadius: 12 },
 });
