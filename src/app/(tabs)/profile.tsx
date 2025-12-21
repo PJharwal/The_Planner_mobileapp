@@ -1,11 +1,16 @@
-import { View, ScrollView, StyleSheet, Alert, ActivityIndicator } from "react-native";
-import { Card, Text, Avatar, List, Button, useTheme, Divider, Snackbar } from "react-native-paper";
+import { View, ScrollView, StyleSheet, Alert, ActivityIndicator, TouchableOpacity } from "react-native";
+import { Text, Avatar, Divider, Snackbar } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { exportAndShare } from "../../utils/dataExport";
+
+// Design tokens
+import { pastel, background, text, semantic, spacing, borderRadius, shadows } from "../../constants/theme";
+// UI Components
+import { Card, Button } from "../../components/ui";
 
 interface UserStats {
     totalTasks: number;
@@ -14,7 +19,6 @@ interface UserStats {
 }
 
 export default function ProfileScreen() {
-    const theme = useTheme();
     const router = useRouter();
     const { user, logout, isLoading } = useAuthStore();
     const [stats, setStats] = useState<UserStats>({ totalTasks: 0, completedTasks: 0, totalSubjects: 0 });
@@ -57,7 +61,18 @@ export default function ProfileScreen() {
     const handleLogout = () => {
         Alert.alert("Sign Out", "Are you sure you want to sign out?", [
             { text: "Cancel", style: "cancel" },
-            { text: "Sign Out", style: "destructive", onPress: logout },
+            {
+                text: "Sign Out",
+                style: "destructive",
+                onPress: async () => {
+                    try {
+                        await logout();
+                    } catch (error) {
+                        console.error("Error signing out:", error);
+                        Alert.alert("Error", "Failed to sign out. Please try again.");
+                    }
+                }
+            },
         ]);
     };
 
@@ -78,14 +93,14 @@ export default function ProfileScreen() {
 
     if (isLoading) {
         return (
-            <View style={[styles.container, styles.centered, { backgroundColor: theme.colors.background }]}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
+            <View style={[styles.container, styles.centered]}>
+                <ActivityIndicator size="large" color={pastel.mint} />
             </View>
         );
     }
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -93,87 +108,87 @@ export default function ProfileScreen() {
                 </View>
 
                 {/* User Card */}
-                <Card style={styles.userCard} mode="outlined">
-                    <Card.Content style={styles.userContent}>
+                <Card style={styles.userCard}>
+                    <View style={styles.userContent}>
                         <Avatar.Text
                             size={64}
                             label={user?.full_name?.charAt(0)?.toUpperCase() || "S"}
-                            style={{ backgroundColor: theme.colors.primary }}
+                            style={{ backgroundColor: pastel.mint }}
+                            labelStyle={{ color: pastel.white }}
                         />
                         <View style={styles.userInfo}>
                             <Text variant="titleLarge" style={styles.userName}>{user?.full_name || "Student"}</Text>
-                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                            <Text variant="bodyMedium" style={{ color: text.secondary }}>
                                 {user?.email || "student@example.com"}
                             </Text>
                         </View>
-                    </Card.Content>
+                    </View>
                 </Card>
 
                 {/* Stats */}
                 <View style={styles.statsRow}>
-                    <Card style={styles.statCard} mode="outlined">
-                        <Card.Content style={styles.statContent}>
+                    <Card style={[styles.statCard, { borderColor: pastel.mint }]}>
+                        <View style={styles.statContent}>
                             <Text variant="headlineSmall" style={styles.statValue}>
                                 {loadingStats ? "-" : stats.totalSubjects}
                             </Text>
-                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Subjects</Text>
-                        </Card.Content>
+                            <Text variant="bodySmall" style={{ color: text.secondary }}>Subjects</Text>
+                        </View>
                     </Card>
-                    <Card style={styles.statCard} mode="outlined">
-                        <Card.Content style={styles.statContent}>
+                    <Card style={[styles.statCard, { borderColor: pastel.peach }]}>
+                        <View style={styles.statContent}>
                             <Text variant="headlineSmall" style={styles.statValue}>
                                 {loadingStats ? "-" : stats.completedTasks}
                             </Text>
-                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Completed</Text>
-                        </Card.Content>
+                            <Text variant="bodySmall" style={{ color: text.secondary }}>Completed</Text>
+                        </View>
                     </Card>
-                    <Card style={styles.statCard} mode="outlined">
-                        <Card.Content style={styles.statContent}>
+                    <Card style={[styles.statCard, { borderColor: pastel.mistBlue }]}>
+                        <View style={styles.statContent}>
                             <Text variant="headlineSmall" style={styles.statValue}>
                                 {loadingStats ? "-" : `${stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0}%`}
                             </Text>
-                            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Progress</Text>
-                        </Card.Content>
+                            <Text variant="bodySmall" style={{ color: text.secondary }}>Progress</Text>
+                        </View>
                     </Card>
                 </View>
 
                 {/* Menu Items */}
-                <Card style={styles.menuCard} mode="outlined">
+                <Card style={styles.menuCard}>
                     {menuItems.map((item, index) => (
                         <View key={item.title}>
-                            <List.Item
-                                title={item.title}
-                                description={item.subtitle}
-                                left={() => <Ionicons name={item.icon} size={24} color="#38BDF8" style={styles.menuIcon} />}
-                                right={() => <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />}
-                                onPress={item.onPress}
-                                titleStyle={styles.menuTitle}
-                                descriptionStyle={styles.menuDesc}
-                            />
+                            <TouchableOpacity style={styles.menuItem} onPress={item.onPress} activeOpacity={0.7}>
+                                <Ionicons name={item.icon} size={24} color={pastel.mint} style={styles.menuIcon} />
+                                <View style={styles.menuInfo}>
+                                    <Text variant="bodyLarge" style={styles.menuTitle}>{item.title}</Text>
+                                    <Text variant="bodySmall" style={styles.menuDesc}>{item.subtitle}</Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                            </TouchableOpacity>
                             {index < menuItems.length - 1 && <Divider style={styles.divider} />}
                         </View>
                     ))}
                 </Card>
 
                 {/* Logout Button */}
-                <Button
-                    mode="outlined"
-                    onPress={handleLogout}
-                    textColor="#EF4444"
-                    style={styles.logoutButton}
-                    icon={() => <Ionicons name="log-out-outline" size={20} color="#EF4444" />}
-                >
-                    Sign Out
-                </Button>
+                <View style={{ paddingHorizontal: 24 }}>
+                    <Button
+                        variant="danger"
+                        onPress={handleLogout}
+                        fullWidth
+                    >
+                        Sign Out
+                    </Button>
+                </View>
 
-                <Text variant="bodySmall" style={styles.version}>Study App v1.0.0</Text>
+                <Text variant="bodySmall" style={styles.version}>The Planner v1.0.0</Text>
             </ScrollView>
 
             <Snackbar
                 visible={snackbarVisible}
                 onDismiss={() => setSnackbarVisible(false)}
                 duration={3000}
-                style={{ backgroundColor: "#1E293B" }}
+                style={{ backgroundColor: pastel.slate }}
             >
                 {snackbarMessage}
             </Snackbar>
@@ -182,24 +197,25 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: { flex: 1, backgroundColor: background.primary },
     centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 24 },
-    title: { color: "#E5E7EB", fontWeight: "bold" },
-    userCard: { marginHorizontal: 24, marginBottom: 20, backgroundColor: "#1E293B" },
+    title: { color: text.primary, fontWeight: "bold" },
+    userCard: { marginHorizontal: 24, marginBottom: 20, padding: 16 },
     userContent: { flexDirection: "row", alignItems: "center" },
     userInfo: { marginLeft: 16, flex: 1 },
-    userName: { color: "#E5E7EB", fontWeight: "600" },
+    userName: { color: text.primary, fontWeight: "600" },
     statsRow: { flexDirection: "row", paddingHorizontal: 24, gap: 12, marginBottom: 20 },
-    statCard: { flex: 1, backgroundColor: "#1E293B" },
+    statCard: { flex: 1, padding: 12, borderWidth: 1 },
     statContent: { alignItems: "center", paddingVertical: 8 },
-    statValue: { color: "#E5E7EB", fontWeight: "bold" },
-    menuCard: { marginHorizontal: 24, marginBottom: 24, backgroundColor: "#1E293B" },
-    menuIcon: { marginLeft: 16, marginRight: 8 },
-    menuTitle: { color: "#E5E7EB" },
-    menuDesc: { color: "#9CA3AF" },
-    divider: { backgroundColor: "#334155" },
-    logoutButton: { marginHorizontal: 24, borderColor: "#EF4444", borderRadius: 12 },
-    version: { textAlign: "center", color: "#9CA3AF", marginTop: 24 },
+    statValue: { color: text.primary, fontWeight: "bold" },
+    menuCard: { marginHorizontal: 24, marginBottom: 24, padding: 0, overflow: "hidden" },
+    menuItem: { flexDirection: "row", alignItems: "center", padding: 16 },
+    menuIcon: { marginRight: 16 },
+    menuInfo: { flex: 1 },
+    menuTitle: { color: text.primary },
+    menuDesc: { color: text.secondary },
+    divider: { backgroundColor: pastel.beige },
+    version: { textAlign: "center", color: text.muted, marginTop: 24 },
 });

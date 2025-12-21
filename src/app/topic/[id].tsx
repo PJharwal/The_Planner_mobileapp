@@ -1,7 +1,7 @@
 // Topic Detail Screen - Shows Sub-Topics
 import { useEffect, useState, useCallback } from "react";
-import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, RefreshControl } from "react-native";
-import { Card, Text, Button, Portal, Modal, TextInput, ProgressBar, Chip, useTheme, IconButton, Snackbar } from "react-native-paper";
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, RefreshControl, TouchableOpacity } from "react-native";
+import { Text, Portal, Modal, TextInput, IconButton, Snackbar } from "react-native-paper";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
@@ -9,20 +9,24 @@ import { useAuthStore } from "../../store/authStore";
 import { SubTopic } from "../../types";
 import { addTopicToToday, addSubTopicToToday } from "../../utils/addToToday";
 
+// Design tokens
+import { pastel, background, text, spacing, borderRadius, shadows } from "../../constants/theme";
+// UI Components
+import { Card, Button, Chip, ProgressBar } from "../../components/ui";
+
 interface SubTopicWithCount extends SubTopic {
     taskCount: number;
     completedCount: number;
 }
 
 export default function TopicDetailScreen() {
-    const theme = useTheme();
     const router = useRouter();
     const { id } = useLocalSearchParams<{ id: string }>();
     const { user } = useAuthStore();
 
     const [topicName, setTopicName] = useState("");
     const [subjectName, setSubjectName] = useState("");
-    const [subjectColor, setSubjectColor] = useState("#38BDF8");
+    const [subjectColor, setSubjectColor] = useState(pastel.mint);
     const [subTopics, setSubTopics] = useState<SubTopicWithCount[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -50,16 +54,13 @@ export default function TopicDetailScreen() {
             if (topicData) {
                 setTopicName(topicData.name);
                 setSubjectName((topicData as any).subjects?.name || "");
-                setSubjectColor((topicData as any).subjects?.color || "#38BDF8");
+                setSubjectColor((topicData as any).subjects?.color || pastel.mint);
             }
 
             // Fetch sub-topics with task counts
             const { data: subTopicsData } = await supabase
                 .from("sub_topics")
-                .select(`
-                    *,
-                    tasks (id, is_completed)
-                `)
+                .select(`*, tasks (id, is_completed)`)
                 .eq("topic_id", id)
                 .order("order_index", { ascending: true });
 
@@ -67,11 +68,10 @@ export default function TopicDetailScreen() {
                 ...st,
                 taskCount: (st.tasks || []).length,
                 completedCount: (st.tasks || []).filter((t: any) => t.is_completed).length,
-                tasks: undefined, // Remove tasks array from the object
+                tasks: undefined,
             }));
 
             setSubTopics(subTopicsWithCounts);
-
         } catch (error) {
             console.error("Error fetching topic:", error);
         }
@@ -132,16 +132,23 @@ export default function TopicDetailScreen() {
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View style={styles.container}>
                 <Stack.Screen
                     options={{
                         title: topicName || "Topic",
-                        headerStyle: { backgroundColor: "#0A0F1A" },
-                        headerTintColor: "#E5E7EB",
+                        headerStyle: { backgroundColor: background.primary },
+                        headerTintColor: text.primary,
+                        headerShadowVisible: false,
                         headerLeft: () => (
                             <IconButton
-                                icon={() => <Ionicons name="arrow-back" size={24} color="#E5E7EB" />}
+                                icon={() => <Ionicons name="arrow-back" size={24} color={text.primary} />}
                                 onPress={() => router.back()}
+                            />
+                        ),
+                        headerRight: () => (
+                            <IconButton
+                                icon={() => <Ionicons name="home-outline" size={22} color={text.secondary} />}
+                                onPress={() => router.replace("/(tabs)")}
                             />
                         ),
                     }}
@@ -149,63 +156,51 @@ export default function TopicDetailScreen() {
 
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
                 >
                     {/* Header Card */}
-                    <Card style={[styles.headerCard, { borderLeftColor: subjectColor, borderLeftWidth: 4 }]} mode="outlined">
-                        <Card.Content>
-                            <Text variant="bodySmall" style={styles.breadcrumb}>
-                                {subjectName}
-                            </Text>
-                            <Text variant="headlineSmall" style={styles.title}>
-                                {topicName}
-                            </Text>
-                            <View style={styles.progressRow}>
-                                <View style={styles.progressInfo}>
-                                    <Chip compact style={styles.statChip} textStyle={styles.statChipText}>
-                                        {completedTasks}/{totalTasks} tasks
-                                    </Chip>
-                                    <Chip compact style={styles.statChip} textStyle={styles.statChipText}>
-                                        {subTopics.length} sub-topics
-                                    </Chip>
-                                </View>
+                    <Card style={[styles.headerCard, { borderLeftColor: subjectColor, borderLeftWidth: 4 }]}>
+                        <View style={styles.headerContent}>
+                            <Text variant="bodySmall" style={styles.breadcrumb}>{subjectName}</Text>
+                            <Text variant="headlineSmall" style={styles.title}>{topicName}</Text>
+                            <View style={styles.progressInfo}>
+                                <Chip variant="default" size="sm">{completedTasks}/{totalTasks} tasks</Chip>
+                                <Chip variant="default" size="sm">{subTopics.length} sub-topics</Chip>
                             </View>
                             <ProgressBar progress={progress} color={subjectColor} style={styles.progressBar} />
                             {pendingTasks > 0 && (
-                                <Button
-                                    mode="contained"
-                                    compact
-                                    onPress={handleAddAllToToday}
-                                    icon={() => <Ionicons name="add-circle" size={16} color="#FFF" />}
-                                    style={styles.addAllButton}
-                                >
-                                    Add all to Today ({pendingTasks})
+                                <Button variant="primary" onPress={handleAddAllToToday} size="sm" style={styles.addAllButton}>
+                                    {`Add all to Today (${pendingTasks})`}
                                 </Button>
                             )}
-                        </Card.Content>
+                        </View>
                     </Card>
 
                     {/* Sub-Topics Section */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
                             <Text variant="titleMedium" style={styles.sectionTitle}>Sub-Topics</Text>
-                            <IconButton
-                                icon={() => <Ionicons name="add" size={20} color="#38BDF8" />}
-                                onPress={() => setModalVisible(true)}
-                            />
+                            <Button variant="ghost" size="sm" onPress={() => setModalVisible(true)}>
+                                Add
+                            </Button>
                         </View>
 
                         {subTopics.length === 0 ? (
                             <Card style={styles.emptyCard}>
-                                <Card.Content style={styles.emptyContent}>
-                                    <Ionicons name="git-branch-outline" size={40} color="#9CA3AF" />
+                                <View style={styles.emptyContent}>
+                                    <View style={styles.emptyIconContainer}>
+                                        <Ionicons name="git-branch-outline" size={32} color={text.muted} />
+                                    </View>
                                     <Text variant="bodyMedium" style={styles.emptyText}>
-                                        No sub-topics yet.{"\n"}Add your first sub-topic!
+                                        No sub-topics yet
                                     </Text>
-                                    <Button mode="contained" onPress={() => setModalVisible(true)} style={{ marginTop: 16 }}>
+                                    <Text variant="bodySmall" style={styles.emptyHint}>
+                                        Break down your topic into smaller parts
+                                    </Text>
+                                    <Button variant="primary" onPress={() => setModalVisible(true)} style={styles.emptyButton}>
                                         Add Sub-Topic
                                     </Button>
-                                </Card.Content>
+                                </View>
                             </Card>
                         ) : (
                             subTopics.map(st => {
@@ -213,38 +208,36 @@ export default function TopicDetailScreen() {
                                 const stPending = st.taskCount - st.completedCount;
 
                                 return (
-                                    <Card
+                                    <TouchableOpacity
                                         key={st.id}
-                                        style={styles.subTopicCard}
-                                        mode="outlined"
                                         onPress={() => (router as any).push(`/subtopic/${st.id}`)}
+                                        activeOpacity={0.7}
                                     >
-                                        <Card.Content>
-                                            <View style={styles.subTopicHeader}>
-                                                <View style={styles.subTopicInfo}>
-                                                    <Text variant="titleMedium" style={styles.subTopicName}>
-                                                        {st.name}
-                                                    </Text>
-                                                    <Text variant="bodySmall" style={styles.subTopicStats}>
-                                                        {st.completedCount}/{st.taskCount} tasks completed
-                                                    </Text>
+                                        <Card style={styles.subTopicCard}>
+                                            <View style={styles.subTopicContent}>
+                                                <View style={styles.subTopicHeader}>
+                                                    <View style={styles.subTopicInfo}>
+                                                        <Text variant="titleMedium" style={styles.subTopicName}>{st.name}</Text>
+                                                        <Text variant="bodySmall" style={styles.subTopicStats}>
+                                                            {st.completedCount}/{st.taskCount} tasks completed
+                                                        </Text>
+                                                    </View>
+                                                    <View style={styles.subTopicActions}>
+                                                        {stPending > 0 && (
+                                                            <TouchableOpacity
+                                                                onPress={() => handleAddSubTopicToToday(st.id)}
+                                                                style={styles.addButton}
+                                                            >
+                                                                <Ionicons name="add-circle-outline" size={22} color={pastel.mint} />
+                                                            </TouchableOpacity>
+                                                        )}
+                                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                                                    </View>
                                                 </View>
-                                                <View style={styles.subTopicActions}>
-                                                    {stPending > 0 && (
-                                                        <IconButton
-                                                            icon={() => <Ionicons name="add-circle-outline" size={22} color="#38BDF8" />}
-                                                            onPress={(e) => {
-                                                                e.stopPropagation();
-                                                                handleAddSubTopicToToday(st.id);
-                                                            }}
-                                                        />
-                                                    )}
-                                                    <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                                                </View>
+                                                <ProgressBar progress={stProgress} color={subjectColor} style={styles.subTopicProgress} />
                                             </View>
-                                            <ProgressBar progress={stProgress} color={subjectColor} style={styles.subTopicProgress} />
-                                        </Card.Content>
-                                    </Card>
+                                        </Card>
+                                    </TouchableOpacity>
                                 );
                             })
                         )}
@@ -262,12 +255,15 @@ export default function TopicDetailScreen() {
                             mode="outlined"
                             style={styles.modalInput}
                             placeholder="e.g., Quadratic Equations"
+                            outlineColor={pastel.beige}
+                            activeOutlineColor={pastel.mint}
+                            textColor={text.primary}
                         />
                         <View style={styles.modalButtons}>
-                            <Button mode="outlined" onPress={() => setModalVisible(false)} textColor="#9CA3AF">
+                            <Button variant="ghost" onPress={() => setModalVisible(false)}>
                                 Cancel
                             </Button>
-                            <Button mode="contained" onPress={handleCreateSubTopic} loading={isCreating} disabled={isCreating || !newSubTopicName.trim()}>
+                            <Button variant="primary" onPress={handleCreateSubTopic} loading={isCreating}>
                                 Add
                             </Button>
                         </View>
@@ -288,33 +284,42 @@ export default function TopicDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: { flex: 1, backgroundColor: background.primary },
     scrollContent: { paddingBottom: 100 },
-    headerCard: { margin: 16, backgroundColor: "#1E293B" },
-    breadcrumb: { color: "#9CA3AF", marginBottom: 4 },
-    title: { color: "#E5E7EB", fontWeight: "bold" },
-    progressRow: { marginTop: 12 },
-    progressInfo: { flexDirection: "row", gap: 8, marginBottom: 8 },
-    statChip: { backgroundColor: "#334155" },
-    statChipText: { color: "#9CA3AF", fontSize: 12 },
+    // Header
+    headerCard: { marginHorizontal: spacing.md, marginTop: spacing.md, borderRadius: borderRadius.lg },
+    headerContent: { padding: spacing.md },
+    breadcrumb: { color: text.secondary, marginBottom: 4 },
+    title: { color: text.primary, fontWeight: "600" },
+    progressInfo: { flexDirection: "row", gap: spacing.xs, marginTop: spacing.sm, marginBottom: spacing.sm },
     progressBar: { height: 6, borderRadius: 3 },
-    addAllButton: { marginTop: 12, borderRadius: 8 },
-    section: { paddingHorizontal: 16 },
-    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-    sectionTitle: { color: "#E5E7EB", fontWeight: "600" },
-    emptyCard: { backgroundColor: "#1E293B" },
-    emptyContent: { alignItems: "center", paddingVertical: 32 },
-    emptyText: { color: "#9CA3AF", marginTop: 12, textAlign: "center" },
-    subTopicCard: { marginBottom: 12, backgroundColor: "#1E293B" },
+    addAllButton: { marginTop: spacing.sm },
+    // Section
+    section: { paddingHorizontal: spacing.md, marginTop: spacing.lg },
+    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
+    sectionTitle: { color: text.primary, fontWeight: "600" },
+    // Empty State
+    emptyCard: {},
+    emptyContent: { alignItems: "center", paddingVertical: spacing.xl },
+    emptyIconContainer: { width: 64, height: 64, borderRadius: 32, backgroundColor: `${pastel.beige}50`, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+    emptyText: { color: text.primary, fontWeight: "500" },
+    emptyHint: { color: text.muted, marginTop: 4 },
+    emptyButton: { marginTop: spacing.md },
+    // Sub-Topic Cards
+    subTopicCard: { marginBottom: spacing.sm },
+    subTopicContent: { padding: spacing.md },
     subTopicHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     subTopicInfo: { flex: 1 },
-    subTopicName: { color: "#E5E7EB" },
-    subTopicStats: { color: "#9CA3AF", marginTop: 4 },
+    subTopicName: { color: text.primary },
+    subTopicStats: { color: text.secondary, marginTop: 4 },
     subTopicActions: { flexDirection: "row", alignItems: "center" },
-    subTopicProgress: { height: 4, borderRadius: 2, marginTop: 12 },
-    modal: { backgroundColor: "#1E293B", margin: 20, padding: 24, borderRadius: 16 },
-    modalTitle: { color: "#E5E7EB", fontWeight: "bold", marginBottom: 16 },
-    modalInput: { marginBottom: 16, backgroundColor: "#0F172A" },
-    modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
-    snackbar: { backgroundColor: "#1E293B" },
+    addButton: { padding: spacing.xs, marginRight: spacing.xs },
+    subTopicProgress: { height: 4, borderRadius: 2, marginTop: spacing.sm },
+    // Modal
+    modal: { backgroundColor: background.card, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, ...shadows.elevated },
+    modalTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
+    modalInput: { marginBottom: spacing.md, backgroundColor: background.primary },
+    modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.sm },
+    // Snackbar
+    snackbar: { backgroundColor: pastel.slate },
 });

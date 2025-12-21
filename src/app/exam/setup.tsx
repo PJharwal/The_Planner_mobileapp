@@ -1,11 +1,24 @@
 import { useState, useEffect } from "react";
-import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from "react-native";
-import { Card, Text, Button, TextInput, useTheme, List, TouchableRipple, IconButton } from "react-native-paper";
+import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
+import { Text, IconButton, Portal, Modal, TextInput } from "react-native-paper";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { format, differenceInSeconds } from "date-fns";
 import { useExamStore } from "../../store/examStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
+
+// Design tokens
+import { pastel, background, text, spacing, borderRadius, shadows, focus } from "../../constants/theme";
+// UI Components
+import { Card, Button } from "../../components/ui";
+
+// Exam mode uses slightly darker, more serious pastels
+const exam = {
+    background: '#E8EEEE',
+    card: '#F0F4F4',
+    accent: '#C9DDDC',
+    ring: '#B8CECE',
+};
 
 function CountdownTimer({ targetDate }: { targetDate: string }) {
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -56,11 +69,10 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
 }
 
 export default function ExamSetupScreen() {
-    const theme = useTheme();
     const router = useRouter();
     const { activeExam, exams, createExam, fetchActiveExam, fetchExams, updateExam } = useExamStore();
     const [examName, setExamName] = useState("");
-    const [examDate, setExamDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)); // Default: 7 days from now
+    const [examDate, setExamDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
 
@@ -102,14 +114,15 @@ export default function ExamSetupScreen() {
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View style={styles.container}>
                 <Stack.Screen
                     options={{
                         title: "Exam Mode",
-                        headerStyle: { backgroundColor: "#0F172A" },
-                        headerTintColor: "#E5E7EB",
+                        headerStyle: { backgroundColor: exam.background },
+                        headerTintColor: text.primary,
+                        headerShadowVisible: false,
                         headerLeft: () => (
-                            <IconButton icon={() => <Ionicons name="arrow-back" size={24} color="#E5E7EB" />} onPress={() => router.back()} />
+                            <IconButton icon={() => <Ionicons name="arrow-back" size={24} color={text.primary} />} onPress={() => router.back()} />
                         ),
                     }}
                 />
@@ -120,7 +133,7 @@ export default function ExamSetupScreen() {
                             {/* Active Exam View */}
                             <View style={styles.activeHeader}>
                                 <View style={styles.examBadge}>
-                                    <Ionicons name="timer" size={16} color="#38BDF8" />
+                                    <Ionicons name="timer" size={16} color={text.primary} />
                                     <Text style={styles.examBadgeText}>EXAM MODE ACTIVE</Text>
                                 </View>
                                 <Text variant="headlineSmall" style={styles.examName}>{activeExam.name}</Text>
@@ -131,36 +144,21 @@ export default function ExamSetupScreen() {
 
                             <CountdownTimer targetDate={activeExam.exam_date} />
 
-                            <Card style={styles.focusCard} mode="outlined">
-                                <Card.Content style={styles.focusContent}>
-                                    <Ionicons name="flash" size={24} color="#38BDF8" />
+                            <Card style={styles.focusCard}>
+                                <View style={styles.focusContent}>
+                                    <View style={styles.focusIconContainer}>
+                                        <Ionicons name="flash" size={24} color={text.primary} />
+                                    </View>
                                     <View style={styles.focusText}>
-                                        <Text variant="titleMedium" style={{ color: "#E5E7EB" }}>Focus Mode</Text>
-                                        <Text variant="bodySmall" style={{ color: "#9CA3AF" }}>
+                                        <Text variant="titleMedium" style={{ color: text.primary }}>Focus Mode</Text>
+                                        <Text variant="bodySmall" style={{ color: text.secondary }}>
                                             Stay focused! Complete your tasks daily.
                                         </Text>
                                     </View>
-                                </Card.Content>
+                                </View>
                             </Card>
 
-                            <Card style={styles.menuCard} mode="outlined">
-                                <List.Item
-                                    title="Focus Tasks"
-                                    description="View exam prep tasks"
-                                    left={() => <Ionicons name="list-outline" size={24} color="#38BDF8" style={{ marginLeft: 16 }} />}
-                                    right={() => <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />}
-                                    titleStyle={{ color: "#E5E7EB" }}
-                                    descriptionStyle={{ color: "#9CA3AF" }}
-                                />
-                            </Card>
-
-                            <Button
-                                mode="outlined"
-                                onPress={handleEndExam}
-                                textColor="#EF4444"
-                                style={styles.endButton}
-                                icon={() => <Ionicons name="stop-circle-outline" size={20} color="#EF4444" />}
-                            >
+                            <Button variant="danger" onPress={handleEndExam} fullWidth>
                                 End Exam Mode
                             </Button>
                         </>
@@ -169,7 +167,7 @@ export default function ExamSetupScreen() {
                             {/* Setup View */}
                             <View style={styles.setupHeader}>
                                 <View style={styles.setupIconContainer}>
-                                    <Ionicons name="timer-outline" size={48} color="#38BDF8" />
+                                    <Ionicons name="timer-outline" size={48} color={text.primary} />
                                 </View>
                                 <Text variant="headlineMedium" style={styles.setupTitle}>Set Up Exam Mode</Text>
                                 <Text variant="bodyMedium" style={styles.setupSubtitle}>
@@ -184,18 +182,23 @@ export default function ExamSetupScreen() {
                                 mode="outlined"
                                 style={styles.input}
                                 placeholder="e.g. Final Math Exam"
+                                outlineColor={pastel.beige}
+                                activeOutlineColor={exam.accent}
+                                textColor={text.primary}
                             />
 
-                            <TouchableRipple onPress={() => setShowDatePicker(true)}>
+                            <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
                                 <TextInput
                                     label="Exam Date"
                                     value={format(examDate, "MMMM d, yyyy")}
                                     mode="outlined"
                                     editable={false}
                                     style={styles.input}
-                                    right={<TextInput.Icon icon={() => <Ionicons name="calendar-outline" size={20} color="#9CA3AF" />} />}
+                                    outlineColor={pastel.beige}
+                                    textColor={text.primary}
+                                    right={<TextInput.Icon icon={() => <Ionicons name="calendar-outline" size={20} color={text.secondary} />} />}
                                 />
-                            </TouchableRipple>
+                            </TouchableOpacity>
 
                             {showDatePicker && (
                                 <DateTimePicker
@@ -210,30 +213,24 @@ export default function ExamSetupScreen() {
                                 />
                             )}
 
-                            <Button
-                                mode="contained"
-                                onPress={handleCreateExam}
-                                loading={isCreating}
-                                disabled={isCreating}
-                                style={styles.button}
-                                contentStyle={styles.buttonContent}
-                                icon={() => <Ionicons name="rocket-outline" size={20} color="#FFF" />}
-                            >
+                            <Button variant="primary" onPress={handleCreateExam} loading={isCreating} fullWidth>
                                 Start Exam Mode
                             </Button>
 
                             {exams.length > 0 && (
                                 <View style={styles.pastSection}>
                                     <Text variant="titleMedium" style={styles.pastTitle}>Past Exams</Text>
-                                    {exams.slice(0, 3).map((exam) => (
-                                        <Card key={exam.id} style={styles.pastCard} mode="outlined">
-                                            <Card.Content style={styles.pastContent}>
-                                                <Ionicons name="school-outline" size={20} color="#9CA3AF" />
-                                                <View style={styles.pastInfo}>
-                                                    <Text variant="bodyLarge" style={{ color: "#E5E7EB" }}>{exam.name}</Text>
-                                                    <Text variant="bodySmall" style={{ color: "#9CA3AF" }}>{exam.exam_date}</Text>
+                                    {exams.slice(0, 3).map((examItem) => (
+                                        <Card key={examItem.id} style={styles.pastCard}>
+                                            <View style={styles.pastContent}>
+                                                <View style={styles.pastIcon}>
+                                                    <Ionicons name="school-outline" size={20} color={text.secondary} />
                                                 </View>
-                                            </Card.Content>
+                                                <View style={styles.pastInfo}>
+                                                    <Text variant="bodyLarge" style={{ color: text.primary }}>{examItem.name}</Text>
+                                                    <Text variant="bodySmall" style={{ color: text.secondary }}>{examItem.exam_date}</Text>
+                                                </View>
+                                            </View>
                                         </Card>
                                     ))}
                                 </View>
@@ -247,42 +244,56 @@ export default function ExamSetupScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    scrollContent: { paddingBottom: 100, paddingHorizontal: 24 },
+    container: { flex: 1, backgroundColor: exam.background },
+    scrollContent: { paddingBottom: 100, paddingHorizontal: spacing.lg },
     // Active Exam Styles
-    activeHeader: { alignItems: "center", paddingTop: 32, paddingBottom: 16 },
-    examBadge: { flexDirection: "row", alignItems: "center", backgroundColor: "#38BDF820", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginBottom: 16 },
-    examBadgeText: { color: "#38BDF8", fontSize: 12, fontWeight: "600", marginLeft: 6 },
-    examName: { color: "#E5E7EB", fontWeight: "bold", textAlign: "center" },
-    examDate: { color: "#9CA3AF", marginTop: 4 },
+    activeHeader: { alignItems: "center", paddingTop: spacing.xl, paddingBottom: spacing.md },
+    examBadge: { flexDirection: "row", alignItems: "center", backgroundColor: `${exam.accent}50`, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: borderRadius.pill, marginBottom: spacing.md },
+    examBadgeText: { color: text.primary, fontSize: 12, fontWeight: "600", marginLeft: 6 },
+    examName: { color: text.primary, fontWeight: "600", textAlign: "center" },
+    examDate: { color: text.secondary, marginTop: 4 },
     // Timer Styles
-    timerContainer: { alignItems: "center", marginVertical: 24 },
-    timerRing: { width: 160, height: 160, borderRadius: 80, borderWidth: 4, borderColor: "#38BDF8", alignItems: "center", justifyContent: "center", marginBottom: 24 },
-    timerDays: { fontSize: 48, fontWeight: "bold", color: "#E5E7EB" },
-    timerLabel: { fontSize: 16, color: "#9CA3AF" },
+    timerContainer: { alignItems: "center", marginVertical: spacing.lg },
+    timerRing: {
+        width: 160,
+        height: 160,
+        borderRadius: 80,
+        borderWidth: 4,
+        borderColor: exam.ring,
+        alignItems: "center",
+        justifyContent: "center",
+        marginBottom: spacing.lg,
+        backgroundColor: exam.card,
+        // Shadow
+        shadowColor: '#5D6B6B',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+    timerDays: { fontSize: 48, fontWeight: "600", color: text.primary },
+    timerLabel: { fontSize: 16, color: text.secondary },
     timerDetails: { flexDirection: "row", alignItems: "center" },
     timerUnit: { alignItems: "center", minWidth: 50 },
-    timerValue: { fontSize: 28, fontWeight: "bold", color: "#E5E7EB", fontVariant: ["tabular-nums"] },
-    timerSeconds: { color: "#EF4444" },
-    timerUnitLabel: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
-    timerSeparator: { fontSize: 28, fontWeight: "bold", color: "#64748B", marginHorizontal: 4 },
+    timerValue: { fontSize: 28, fontWeight: "600", color: text.primary, fontVariant: ["tabular-nums"] },
+    timerSeconds: { color: pastel.peach },
+    timerUnitLabel: { fontSize: 12, color: text.secondary, marginTop: 2 },
+    timerSeparator: { fontSize: 28, fontWeight: "600", color: text.muted, marginHorizontal: 4 },
     // Cards
-    focusCard: { marginBottom: 16, backgroundColor: "#1E293B", borderColor: "#38BDF840" },
-    focusContent: { flexDirection: "row", alignItems: "center" },
-    focusText: { marginLeft: 16, flex: 1 },
-    menuCard: { marginBottom: 24, backgroundColor: "#1E293B" },
-    endButton: { borderColor: "#EF4444", borderRadius: 12 },
+    focusCard: { marginBottom: spacing.md },
+    focusContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    focusIconContainer: { width: 44, height: 44, borderRadius: 22, backgroundColor: `${exam.accent}40`, alignItems: "center", justifyContent: "center" },
+    focusText: { marginLeft: spacing.md, flex: 1 },
     // Setup Styles
-    setupHeader: { alignItems: "center", paddingTop: 32, paddingBottom: 32 },
-    setupIconContainer: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#38BDF820", alignItems: "center", justifyContent: "center", marginBottom: 16 },
-    setupTitle: { color: "#E5E7EB", fontWeight: "bold", marginBottom: 8 },
-    setupSubtitle: { color: "#9CA3AF", textAlign: "center" },
-    input: { marginBottom: 16, backgroundColor: "#1E293B" },
-    button: { marginTop: 8, borderRadius: 12 },
-    buttonContent: { paddingVertical: 8 },
-    pastSection: { marginTop: 40 },
-    pastTitle: { color: "#E5E7EB", fontWeight: "600", marginBottom: 16 },
-    pastCard: { marginBottom: 12, backgroundColor: "#1E293B" },
-    pastContent: { flexDirection: "row", alignItems: "center" },
-    pastInfo: { marginLeft: 12, flex: 1 },
+    setupHeader: { alignItems: "center", paddingTop: spacing.xl, paddingBottom: spacing.xl },
+    setupIconContainer: { width: 80, height: 80, borderRadius: 40, backgroundColor: `${exam.accent}40`, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+    setupTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.xs },
+    setupSubtitle: { color: text.secondary, textAlign: "center" },
+    input: { marginBottom: spacing.md, backgroundColor: exam.card },
+    pastSection: { marginTop: spacing.xl },
+    pastTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
+    pastCard: { marginBottom: spacing.sm },
+    pastContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    pastIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: `${exam.accent}30`, alignItems: "center", justifyContent: "center" },
+    pastInfo: { marginLeft: spacing.sm, flex: 1 },
 });

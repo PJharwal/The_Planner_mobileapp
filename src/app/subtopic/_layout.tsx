@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import { background, text } from "../../constants/theme";
 
-export default function TopicLayout() {
+export default function SubtopicLayout() {
     return (
         <Stack
             screenOptions={{

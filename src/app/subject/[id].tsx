@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from "react-native";
-import { Card, Text, Button, Portal, Modal, TextInput, useTheme, TouchableRipple, IconButton } from "react-native-paper";
+import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
+import { Text, Portal, Modal, TextInput, IconButton } from "react-native-paper";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSubjectStore } from "../../store/subjectStore";
-import { Topic } from "../../types";
+
+// Design tokens
+import { pastel, background, text, spacing, borderRadius, shadows } from "../../constants/theme";
+// UI Components
+import { Card, Button } from "../../components/ui";
 
 export default function SubjectDetailScreen() {
-    const theme = useTheme();
     const { id } = useLocalSearchParams<{ id: string }>();
     const router = useRouter();
-    const { currentSubject, fetchSubjectWithTopics, createTopic, deleteTopic } = useSubjectStore();
+    const { currentSubject, fetchSubjectWithTopics, createTopic } = useSubjectStore();
     const [modalVisible, setModalVisible] = useState(false);
     const [newTopicName, setNewTopicName] = useState("");
     const [isCreating, setIsCreating] = useState(false);
@@ -34,26 +37,38 @@ export default function SubjectDetailScreen() {
 
     if (!currentSubject) {
         return (
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-                <Text style={styles.loading}>Loading...</Text>
+            <View style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <Text style={styles.loading}>Loading...</Text>
+                </View>
             </View>
         );
     }
 
+    // Get soft pastel variant of subject color
+    const subjectColor = currentSubject.color || pastel.mint;
+
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View style={styles.container}>
                 <Stack.Screen
                     options={{
                         title: currentSubject.name,
-                        headerStyle: { backgroundColor: "#0F172A" },
-                        headerTintColor: "#E5E7EB",
+                        headerStyle: { backgroundColor: background.primary },
+                        headerTintColor: text.primary,
+                        headerShadowVisible: false,
                         headerBackVisible: false,
                         headerLeft: () => (
                             <IconButton
-                                icon={() => <Ionicons name="arrow-back" size={24} color="#E5E7EB" />}
+                                icon={() => <Ionicons name="arrow-back" size={24} color={text.primary} />}
                                 onPress={() => router.back()}
                                 style={{ marginLeft: -4 }}
+                            />
+                        ),
+                        headerRight: () => (
+                            <IconButton
+                                icon={() => <Ionicons name="home-outline" size={22} color={text.secondary} />}
+                                onPress={() => router.replace("/(tabs)")}
                             />
                         ),
                     }}
@@ -61,58 +76,65 @@ export default function SubjectDetailScreen() {
 
                 <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                     {/* Subject Header */}
-                    <View style={styles.subjectHeader}>
-                        <View style={[styles.iconContainer, { backgroundColor: currentSubject.color + "20" }]}>
-                            <Text style={styles.subjectIcon}>{currentSubject.icon}</Text>
+                    <Card style={styles.headerCard}>
+                        <View style={styles.subjectHeader}>
+                            <View style={[styles.iconContainer, { backgroundColor: `${subjectColor}30` }]}>
+                                <Text style={styles.subjectIcon}>{currentSubject.icon || "📚"}</Text>
+                            </View>
+                            <View style={styles.headerInfo}>
+                                <Text variant="headlineSmall" style={styles.subjectName}>{currentSubject.name}</Text>
+                                <Text variant="bodyMedium" style={styles.topicCount}>
+                                    {currentSubject.topics?.length || 0} topics
+                                </Text>
+                            </View>
                         </View>
-                        <View style={styles.headerInfo}>
-                            <Text variant="headlineSmall" style={styles.subjectName}>{currentSubject.name}</Text>
-                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-                                {currentSubject.topics?.length || 0} topics
-                            </Text>
-                        </View>
-                    </View>
+                    </Card>
 
                     {/* Topics Section */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
-                            <Text variant="titleMedium" style={{ color: "#E5E7EB" }}>Topics</Text>
-                            <Button mode="contained" compact onPress={() => setModalVisible(true)}>
-                                <Ionicons name="add" size={16} color="#FFF" /> Add
+                            <Text variant="titleMedium" style={styles.sectionTitle}>Topics</Text>
+                            <Button variant="primary" size="sm" onPress={() => setModalVisible(true)}>
+                                Add Topic
                             </Button>
                         </View>
 
                         {currentSubject.topics?.length === 0 ? (
                             <Card style={styles.emptyCard}>
-                                <Card.Content style={styles.emptyContent}>
-                                    <Ionicons name="book-outline" size={40} color="#9CA3AF" />
-                                    <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", marginTop: 12 }}>
-                                        No topics yet.{"\n"}Add your first topic.
+                                <View style={styles.emptyContent}>
+                                    <View style={styles.emptyIconContainer}>
+                                        <Ionicons name="book-outline" size={32} color={text.muted} />
+                                    </View>
+                                    <Text variant="bodyMedium" style={styles.emptyText}>
+                                        No topics yet
                                     </Text>
-                                </Card.Content>
+                                    <Text variant="bodySmall" style={styles.emptyHint}>
+                                        Add your first topic to get started
+                                    </Text>
+                                </View>
                             </Card>
                         ) : (
                             currentSubject.topics?.map((topic, index) => (
-                                <TouchableRipple key={topic.id} onPress={() => router.push(`/topic/${topic.id}`)}>
-                                    <Card style={styles.topicCard} mode="outlined">
-                                        <Card.Content style={styles.topicContent}>
-                                            <View style={[styles.topicNumber, { backgroundColor: currentSubject.color + "20" }]}>
-                                                <Text style={[styles.topicNumberText, { color: currentSubject.color }]}>{index + 1}</Text>
+                                <TouchableOpacity key={topic.id} onPress={() => router.push(`/topic/${topic.id}`)} activeOpacity={0.7}>
+                                    <Card style={styles.topicCard}>
+                                        <View style={styles.topicContent}>
+                                            <View style={[styles.topicNumber, { backgroundColor: `${subjectColor}25` }]}>
+                                                <Text style={[styles.topicNumberText, { color: subjectColor }]}>{index + 1}</Text>
                                             </View>
                                             <View style={styles.topicInfo}>
-                                                <Text variant="bodyLarge" style={{ color: "#E5E7EB" }}>{topic.name}</Text>
-                                                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Tap to view tasks</Text>
+                                                <Text variant="bodyLarge" style={styles.topicName}>{topic.name}</Text>
+                                                <Text variant="bodySmall" style={styles.topicHint}>Tap to view tasks</Text>
                                             </View>
-                                            <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-                                        </Card.Content>
+                                            <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                                        </View>
                                     </Card>
-                                </TouchableRipple>
+                                </TouchableOpacity>
                             ))
                         )}
                     </View>
                 </ScrollView>
 
-                {/* Modal */}
+                {/* Add Topic Modal */}
                 <Portal>
                     <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modal}>
                         <Text variant="titleLarge" style={styles.modalTitle}>Add Topic</Text>
@@ -122,14 +144,11 @@ export default function SubjectDetailScreen() {
                             onChangeText={setNewTopicName}
                             mode="outlined"
                             style={styles.modalInput}
+                            outlineColor={pastel.beige}
+                            activeOutlineColor={pastel.mint}
+                            textColor={text.primary}
                         />
-                        <Button
-                            mode="contained"
-                            onPress={handleCreateTopic}
-                            style={styles.createButton}
-                            loading={isCreating}
-                            disabled={isCreating}
-                        >
+                        <Button variant="primary" onPress={handleCreateTopic} loading={isCreating} fullWidth>
                             Add Topic
                         </Button>
                     </Modal>
@@ -140,25 +159,38 @@ export default function SubjectDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    loading: { color: "#9CA3AF", textAlign: "center", marginTop: 100 },
+    container: { flex: 1, backgroundColor: background.primary },
+    loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+    loading: { color: text.muted },
     scrollContent: { paddingBottom: 100 },
-    subjectHeader: { flexDirection: "row", alignItems: "center", paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 },
-    iconContainer: { width: 56, height: 56, borderRadius: 16, alignItems: "center", justifyContent: "center", marginRight: 16 },
+    // Header Card
+    headerCard: { marginHorizontal: spacing.lg, marginTop: spacing.md },
+    subjectHeader: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    iconContainer: { width: 56, height: 56, borderRadius: borderRadius.md, alignItems: "center", justifyContent: "center", marginRight: spacing.md },
     subjectIcon: { fontSize: 28 },
     headerInfo: { flex: 1 },
-    subjectName: { color: "#E5E7EB", fontWeight: "bold" },
-    section: { paddingHorizontal: 24 },
-    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-    emptyCard: { backgroundColor: "#1E293B" },
-    emptyContent: { alignItems: "center", paddingVertical: 40 },
-    topicCard: { marginBottom: 12, backgroundColor: "#1E293B" },
-    topicContent: { flexDirection: "row", alignItems: "center" },
-    topicNumber: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", marginRight: 16 },
-    topicNumberText: { fontWeight: "bold" },
+    subjectName: { color: text.primary, fontWeight: "600" },
+    topicCount: { color: text.secondary, marginTop: 2 },
+    // Section
+    section: { paddingHorizontal: spacing.lg, marginTop: spacing.lg },
+    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md },
+    sectionTitle: { color: text.primary, fontWeight: "600" },
+    // Empty State
+    emptyCard: { marginTop: spacing.xs },
+    emptyContent: { alignItems: "center", paddingVertical: spacing.xl },
+    emptyIconContainer: { width: 64, height: 64, borderRadius: 32, backgroundColor: `${pastel.beige}50`, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+    emptyText: { color: text.primary, fontWeight: "500" },
+    emptyHint: { color: text.muted, marginTop: 4 },
+    // Topic Cards
+    topicCard: { marginBottom: spacing.sm },
+    topicContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    topicNumber: { width: 40, height: 40, borderRadius: borderRadius.sm, alignItems: "center", justifyContent: "center", marginRight: spacing.md },
+    topicNumberText: { fontWeight: "600", fontSize: 16 },
     topicInfo: { flex: 1 },
-    modal: { backgroundColor: "#1E293B", margin: 20, padding: 24, borderRadius: 16 },
-    modalTitle: { color: "#E5E7EB", fontWeight: "bold", marginBottom: 20 },
-    modalInput: { marginBottom: 24, backgroundColor: "#0F172A" },
-    createButton: { borderRadius: 12 },
+    topicName: { color: text.primary },
+    topicHint: { color: text.muted },
+    // Modal
+    modal: { backgroundColor: background.card, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, ...shadows.elevated },
+    modalTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
+    modalInput: { marginBottom: spacing.md, backgroundColor: background.primary },
 });

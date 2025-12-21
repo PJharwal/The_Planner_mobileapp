@@ -93,12 +93,24 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
 
+        // Validate required fields
+        if (!input.sub_topic_id) {
+            throw new Error('Sub-topic ID is required. Please create a subject and topic first.');
+        }
+        if (!input.title?.trim()) {
+            throw new Error('Task title is required.');
+        }
+
+        // Default due_date to today if not provided
+        const due_date = input.due_date || format(new Date(), 'yyyy-MM-dd');
+
         const { data, error } = await supabase
             .from('tasks')
             .insert({
                 ...input,
                 user_id: user.id,
                 priority: input.priority || 'medium',
+                due_date: due_date,
             })
             .select()
             .single();

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, ScrollView, RefreshControl, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, TouchableOpacity, LayoutAnimation, UIManager } from "react-native";
-import { Card, Text, Checkbox, Chip, ProgressBar, TextInput, IconButton, useTheme, Button, Portal, Modal, Searchbar, Snackbar } from "react-native-paper";
+import { Text, TextInput, IconButton, Portal, Modal, Snackbar } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useTaskStore } from "../../store/taskStore";
@@ -15,106 +15,57 @@ import { getMissedTasks, MissedTask, rescheduleToToday, skipTask, SkipReason } f
 import { globalSearch, SearchResult, getSearchIcon, getSearchTypeLabel } from "../../utils/globalSearch";
 import { addSubjectToToday, addTopicToToday, addSubTopicToToday, addTaskToToday } from "../../utils/addToToday";
 
+// Design tokens
+import { pastel, background, text, semantic, priority, spacing, borderRadius, shadows, paperTheme } from "../../constants/theme";
+// UI Components
+import { Card, Checkbox, Chip, Button, SearchBar, ProgressBar, TaskRow } from "../../components/ui";
+
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
 // Smart Today Task Card
 function SmartTaskCard({ suggestion, onToggle, onDismiss }: {
     suggestion: SuggestedTask;
     onToggle: (id: string) => void;
     onDismiss: (id: string) => void;
 }) {
-    const theme = useTheme();
     const reasonColors: Record<string, string> = {
-        exam_soon: "#EF4444",
-        missed_yesterday: "#F97316",
-        high_priority: "#A855F7",
-        due_soon: "#38BDF8",
-        balanced: "#22C55E",
+        exam_soon: semantic.error,
+        missed_yesterday: semantic.warning,
+        high_priority: pastel.peach,
+        due_soon: pastel.mint,
+        balanced: semantic.success,
     };
 
     return (
-        <Card style={[styles.smartCard, { borderLeftColor: suggestion.subjectColor || theme.colors.primary, borderLeftWidth: 4 }]} mode="outlined">
-            <Card.Content style={styles.smartContent}>
+        <Card style={[styles.smartCard, { borderLeftColor: suggestion.subjectColor || pastel.mint, borderLeftWidth: 4 }]}>
+            <View style={styles.smartContent}>
                 <Checkbox
-                    status={suggestion.task.is_completed ? "checked" : "unchecked"}
-                    onPress={() => onToggle(suggestion.task.id)}
-                    color="#22C55E"
+                    checked={suggestion.task.is_completed}
+                    onToggle={() => onToggle(suggestion.task.id)}
                 />
                 <View style={styles.smartInfo}>
                     <Text variant="bodyLarge" style={styles.smartTitle}>{suggestion.task.title}</Text>
                     <View style={styles.smartMeta}>
-                        <Chip
-                            compact
-                            style={{ backgroundColor: reasonColors[suggestion.reason] + "20", marginRight: 8 }}
-                            textStyle={{ color: reasonColors[suggestion.reason], fontSize: 10 }}
-                        >
+                        <Chip size="sm" style={{ backgroundColor: reasonColors[suggestion.reason] + "25" }}>
                             {suggestion.reasonText}
                         </Chip>
                         {suggestion.subjectName && (
-                            <Text variant="bodySmall" style={{ color: "#9CA3AF" }}>{suggestion.subjectName}</Text>
+                            <Text variant="bodySmall" style={{ color: text.secondary, marginLeft: 8 }}>{suggestion.subjectName}</Text>
                         )}
                     </View>
                 </View>
-                <IconButton
-                    icon={() => <Ionicons name="close" size={16} color="#9CA3AF" />}
-                    size={20}
-                    onPress={() => onDismiss(suggestion.task.id)}
-                />
-            </Card.Content>
-        </Card>
-    );
-}
-
-// Regular Task Card with Edit/Delete
-function TaskItem({ task, onToggle, onEdit, onDelete }: {
-    task: Task;
-    onToggle: (id: string) => void;
-    onEdit: (task: Task) => void;
-    onDelete: (id: string) => void;
-}) {
-    const priorityColors = { high: "#EF4444", medium: "#FACC15", low: "#22C55E" };
-
-    return (
-        <Card style={[styles.taskCard, task.is_completed && styles.taskCompleted]} mode="outlined">
-            <Card.Content style={styles.taskContent}>
-                <Checkbox
-                    status={task.is_completed ? "checked" : "unchecked"}
-                    onPress={() => onToggle(task.id)}
-                    color="#22C55E"
-                />
-                <View style={styles.taskInfo}>
-                    <Text variant="bodyLarge" style={[styles.taskTitle, task.is_completed && styles.taskTitleCompleted]}>
-                        {task.title}
-                    </Text>
-                </View>
-                <View style={styles.taskActions}>
-                    <Chip
-                        compact
-                        style={{ backgroundColor: priorityColors[task.priority || "medium"] + "20" }}
-                        textStyle={{ color: priorityColors[task.priority || "medium"], fontSize: 10 }}
-                    >
-                        {task.priority}
-                    </Chip>
-                    <IconButton
-                        icon={() => <Ionicons name="pencil-outline" size={16} color="#9CA3AF" />}
-                        size={18}
-                        onPress={() => onEdit(task)}
-                    />
-                    <IconButton
-                        icon={() => <Ionicons name="trash-outline" size={16} color="#EF4444" />}
-                        size={18}
-                        onPress={() => onDelete(task.id)}
-                    />
-                </View>
-            </Card.Content>
+                <TouchableOpacity onPress={() => onDismiss(suggestion.task.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Ionicons name="close" size={18} color={text.muted} />
+                </TouchableOpacity>
+            </View>
         </Card>
     );
 }
 
 export default function HomeScreen() {
-    const theme = useTheme();
     const router = useRouter();
     const { user } = useAuthStore();
     const { todayTasks, fetchTodayTasks, toggleTaskComplete, createTask, isLoading: tasksLoading } = useTaskStore();
@@ -159,6 +110,9 @@ export default function HomeScreen() {
 
     // Collapsible Today section
     const [todayCollapsed, setTodayCollapsed] = useState(false);
+
+    // Smart Today expanded state
+    const [smartExpanded, setSmartExpanded] = useState(false);
 
     // Search snackbar
     const [searchSnackbarVisible, setSearchSnackbarVisible] = useState(false);
@@ -252,18 +206,32 @@ export default function HomeScreen() {
     };
 
     const handleQuickAdd = async () => {
-        if (!quickTaskTitle.trim()) return;
+        if (!quickTaskTitle.trim() || !user) return;
         setIsAddingTask(true);
         try {
-            // Get the first sub-topic to add the task to
-            const { data: subTopics } = await supabase.from("sub_topics").select("id").limit(1);
-            if (subTopics && subTopics.length > 0) {
-                await createTask({
-                    sub_topic_id: subTopics[0].id,
-                    title: quickTaskTitle.trim(),
-                    priority: "medium",
-                    due_date: format(new Date(), "yyyy-MM-dd")
-                });
+            // Get first sub_topic with its topic_id
+            const { data: subTopics } = await supabase
+                .from("sub_topics")
+                .select("id, topic_id")
+                .limit(1);
+
+            if (!subTopics || subTopics.length === 0) {
+                // No sub-topics exist yet
+                setIsAddingTask(false);
+                return;
+            }
+
+            // Insert task with all required foreign keys
+            const { error } = await supabase.from("tasks").insert({
+                user_id: user.id,
+                sub_topic_id: subTopics[0].id,
+                topic_id: subTopics[0].topic_id,
+                title: quickTaskTitle.trim(),
+                priority: "medium",
+                due_date: format(new Date(), "yyyy-MM-dd"),
+            });
+
+            if (!error) {
                 setQuickTaskTitle("");
                 await Promise.all([fetchTodayTasks(), fetchSmartToday()]);
             }
@@ -388,71 +356,62 @@ export default function HomeScreen() {
 
     if (tasksLoading && todayTasks.length === 0 && isLoadingSmart) {
         return (
-            <View style={[styles.container, styles.centered, { backgroundColor: theme.colors.background }]}>
-                <ActivityIndicator size="large" color={theme.colors.primary} />
-                <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}>Loading...</Text>
+            <View style={[styles.container, styles.centered]}>
+                <ActivityIndicator size="large" color={pastel.mint} />
+                <Text variant="bodyMedium" style={{ color: text.secondary, marginTop: 16 }}>Loading...</Text>
             </View>
         );
     }
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View style={styles.container}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
                     keyboardShouldPersistTaps="handled"
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                        <Text variant="bodyMedium" style={{ color: text.secondary }}>
                             {format(new Date(), "EEEE, MMMM d")}
                         </Text>
                         <TouchableOpacity onPress={handleOpenNameModal} style={styles.greetingRow}>
                             <Text variant="headlineLarge" style={styles.greeting}>
                                 {getGreeting()}, {displayName || user?.full_name?.split(" ")[0] || "Student"} 👋
                             </Text>
-                            <Ionicons name="pencil-outline" size={16} color="#9CA3AF" style={{ marginLeft: 8 }} />
+                            <Ionicons name="pencil-outline" size={16} color={text.muted} style={{ marginLeft: 8 }} />
                         </TouchableOpacity>
                     </View>
 
                     {/* Search Bar */}
                     <View style={styles.searchContainer}>
-                        <Searchbar
+                        <SearchBar
                             placeholder="Search subjects, tasks, notes..."
                             value={searchQuery}
                             onChangeText={handleSearch}
-                            style={styles.searchBar}
-                            inputStyle={styles.searchInput}
-                            iconColor="#9CA3AF"
                         />
                         {searchResults.length > 0 && (
-                            <Card style={styles.searchResults}>
+                            <Card style={styles.searchResults} noPadding>
                                 {searchResults.slice(0, 6).map((result) => (
-                                    <Card key={result.id} style={styles.searchResultItem} onPress={() => handleSearchSelect(result)}>
-                                        <Card.Content style={styles.searchResultContent}>
-                                            <Ionicons name={getSearchIcon(result.type) as any} size={16} color={result.color || "#38BDF8"} />
-                                            <View style={styles.searchResultInfo}>
-                                                <Text variant="bodyMedium" style={{ color: "#E5E7EB" }}>{result.title}</Text>
-                                                <View style={styles.searchResultMeta}>
-                                                    <Chip compact style={styles.searchTypeBadge} textStyle={styles.searchTypeBadgeText}>
-                                                        {getSearchTypeLabel(result.type)}
-                                                    </Chip>
-                                                    <Text variant="bodySmall" style={{ color: "#9CA3AF" }}>{result.subtitle}</Text>
-                                                </View>
+                                    <TouchableOpacity key={result.id} style={styles.searchResultItem} onPress={() => handleSearchSelect(result)}>
+                                        <Ionicons name={getSearchIcon(result.type) as any} size={16} color={result.color || pastel.mint} />
+                                        <View style={styles.searchResultInfo}>
+                                            <Text variant="bodyMedium" style={{ color: text.primary }}>{result.title}</Text>
+                                            <View style={styles.searchResultMeta}>
+                                                <Chip size="sm">{getSearchTypeLabel(result.type)}</Chip>
+                                                <Text variant="bodySmall" style={{ color: text.secondary }}>{result.subtitle}</Text>
                                             </View>
-                                            {result.type !== "note" && (
-                                                <IconButton
-                                                    icon={() => <Ionicons name="add-circle-outline" size={20} color="#38BDF8" />}
-                                                    size={20}
-                                                    onPress={(e) => {
-                                                        e.stopPropagation();
-                                                        handleSearchAddToToday(result);
-                                                    }}
-                                                />
-                                            )}
-                                        </Card.Content>
-                                    </Card>
+                                        </View>
+                                        {result.type !== "note" && (
+                                            <TouchableOpacity
+                                                onPress={() => handleSearchAddToToday(result)}
+                                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                            >
+                                                <Ionicons name="add-circle-outline" size={22} color={pastel.mint} />
+                                            </TouchableOpacity>
+                                        )}
+                                    </TouchableOpacity>
                                 ))}
                             </Card>
                         )}
@@ -460,48 +419,44 @@ export default function HomeScreen() {
 
                     {/* Exam Alert */}
                     {examDaysAway !== null && examDaysAway <= 7 && (
-                        <Card style={styles.examAlert} mode="outlined">
-                            <Card.Content style={styles.examAlertContent}>
-                                <Ionicons name="warning" size={20} color="#EF4444" />
+                        <Card style={styles.examAlert}>
+                            <View style={styles.examAlertContent}>
+                                <Ionicons name="warning" size={20} color={semantic.error} />
                                 <Text variant="bodyMedium" style={styles.examAlertText}>
                                     Exam in {examDaysAway} days! Focus on exam tasks.
                                 </Text>
-                            </Card.Content>
+                            </View>
                         </Card>
                     )}
 
                     {/* Stats Cards */}
                     <View style={styles.statsRow}>
-                        <Card style={[styles.statCard, { borderLeftColor: theme.colors.primary, borderLeftWidth: 3 }]} mode="outlined">
-                            <Card.Content>
-                                <View style={styles.statHeader}>
-                                    <Ionicons name="checkmark-circle" size={16} color={theme.colors.primary} />
-                                    <Text variant="labelSmall" style={{ color: theme.colors.primary, marginLeft: 4 }}>Today</Text>
-                                </View>
-                                <Text variant="titleLarge" style={styles.statValue}>{completedCount}/{totalCount}</Text>
-                                <ProgressBar progress={progress} color={theme.colors.primary} style={styles.progressBar} />
-                            </Card.Content>
+                        <Card style={[styles.statCard, { borderLeftColor: pastel.mint, borderLeftWidth: 3 }]}>
+                            <View style={styles.statHeader}>
+                                <Ionicons name="checkmark-circle" size={16} color={pastel.mint} />
+                                <Text variant="labelSmall" style={{ color: pastel.mint, marginLeft: 4 }}>Today</Text>
+                            </View>
+                            <Text variant="titleLarge" style={styles.statValue}>{completedCount}/{totalCount}</Text>
+                            <ProgressBar progress={progress} color={pastel.mint} height={4} style={{ marginTop: 8 }} />
                         </Card>
-                        <Card style={[styles.statCard, { borderLeftColor: "#F97316", borderLeftWidth: 3 }]} mode="outlined">
-                            <Card.Content>
-                                <View style={styles.statHeader}>
-                                    <Ionicons name="flame" size={16} color="#F97316" />
-                                    <Text variant="labelSmall" style={{ color: "#F97316", marginLeft: 4 }}>Streak</Text>
-                                </View>
-                                <Text variant="titleLarge" style={styles.statValue}>
-                                    {isLoadingStreak ? "-" : `${streak}d`}
-                                </Text>
-                            </Card.Content>
+                        <Card style={[styles.statCard, { borderLeftColor: pastel.peach, borderLeftWidth: 3 }]}>
+                            <View style={styles.statHeader}>
+                                <Ionicons name="flame" size={16} color="#D89080" />
+                                <Text variant="labelSmall" style={{ color: pastel.peach, marginLeft: 4 }}>Streak</Text>
+                            </View>
+                            <Text variant="titleLarge" style={styles.statValue}>
+                                {isLoadingStreak ? "-" : `${streak}d`}
+                            </Text>
                         </Card>
-                        <Card style={[styles.statCard, { borderLeftColor: "#A855F7", borderLeftWidth: 3 }]} mode="outlined" onPress={() => (router as any).push("/focus")}>
-                            <Card.Content>
+                        <TouchableOpacity onPress={() => (router as any).push("/focus")}>
+                            <Card style={[styles.statCard, { borderLeftColor: pastel.mistBlue, borderLeftWidth: 3 }]}>
                                 <View style={styles.statHeader}>
-                                    <Ionicons name="timer" size={16} color="#A855F7" />
-                                    <Text variant="labelSmall" style={{ color: "#A855F7", marginLeft: 4 }}>Focus</Text>
+                                    <Ionicons name="timer" size={16} color="#6AABAC" />
+                                    <Text variant="labelSmall" style={{ color: pastel.mint, marginLeft: 4 }}>Focus</Text>
                                 </View>
                                 <Text variant="titleLarge" style={styles.statValue}>Start</Text>
-                            </Card.Content>
-                        </Card>
+                            </Card>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Missed Tasks Recovery */}
@@ -509,88 +464,35 @@ export default function HomeScreen() {
                         <View style={styles.section}>
                             <View style={styles.sectionHeader}>
                                 <View style={styles.sectionTitleRow}>
-                                    <Ionicons name="alert-circle" size={20} color="#F97316" />
+                                    <Ionicons name="alert-circle" size={20} color={semantic.warning} />
                                     <Text variant="titleMedium" style={styles.sectionTitle}>Missed Tasks</Text>
                                 </View>
                             </View>
                             {missedTasks.map((missed) => (
-                                <Card key={missed.task.id} style={styles.missedCard} mode="outlined">
-                                    <Card.Content>
-                                        <Text variant="bodyLarge" style={{ color: "#E5E7EB" }}>{missed.task.title}</Text>
-                                        <Text variant="bodySmall" style={{ color: "#F97316", marginTop: 4 }}>
-                                            Missed {missed.daysMissed} day{missed.daysMissed > 1 ? 's' : ''} ago
-                                        </Text>
-                                        <View style={styles.missedActions}>
-                                            <Button mode="contained" compact onPress={() => handleReschedule(missed.task.id)} style={styles.rescheduleBtn}>
-                                                Reschedule
-                                            </Button>
-                                            <Button mode="outlined" compact onPress={() => handleSkipTask(missed.task.id, 'no_time')} textColor="#9CA3AF">
-                                                Skip
-                                            </Button>
-                                        </View>
-                                    </Card.Content>
+                                <Card key={missed.task.id} style={styles.missedCard}>
+                                    <Text variant="bodyLarge" style={{ color: text.primary }}>{missed.task.title}</Text>
+                                    <Text variant="bodySmall" style={{ color: semantic.warning, marginTop: 4 }}>
+                                        Missed {missed.daysMissed} day{missed.daysMissed > 1 ? 's' : ''} ago
+                                    </Text>
+                                    <View style={styles.missedActions}>
+                                        <Button size="sm" onPress={() => handleReschedule(missed.task.id)}>
+                                            Reschedule
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onPress={() => handleSkipTask(missed.task.id, 'no_time')}>
+                                            Skip
+                                        </Button>
+                                    </View>
                                 </Card>
                             ))}
                         </View>
                     )}
-
-                    {/* Smart Today Section */}
-                    {smartSuggestions.length > 0 && (
-                        <View style={styles.section}>
-                            <View style={styles.sectionHeader}>
-                                <View style={styles.sectionTitleRow}>
-                                    <Ionicons name="sparkles" size={20} color="#38BDF8" />
-                                    <Text variant="titleMedium" style={styles.sectionTitle}>Smart Today</Text>
-                                </View>
-                                <Chip compact style={{ backgroundColor: "#38BDF820" }} textStyle={{ color: "#38BDF8", fontSize: 10 }}>
-                                    AI Suggested
-                                </Chip>
-                            </View>
-                            <Text variant="bodySmall" style={styles.sectionSubtitle}>
-                                Your personalized study plan for today
-                            </Text>
-
-                            {smartSuggestions.map((suggestion) => (
-                                <SmartTaskCard
-                                    key={suggestion.task.id}
-                                    suggestion={suggestion}
-                                    onToggle={handleToggleSmart}
-                                    onDismiss={handleDismissSuggestion}
-                                />
-                            ))}
-                        </View>
-                    )}
-
-                    {/* Quick Add Task */}
-                    <Card style={styles.quickAddCard} mode="outlined">
-                        <Card.Content style={styles.quickAddContent}>
-                            <Ionicons name="add-circle-outline" size={20} color="#9CA3AF" style={{ marginRight: 8 }} />
-                            <TextInput
-                                placeholder="Add a quick task..."
-                                value={quickTaskTitle}
-                                onChangeText={setQuickTaskTitle}
-                                mode="flat"
-                                style={styles.quickAddInput}
-                                underlineStyle={{ display: 'none' }}
-                                onSubmitEditing={handleQuickAdd}
-                            />
-                            <IconButton
-                                icon={() => <Ionicons name="send" size={18} color="#FFF" />}
-                                mode="contained"
-                                onPress={handleQuickAdd}
-                                style={{ backgroundColor: theme.colors.primary }}
-                                disabled={isAddingTask || !quickTaskTitle.trim()}
-                                size={18}
-                            />
-                        </Card.Content>
-                    </Card>
 
                     {/* Today's Tasks - Collapsible */}
                     <View style={styles.section}>
                         <TouchableOpacity onPress={toggleTodayCollapse} activeOpacity={0.7}>
                             <View style={styles.sectionHeader}>
                                 <View style={styles.sectionTitleRow}>
-                                    <Ionicons name="today" size={20} color="#E5E7EB" />
+                                    <Ionicons name="today" size={20} color={text.primary} />
                                     <Text variant="titleMedium" style={styles.sectionTitle}>
                                         Today ({totalCount} tasks)
                                     </Text>
@@ -598,7 +500,7 @@ export default function HomeScreen() {
                                 <Ionicons
                                     name={todayCollapsed ? "chevron-forward" : "chevron-down"}
                                     size={20}
-                                    color="#9CA3AF"
+                                    color={text.muted}
                                 />
                             </View>
                         </TouchableOpacity>
@@ -607,34 +509,104 @@ export default function HomeScreen() {
                             <>
                                 {todayTasks.length === 0 ? (
                                     <Card style={styles.emptyCard}>
-                                        <Card.Content style={styles.emptyContent}>
-                                            <Ionicons name="checkbox-outline" size={40} color="#9CA3AF" />
-                                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, textAlign: "center", marginTop: 12 }}>
+                                        <View style={styles.emptyContent}>
+                                            <Ionicons name="checkbox-outline" size={40} color={text.muted} />
+                                            <Text variant="bodyMedium" style={{ color: text.secondary, textAlign: "center", marginTop: 12 }}>
                                                 No tasks due today.{"\n"}Add some from Subjects.
                                             </Text>
-                                        </Card.Content>
+                                        </View>
                                     </Card>
                                 ) : (
                                     todayTasks.map((task) => (
-                                        <TaskItem
+                                        <TaskRow
                                             key={task.id}
-                                            task={task}
-                                            onToggle={toggleTaskComplete}
-                                            onEdit={handleEditTask}
-                                            onDelete={handleDeleteTask}
+                                            title={task.title}
+                                            completed={task.is_completed}
+                                            priority={task.priority || "medium"}
+                                            onToggle={() => toggleTaskComplete(task.id)}
+                                            onEdit={() => handleEditTask(task)}
+                                            onDelete={() => handleDeleteTask(task.id)}
                                         />
                                     ))
                                 )}
                             </>
                         )}
                     </View>
+
+                    {/* Smart Today Section - Below Today Tasks, Collapsible */}
+                    {smartSuggestions.length > 0 && (
+                        <View style={styles.section}>
+                            <TouchableOpacity onPress={() => setSmartExpanded(!smartExpanded)} activeOpacity={0.7}>
+                                <View style={styles.sectionHeader}>
+                                    <View style={styles.sectionTitleRow}>
+                                        <Ionicons name="sparkles" size={20} color={pastel.mint} />
+                                        <Text variant="titleMedium" style={styles.sectionTitle}>Smart Suggestions</Text>
+                                        <Chip size="sm" variant="primary" style={{ marginLeft: 8 }}>{smartSuggestions.length}</Chip>
+                                    </View>
+                                    <Ionicons
+                                        name={smartExpanded ? "chevron-up" : "chevron-down"}
+                                        size={20}
+                                        color={text.muted}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+
+                            {smartExpanded && (
+                                <>
+                                    <Text variant="bodySmall" style={styles.sectionSubtitle}>
+                                        AI-powered suggestions based on your study patterns
+                                    </Text>
+                                    {smartSuggestions.slice(0, 5).map((suggestion) => (
+                                        <SmartTaskCard
+                                            key={suggestion.task.id}
+                                            suggestion={suggestion}
+                                            onToggle={handleToggleSmart}
+                                            onDismiss={handleDismissSuggestion}
+                                        />
+                                    ))}
+                                    {smartSuggestions.length > 5 && (
+                                        <Text variant="bodySmall" style={{ color: text.muted, textAlign: "center", marginTop: 8 }}>
+                                            +{smartSuggestions.length - 5} more suggestions
+                                        </Text>
+                                    )}
+                                </>
+                            )}
+                        </View>
+                    )}
+
+                    {/* Quick Add Task */}
+                    <Card style={styles.quickAddCard}>
+                        <View style={styles.quickAddContent}>
+                            <Ionicons name="add-circle-outline" size={20} color={text.muted} style={{ marginRight: 8 }} />
+                            <TextInput
+                                placeholder="Add a quick task..."
+                                placeholderTextColor={text.muted}
+                                value={quickTaskTitle}
+                                onChangeText={setQuickTaskTitle}
+                                mode="flat"
+                                style={styles.quickAddInput}
+                                underlineStyle={{ display: 'none' } as any}
+                                onSubmitEditing={handleQuickAdd}
+                                theme={{ colors: { text: text.primary, primary: pastel.mint } }}
+                            />
+                            <TouchableOpacity
+                                onPress={handleQuickAdd}
+                                disabled={isAddingTask || !quickTaskTitle.trim()}
+                                style={[styles.quickAddButton, (!quickTaskTitle.trim() || isAddingTask) && styles.quickAddButtonDisabled]}
+                            >
+                                <Ionicons name="send" size={18} color={pastel.white} />
+                            </TouchableOpacity>
+                        </View>
+                    </Card>
+
                 </ScrollView>
 
-                {/* Reflection Modal */}
+                {/* Modals */}
                 <Portal>
+                    {/* Reflection Modal */}
                     <Modal visible={reflectionVisible} onDismiss={() => { setReflectionVisible(false); markPromptShown(); }} contentContainerStyle={styles.modal}>
                         <View style={styles.modalHeader}>
-                            <Ionicons name="bulb" size={24} color="#FACC15" />
+                            <Ionicons name="bulb" size={24} color={semantic.warning} />
                             <Text variant="titleLarge" style={styles.modalTitle}>Daily Reflection</Text>
                         </View>
                         <Text variant="bodySmall" style={styles.modalSubtitle}>
@@ -647,6 +619,9 @@ export default function HomeScreen() {
                             mode="outlined"
                             style={styles.modalInput}
                             maxLength={200}
+                            outlineColor={pastel.beige}
+                            activeOutlineColor={pastel.mint}
+                            textColor={text.primary}
                         />
                         <TextInput
                             label="What was difficult?"
@@ -655,12 +630,15 @@ export default function HomeScreen() {
                             mode="outlined"
                             style={styles.modalInput}
                             maxLength={200}
+                            outlineColor={pastel.beige}
+                            activeOutlineColor={pastel.mint}
+                            textColor={text.primary}
                         />
                         <View style={styles.modalButtons}>
-                            <Button mode="outlined" onPress={() => { setReflectionVisible(false); markPromptShown(); }} textColor="#9CA3AF">
+                            <Button variant="ghost" onPress={() => { setReflectionVisible(false); markPromptShown(); }}>
                                 Skip
                             </Button>
-                            <Button mode="contained" onPress={handleSaveReflection}>
+                            <Button onPress={handleSaveReflection}>
                                 Save
                             </Button>
                         </View>
@@ -676,12 +654,15 @@ export default function HomeScreen() {
                             mode="outlined"
                             style={styles.modalInput}
                             autoFocus
+                            outlineColor={pastel.beige}
+                            activeOutlineColor={pastel.mint}
+                            textColor={text.primary}
                         />
                         <View style={styles.modalButtons}>
-                            <Button mode="outlined" onPress={() => setNameModalVisible(false)} textColor="#9CA3AF">
+                            <Button variant="ghost" onPress={() => setNameModalVisible(false)}>
                                 Cancel
                             </Button>
-                            <Button mode="contained" onPress={handleSaveName} loading={isSavingName} disabled={isSavingName || !editName.trim()}>
+                            <Button onPress={handleSaveName} loading={isSavingName} disabled={isSavingName || !editName.trim()}>
                                 Save
                             </Button>
                         </View>
@@ -696,101 +677,90 @@ export default function HomeScreen() {
                             onChangeText={setEditTaskTitle}
                             mode="outlined"
                             style={styles.modalInput}
+                            outlineColor={pastel.beige}
+                            activeOutlineColor={pastel.mint}
+                            textColor={text.primary}
                         />
-                        <Text variant="bodyMedium" style={{ color: "#9CA3AF", marginBottom: 8 }}>Priority</Text>
+                        <Text variant="bodyMedium" style={{ color: text.secondary, marginBottom: 8 }}>Priority</Text>
                         <View style={styles.priorityRow}>
                             {(["low", "medium", "high"] as const).map((p) => (
                                 <Chip
                                     key={p}
+                                    variant={`priority-${p}`}
                                     selected={editTaskPriority === p}
                                     onPress={() => setEditTaskPriority(p)}
-                                    style={[
-                                        styles.priorityChip,
-                                        editTaskPriority === p && {
-                                            backgroundColor: p === "high" ? "#EF444420" : p === "medium" ? "#FACC1520" : "#22C55E20"
-                                        }
-                                    ]}
-                                    textStyle={{
-                                        color: editTaskPriority === p
-                                            ? (p === "high" ? "#EF4444" : p === "medium" ? "#FACC15" : "#22C55E")
-                                            : "#9CA3AF"
-                                    }}
                                 >
                                     {p.charAt(0).toUpperCase() + p.slice(1)}
                                 </Chip>
                             ))}
                         </View>
                         <View style={styles.modalButtons}>
-                            <Button mode="outlined" onPress={() => setTaskEditVisible(false)} textColor="#9CA3AF">
+                            <Button variant="ghost" onPress={() => setTaskEditVisible(false)}>
                                 Cancel
                             </Button>
-                            <Button mode="contained" onPress={handleSaveTask} loading={isSavingTask} disabled={isSavingTask || !editTaskTitle.trim()}>
+                            <Button onPress={handleSaveTask} loading={isSavingTask} disabled={isSavingTask || !editTaskTitle.trim()}>
                                 Save
                             </Button>
                         </View>
                     </Modal>
                 </Portal>
+
+                <Snackbar
+                    visible={searchSnackbarVisible}
+                    onDismiss={() => setSearchSnackbarVisible(false)}
+                    duration={2000}
+                    style={{ backgroundColor: pastel.slate }}
+                >
+                    {searchSnackbarMessage}
+                </Snackbar>
             </View>
         </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: { flex: 1, backgroundColor: background.primary },
     centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 12 },
-    greeting: { color: "#E5E7EB", fontWeight: "bold", marginTop: 4 },
+    greeting: { color: text.primary, fontWeight: "bold", marginTop: 4 },
     greetingRow: { flexDirection: "row", alignItems: "center" },
     searchContainer: { paddingHorizontal: 24, marginBottom: 16, zIndex: 100 },
-    searchBar: { backgroundColor: "#1E293B", borderRadius: 12 },
-    searchInput: { color: "#E5E7EB" },
-    searchResults: { position: "absolute", top: 56, left: 24, right: 24, backgroundColor: "#1E293B", borderRadius: 12, zIndex: 999 },
-    searchResultItem: { backgroundColor: "transparent" },
-    searchResultContent: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
+    searchResults: { position: "absolute", top: 56, left: 0, right: 0, zIndex: 999, paddingVertical: 8 },
+    searchResultItem: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 16 },
     searchResultInfo: { marginLeft: 12, flex: 1 },
-    examAlert: { marginHorizontal: 24, marginBottom: 16, backgroundColor: "#EF444420", borderColor: "#EF4444" },
+    searchResultMeta: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+    examAlert: { marginHorizontal: 24, marginBottom: 16, backgroundColor: semantic.errorLight },
     examAlertContent: { flexDirection: "row", alignItems: "center" },
-    examAlertText: { color: "#EF4444", marginLeft: 12, flex: 1 },
+    examAlertText: { color: "#C08080", marginLeft: 12, flex: 1 },
     statsRow: { flexDirection: "row", paddingHorizontal: 24, gap: 10, marginBottom: 20 },
-    statCard: { flex: 1, backgroundColor: "#1E293B" },
+    statCard: { flex: 1, padding: 12 },
     statHeader: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
-    statValue: { color: "#E5E7EB", fontWeight: "bold" },
-    progressBar: { marginTop: 8, height: 4, borderRadius: 2 },
+    statValue: { color: text.primary, fontWeight: "bold" },
     section: { paddingHorizontal: 24, marginBottom: 20 },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
     sectionTitleRow: { flexDirection: "row", alignItems: "center" },
-    sectionTitle: { color: "#E5E7EB", fontWeight: "600", marginLeft: 8 },
-    sectionSubtitle: { color: "#9CA3AF", marginBottom: 12 },
-    missedCard: { backgroundColor: "#1E293B", marginBottom: 10, borderColor: "#F97316" },
+    sectionTitle: { color: text.primary, fontWeight: "600", marginLeft: 8 },
+    sectionSubtitle: { color: text.secondary, marginBottom: 12 },
+    missedCard: { marginBottom: 10 },
     missedActions: { flexDirection: "row", gap: 8, marginTop: 12 },
-    rescheduleBtn: { borderRadius: 8 },
-    smartCard: { marginBottom: 10, backgroundColor: "#1E293B" },
+    smartCard: { marginBottom: 10 },
     smartContent: { flexDirection: "row", alignItems: "center" },
-    smartInfo: { flex: 1, marginLeft: 4 },
-    smartTitle: { color: "#E5E7EB", marginBottom: 4 },
+    smartInfo: { flex: 1, marginLeft: 8 },
+    smartTitle: { color: text.primary, marginBottom: 4 },
     smartMeta: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
-    quickAddCard: { marginHorizontal: 24, marginBottom: 20, backgroundColor: "#1E293B" },
+    quickAddCard: { marginHorizontal: 24, marginBottom: 20 },
     quickAddContent: { flexDirection: "row", alignItems: "center" },
     quickAddInput: { flex: 1, backgroundColor: "transparent", fontSize: 14 },
-    emptyCard: { backgroundColor: "#1E293B" },
-    emptyContent: { alignItems: "center", paddingVertical: 32 },
-    taskCard: { marginBottom: 10, backgroundColor: "#1E293B" },
-    taskCompleted: { opacity: 0.6 },
-    taskContent: { flexDirection: "row", alignItems: "center" },
-    taskInfo: { flex: 1, marginLeft: 4 },
-    taskTitle: { color: "#E5E7EB" },
-    taskTitleCompleted: { color: "#9CA3AF", textDecorationLine: "line-through" },
-    modal: { backgroundColor: "#1E293B", margin: 20, padding: 24, borderRadius: 16 },
+    quickAddButton: { backgroundColor: pastel.mint, borderRadius: borderRadius.pill, padding: 10 },
+    quickAddButtonDisabled: { opacity: 0.5 },
+    emptyCard: { padding: 24 },
+    emptyContent: { alignItems: "center" },
+    modal: { backgroundColor: background.card, margin: 20, padding: 24, borderRadius: borderRadius.lg },
     modalHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-    modalTitle: { color: "#E5E7EB", fontWeight: "bold", marginLeft: 12 },
-    modalSubtitle: { color: "#9CA3AF", marginBottom: 20 },
-    modalInput: { marginBottom: 12, backgroundColor: "#0F172A" },
+    modalTitle: { color: text.primary, fontWeight: "bold", marginLeft: 12 },
+    modalSubtitle: { color: text.secondary, marginBottom: 20 },
+    modalInput: { marginBottom: 12, backgroundColor: background.primary },
     modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 8 },
-    taskActions: { flexDirection: "row", alignItems: "center", gap: 4 },
     priorityRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-    priorityChip: { backgroundColor: "#334155" },
-    searchResultMeta: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
-    searchTypeBadge: { backgroundColor: "#334155", height: 20 },
-    searchTypeBadgeText: { color: "#9CA3AF", fontSize: 9 },
 });

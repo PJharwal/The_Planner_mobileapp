@@ -1,97 +1,104 @@
-// Calm Growth / Focused Student Theme
-// Optimized for night study, exam prep, and long sessions
+// Calm Pastel Soft-UI Theme
+// Optimized for student productivity with gentle, distraction-free aesthetics
+// Color palette from user-provided reference
 
-export const colors = {
-    // Background colors
-    background: '#0F172A',  // Deep slate / blue-black
-    card: '#111827',        // Card background
-    cardBorder: '#1E293B',  // Subtle card border
-
-    // Primary - Calm Sky Blue
-    primary: {
-        50: '#f0f9ff',
-        100: '#e0f2fe',
-        200: '#bae6fd',
-        300: '#7dd3fc',
-        400: '#38bdf8',  // Main primary
-        500: '#0ea5e9',
-        600: '#0284c7',
-        700: '#0369a1',
-        800: '#075985',
-        900: '#0c4a6e',
-    },
-
-    // Accent - Purple (for streaks, special features)
-    accent: {
-        400: '#c084fc',
-        500: '#a855f7',
-        600: '#9333ea',
-    },
-
-    // Status colors
-    success: '#22C55E',
-    warning: '#FACC15',
-    error: '#EF4444',
-    info: '#38BDF8',
-
-    // Text colors
-    text: {
-        primary: '#E5E7EB',
-        secondary: '#D1D5DB',
-        muted: '#9CA3AF',
-        disabled: '#6B7280',
-    },
-
-    // Dark palette for UI elements
-    dark: {
-        50: '#f8fafc',
-        100: '#f1f5f9',
-        200: '#e2e8f0',
-        300: '#cbd5e1',
-        400: '#94a3b8',
-        500: '#64748b',
-        600: '#475569',
-        700: '#334155',
-        800: '#1e293b',
-        900: '#0f172a',
-        950: '#020617',
-    },
-
-    // Common
-    white: '#ffffff',
-    black: '#000000',
-    transparent: 'transparent',
-
-    // Priority colors
-    priority: {
-        high: '#EF4444',
-        highBg: 'rgba(239, 68, 68, 0.15)',
-        medium: '#FACC15',
-        mediumBg: 'rgba(250, 204, 21, 0.15)',
-        low: '#22C55E',
-        lowBg: 'rgba(34, 197, 94, 0.15)',
-    },
+// ============================================
+// PRIMARY PASTEL PALETTE
+// ============================================
+export const pastel = {
+    peach: '#F7CBC9',      // Peach Soft - Primary accent, warm elements
+    beige: '#E9DDD8',      // Warm Beige - Secondary surfaces
+    white: '#F7F7F7',      // Cloud White - App background
+    mistBlue: '#D5E5E5',   // Mist Blue - Cards, cool surfaces
+    mint: '#C9DDDC',       // Pale Mint - Success, highlights, CTAs
+    slate: '#5D6B6B',      // Slate Green - Primary text, icons
 };
 
+// ============================================
+// SEMANTIC COLORS (Muted, never harsh)
+// ============================================
+export const semantic = {
+    success: '#8DD7D8',           // Soft mint (from palette)
+    successLight: '#C9ECEC',      // Lighter mint for backgrounds
+    warning: '#E8C9A0',           // Warm pastel orange
+    warningLight: '#F5E6D3',      // Light warning background
+    error: '#E8A0A0',             // Muted coral (not harsh red)
+    errorLight: '#F5D5D5',        // Light error background
+    info: '#A0C4E8',              // Soft blue
+    infoLight: '#D5E5F5',         // Light info background
+};
+
+// ============================================
+// PRIORITY COLORS (Soft versions)
+// ============================================
+export const priority = {
+    high: '#E8A0A0',              // Muted coral
+    highBg: 'rgba(232, 160, 160, 0.15)',
+    medium: '#E8C9A0',            // Warm pastel orange
+    mediumBg: 'rgba(232, 201, 160, 0.15)',
+    low: '#8DD7D8',               // Soft mint
+    lowBg: 'rgba(141, 215, 216, 0.15)',
+};
+
+// ============================================
+// TEXT COLORS
+// ============================================
+export const text = {
+    primary: '#5D6B6B',           // Deep slate - main text
+    secondary: 'rgba(93, 107, 107, 0.7)',  // 70% opacity
+    muted: 'rgba(93, 107, 107, 0.5)',      // 50% opacity
+    disabled: 'rgba(93, 107, 107, 0.35)',  // 35% opacity
+    inverse: '#F1F7F7',           // Light text on dark backgrounds
+};
+
+// ============================================
+// BACKGROUND & SURFACE COLORS
+// ============================================
+export const background = {
+    primary: '#F1F7F7',           // Main app background (cloud white)
+    secondary: '#E8F0F0',         // Slightly darker for sections
+    card: '#FFFFFF',              // Pure white-ish card base
+    cardAlt: '#F7CBCA',           // Peach card variant
+    cardMint: '#D5E6E5',          // Mist blue card variant
+    overlay: 'rgba(93, 107, 107, 0.4)',  // Modal overlay
+};
+
+// ============================================
+// FOCUS MODE (Darker pastels for reduced eye strain)
+// ============================================
+export const focus = {
+    background: '#E5ECEC',        // Darker pastel for reduced eye strain
+    card: '#DDE6E6',              // Slightly darker cards
+    accent: '#C9DDDC',            // Pale mint accent
+    text: '#5D6B6B',              // Slate text
+};
+
+// ============================================
+// SPACING SCALE (Generous, breathable)
+// ============================================
 export const spacing = {
-    xs: 4,
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 20,
-    xxl: 24,
-    xxxl: 32,
+    xs: 8,     // XS
+    sm: 12,    // SM
+    md: 16,    // MD
+    lg: 24,    // LG
+    xl: 32,    // XL
 };
 
+// ============================================
+// BORDER RADIUS (Soft, rounded everything)
+// ============================================
 export const borderRadius = {
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 20,
-    xxl: 24,  // rounded-2xl equivalent
-    full: 9999,
+    sm: 12,
+    md: 16,
+    lg: 20,
+    xl: 24,
+    xxl: 28,
+    pill: 9999,
 };
 
+// ============================================
+// TYPOGRAPHY
+// ============================================
 export const fontSize = {
     xs: 12,
     sm: 14,
@@ -110,27 +117,165 @@ export const fontWeight = {
     bold: '700' as const,
 };
 
-// Shadows - soft, no harsh edges
+export const lineHeight = {
+    tight: 1.2,
+    normal: 1.5,
+    relaxed: 1.75,
+};
+
+// ============================================
+// NEUMORPHIC SHADOWS (Soft, dual-tone)
+// ============================================
+export const neumorphic = {
+    // Light shadow (top-left)
+    light: {
+        shadowColor: '#FFFFFF',
+        shadowOffset: { width: -4, height: -4 },
+        shadowOpacity: 0.7,
+        shadowRadius: 8,
+    },
+    // Dark shadow (bottom-right)
+    dark: {
+        shadowColor: '#C5D0D0',
+        shadowOffset: { width: 4, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+    },
+};
+
+// Combined shadow for iOS
 export const shadows = {
-    sm: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+    soft: {
+        shadowColor: '#5D6B6B',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
         elevation: 2,
     },
-    md: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
+    medium: {
+        shadowColor: '#5D6B6B',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
         elevation: 4,
     },
-    lg: {
-        shadowColor: '#000',
+    elevated: {
+        shadowColor: '#5D6B6B',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.12,
+        shadowRadius: 16,
+        elevation: 6,
+    },
+    // Card shadow (neumorphic-inspired single shadow)
+    card: {
+        shadowColor: '#B8C5C5',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 8,
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 3,
+    },
+};
+
+// ============================================
+// LEGACY SUPPORT (for gradual migration)
+// Keep old structure for components not yet updated
+// ============================================
+export const colors = {
+    background: background.primary,
+    card: background.card,
+    cardBorder: pastel.beige,
+
+    primary: {
+        50: '#E8F5F5',
+        100: '#D5ECEC',
+        200: '#C0E3E3',
+        300: '#A8D9D9',
+        400: pastel.mint,    // Main primary
+        500: '#6EC5C6',
+        600: '#55B3B4',
+        700: '#3F9FA0',
+        800: '#2E8586',
+        900: '#1F6B6C',
+    },
+
+    accent: {
+        400: pastel.peach,
+        500: '#F0B5B4',
+        600: '#E89E9D',
+    },
+
+    success: semantic.success,
+    warning: semantic.warning,
+    error: semantic.error,
+    info: semantic.info,
+
+    text: text,
+
+    dark: {
+        50: pastel.white,
+        100: '#E8F0F0',
+        200: pastel.mistBlue,
+        300: pastel.beige,
+        400: '#9BA8A8',
+        500: '#7A8989',
+        600: pastel.slate,
+        700: '#4D5858',
+        800: '#3D4545',
+        900: '#2D3333',
+        950: '#1D2222',
+    },
+
+    white: '#FEFEFE',
+    black: '#2D3333',
+    transparent: 'transparent',
+
+    priority: priority,
+};
+
+// ============================================
+// THEME OBJECT (for React Native Paper)
+// ============================================
+export const paperTheme = {
+    colors: {
+        primary: pastel.mint,
+        primaryContainer: pastel.mistBlue,
+        secondary: pastel.peach,
+        secondaryContainer: 'rgba(247, 203, 202, 0.3)',
+        tertiary: pastel.beige,
+        tertiaryContainer: 'rgba(208, 211, 212, 0.3)',
+        surface: background.card,
+        surfaceVariant: background.secondary,
+        surfaceDisabled: 'rgba(93, 107, 107, 0.12)',
+        background: background.primary,
+        error: semantic.error,
+        errorContainer: semantic.errorLight,
+        onPrimary: text.primary,
+        onPrimaryContainer: text.primary,
+        onSecondary: text.primary,
+        onSecondaryContainer: text.primary,
+        onTertiary: text.primary,
+        onTertiaryContainer: text.primary,
+        onSurface: text.primary,
+        onSurfaceVariant: text.secondary,
+        onSurfaceDisabled: text.disabled,
+        onError: text.inverse,
+        onErrorContainer: text.primary,
+        onBackground: text.primary,
+        outline: pastel.beige,
+        outlineVariant: 'rgba(208, 211, 212, 0.5)',
+        inverseSurface: pastel.slate,
+        inverseOnSurface: text.inverse,
+        inversePrimary: '#A8E5E5',
+        shadow: '#5D6B6B',
+        scrim: 'rgba(93, 107, 107, 0.4)',
+        backdrop: 'rgba(93, 107, 107, 0.4)',
+        elevation: {
+            level0: 'transparent',
+            level1: background.card,
+            level2: '#FAFEFE',
+            level3: '#F5FBFB',
+            level4: '#F2F9F9',
+            level5: '#EFF7F7',
+        },
     },
 };

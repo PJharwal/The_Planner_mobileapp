@@ -1,12 +1,14 @@
 import { Stack } from "expo-router";
+import { background, text } from "../../constants/theme";
 
 export default function SubjectLayout() {
     return (
         <Stack
             screenOptions={{
-                headerStyle: { backgroundColor: "#0F172A" },
-                headerTintColor: "#E5E7EB",
-                headerBackVisible: true,
+                headerStyle: { backgroundColor: background.primary },
+                headerTintColor: text.primary,
+                headerShadowVisible: false,
+                contentStyle: { backgroundColor: background.primary },
             }}
         />
     );

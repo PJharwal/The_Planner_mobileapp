@@ -1,24 +1,29 @@
 // Sub-Topic Detail Screen
 import { useState, useEffect, useCallback } from "react";
-import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, RefreshControl } from "react-native";
-import { Card, Text, Button, IconButton, TextInput, useTheme, Checkbox, Portal, Modal, Chip, Snackbar } from "react-native-paper";
+import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, RefreshControl, TouchableOpacity, Alert } from "react-native";
+import { Text, IconButton, TextInput, Portal, Modal, Snackbar } from "react-native-paper";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
 import { useAuthStore } from "../../store/authStore";
 import { Task, SubTopic } from "../../types";
 import { addTaskToToday, addSubTopicToToday, isTaskInToday } from "../../utils/addToToday";
+import { format } from "date-fns";
+
+// Design tokens
+import { pastel, background, text, spacing, borderRadius, shadows, priority as priorityColors } from "../../constants/theme";
+// UI Components
+import { Card, Button, Chip, Checkbox } from "../../components/ui";
 
 export default function SubTopicDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
-    const theme = useTheme();
     const router = useRouter();
     const { user } = useAuthStore();
 
     const [subTopic, setSubTopic] = useState<SubTopic | null>(null);
     const [topicName, setTopicName] = useState("");
     const [subjectName, setSubjectName] = useState("");
-    const [subjectColor, setSubjectColor] = useState("#38BDF8");
+    const [subjectColor, setSubjectColor] = useState(pastel.mint);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -40,16 +45,9 @@ export default function SubTopicDetailScreen() {
         if (!id) return;
 
         try {
-            // Fetch sub-topic with topic and subject info
             const { data: stData } = await supabase
                 .from("sub_topics")
-                .select(`
-                    *,
-                    topics (
-                        id, name,
-                        subjects (id, name, color)
-                    )
-                `)
+                .select(`*, topics (id, name, subjects (id, name, color))`)
                 .eq("id", id)
                 .single();
 
@@ -57,10 +55,9 @@ export default function SubTopicDetailScreen() {
                 setSubTopic(stData);
                 setTopicName((stData as any).topics?.name || "");
                 setSubjectName((stData as any).topics?.subjects?.name || "");
-                setSubjectColor((stData as any).topics?.subjects?.color || "#38BDF8");
+                setSubjectColor((stData as any).topics?.subjects?.color || pastel.mint);
             }
 
-            // Fetch tasks
             const { data: tasksData } = await supabase
                 .from("tasks")
                 .select("*")
@@ -69,13 +66,11 @@ export default function SubTopicDetailScreen() {
 
             setTasks(tasksData || []);
 
-            // Check which tasks are in Today
             const statusMap: Record<string, boolean> = {};
             for (const task of tasksData || []) {
                 statusMap[task.id] = await isTaskInToday(task.id);
             }
             setTodayStatus(statusMap);
-
         } catch (error) {
             console.error("Error fetching sub-topic:", error);
         }
@@ -97,41 +92,43 @@ export default function SubTopicDetailScreen() {
         if (!task) return;
 
         const newStatus = !task.is_completed;
-
-        // Optimistic update
         setTasks(prev => prev.map(t =>
             t.id === taskId ? { ...t, is_completed: newStatus, completed_at: newStatus ? new Date().toISOString() : undefined } : t
         ));
 
         await supabase
             .from("tasks")
-            .update({
-                is_completed: newStatus,
-                completed_at: newStatus ? new Date().toISOString() : null
-            })
+            .update({ is_completed: newStatus, completed_at: newStatus ? new Date().toISOString() : null })
             .eq("id", taskId);
     };
 
     const handleAddTask = async () => {
-        if (!newTaskTitle.trim() || !id || !user) return;
+        if (!newTaskTitle.trim() || !id || !user || !subTopic) return;
         setIsAdding(true);
 
         try {
             const { error } = await supabase.from("tasks").insert({
                 sub_topic_id: id,
+                topic_id: subTopic.topic_id, // FIXED: Include topic_id
                 user_id: user.id,
                 title: newTaskTitle.trim(),
                 priority: newTaskPriority,
+                due_date: format(new Date(), "yyyy-MM-dd"), // FIXED: Default to today
             });
 
-            if (!error) {
+            if (error) {
+                Alert.alert("Error", error.message || "Could not add task");
+            } else {
                 setNewTaskTitle("");
                 setNewTaskPriority("medium");
                 setShowAddModal(false);
                 await fetchData();
+                setSnackbarMessage("Task added!");
+                setSnackbarVisible(true);
             }
         } catch (error) {
             console.error("Error adding task:", error);
+            Alert.alert("Error", "Could not add task. Please try again.");
         }
         setIsAdding(false);
     };
@@ -150,30 +147,32 @@ export default function SubTopicDetailScreen() {
         const result = await addSubTopicToToday(id);
         setSnackbarMessage(result.message);
         setSnackbarVisible(true);
-        if (result.success) {
-            await fetchData();
-        }
+        if (result.success) await fetchData();
     };
 
     const completedCount = tasks.filter(t => t.is_completed).length;
     const totalCount = tasks.length;
     const pendingCount = totalCount - completedCount;
-    const progress = totalCount > 0 ? completedCount / totalCount : 0;
-
-    const priorityColors = { high: "#EF4444", medium: "#FACC15", low: "#22C55E" };
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            <View style={styles.container}>
                 <Stack.Screen
                     options={{
                         title: subTopic?.name || "Sub-Topic",
-                        headerStyle: { backgroundColor: "#0A0F1A" },
-                        headerTintColor: "#E5E7EB",
+                        headerStyle: { backgroundColor: background.primary },
+                        headerTintColor: text.primary,
+                        headerShadowVisible: false,
                         headerLeft: () => (
                             <IconButton
-                                icon={() => <Ionicons name="arrow-back" size={24} color="#E5E7EB" />}
+                                icon={() => <Ionicons name="arrow-back" size={24} color={text.primary} />}
                                 onPress={() => router.back()}
+                            />
+                        ),
+                        headerRight: () => (
+                            <IconButton
+                                icon={() => <Ionicons name="home-outline" size={22} color={text.secondary} />}
+                                onPress={() => router.replace("/(tabs)")}
                             />
                         ),
                     }}
@@ -181,11 +180,11 @@ export default function SubTopicDetailScreen() {
 
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
                 >
                     {/* Header Card */}
-                    <Card style={[styles.headerCard, { borderLeftColor: subjectColor, borderLeftWidth: 4 }]} mode="outlined">
-                        <Card.Content>
+                    <Card style={[styles.headerCard, { borderLeftColor: subjectColor, borderLeftWidth: 4 }]}>
+                        <View style={styles.headerContent}>
                             <Text variant="bodySmall" style={styles.breadcrumb}>
                                 {subjectName} • {topicName}
                             </Text>
@@ -193,75 +192,72 @@ export default function SubTopicDetailScreen() {
                                 {subTopic?.name}
                             </Text>
                             <View style={styles.statsRow}>
-                                <Chip compact style={styles.statChip} textStyle={styles.statChipText}>
-                                    {completedCount}/{totalCount} completed
-                                </Chip>
+                                <Chip variant="default" size="sm">{`${completedCount}/${totalCount} completed`}</Chip>
                                 {pendingCount > 0 && (
-                                    <Button
-                                        mode="contained"
-                                        compact
-                                        onPress={handleAddAllToToday}
-                                        icon={() => <Ionicons name="add-circle" size={16} color="#FFF" />}
-                                        style={styles.addAllButton}
-                                    >
+                                    <Button variant="primary" size="sm" onPress={handleAddAllToToday}>
                                         Add all to Today
                                     </Button>
                                 )}
                             </View>
-                        </Card.Content>
+                        </View>
                     </Card>
 
                     {/* Tasks Section */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
                             <Text variant="titleMedium" style={styles.sectionTitle}>Tasks</Text>
-                            <IconButton
-                                icon={() => <Ionicons name="add" size={20} color="#38BDF8" />}
-                                onPress={() => setShowAddModal(true)}
-                            />
+                            <Button variant="ghost" size="sm" onPress={() => setShowAddModal(true)}>
+                                Add
+                            </Button>
                         </View>
 
                         {tasks.length === 0 ? (
                             <Card style={styles.emptyCard}>
-                                <Card.Content style={styles.emptyContent}>
-                                    <Ionicons name="checkbox-outline" size={40} color="#9CA3AF" />
-                                    <Text variant="bodyMedium" style={styles.emptyText}>
-                                        No tasks yet. Add your first task!
-                                    </Text>
-                                </Card.Content>
+                                <View style={styles.emptyContent}>
+                                    <View style={styles.emptyIconContainer}>
+                                        <Ionicons name="checkbox-outline" size={32} color={text.muted} />
+                                    </View>
+                                    <Text variant="bodyMedium" style={styles.emptyText}>No tasks yet</Text>
+                                    <Text variant="bodySmall" style={styles.emptyHint}>Add your first task to get started</Text>
+                                    <Button variant="primary" onPress={() => setShowAddModal(true)} style={styles.emptyButton}>
+                                        Add Task
+                                    </Button>
+                                </View>
                             </Card>
                         ) : (
                             tasks.map(task => (
-                                <Card key={task.id} style={[styles.taskCard, task.is_completed && styles.taskCompleted]} mode="outlined">
-                                    <Card.Content style={styles.taskContent}>
+                                <Card key={task.id} style={[styles.taskCard, task.is_completed && styles.taskCompleted]}>
+                                    <View style={styles.taskContent}>
                                         <Checkbox
-                                            status={task.is_completed ? "checked" : "unchecked"}
-                                            onPress={() => handleToggleTask(task.id)}
-                                            color="#22C55E"
+                                            checked={task.is_completed}
+                                            onToggle={() => handleToggleTask(task.id)}
                                         />
                                         <View style={styles.taskInfo}>
-                                            <Text variant="bodyLarge" style={[styles.taskTitle, task.is_completed && styles.taskTitleCompleted]}>
+                                            <Text
+                                                variant="bodyLarge"
+                                                style={[styles.taskTitle, task.is_completed && styles.taskTitleCompleted]}
+                                            >
                                                 {task.title}
                                             </Text>
                                         </View>
                                         <Chip
-                                            compact
-                                            style={{ backgroundColor: priorityColors[task.priority] + "20", marginRight: 8 }}
-                                            textStyle={{ color: priorityColors[task.priority], fontSize: 10 }}
+                                            variant={`priority-${task.priority}` as any}
+                                            size="sm"
                                         >
                                             {task.priority}
                                         </Chip>
                                         {!task.is_completed && !todayStatus[task.id] && (
-                                            <IconButton
-                                                icon={() => <Ionicons name="add-circle-outline" size={20} color="#38BDF8" />}
-                                                size={20}
+                                            <TouchableOpacity
                                                 onPress={() => handleAddTaskToToday(task.id)}
-                                            />
+                                                style={styles.addButton}
+                                            >
+                                                <Ionicons name="add-circle-outline" size={22} color={pastel.mint} />
+                                            </TouchableOpacity>
                                         )}
                                         {todayStatus[task.id] && (
-                                            <Ionicons name="checkmark-circle" size={20} color="#22C55E" style={{ marginRight: 8 }} />
+                                            <Ionicons name="checkmark-circle" size={20} color={pastel.mint} style={styles.todayIcon} />
                                         )}
-                                    </Card.Content>
+                                    </View>
                                 </Card>
                             ))
                         )}
@@ -278,29 +274,28 @@ export default function SubTopicDetailScreen() {
                             onChangeText={setNewTaskTitle}
                             mode="outlined"
                             style={styles.modalInput}
+                            outlineColor={pastel.beige}
+                            activeOutlineColor={pastel.mint}
+                            textColor={text.primary}
                         />
                         <Text variant="bodyMedium" style={styles.priorityLabel}>Priority</Text>
                         <View style={styles.priorityRow}>
                             {(["low", "medium", "high"] as const).map(p => (
                                 <Chip
                                     key={p}
+                                    variant={`priority-${p}` as any}
                                     selected={newTaskPriority === p}
                                     onPress={() => setNewTaskPriority(p)}
-                                    style={[
-                                        styles.priorityChip,
-                                        newTaskPriority === p && { backgroundColor: priorityColors[p] + "20" }
-                                    ]}
-                                    textStyle={{ color: newTaskPriority === p ? priorityColors[p] : "#9CA3AF" }}
                                 >
                                     {p.charAt(0).toUpperCase() + p.slice(1)}
                                 </Chip>
                             ))}
                         </View>
                         <View style={styles.modalButtons}>
-                            <Button mode="outlined" onPress={() => setShowAddModal(false)} textColor="#9CA3AF">
+                            <Button variant="ghost" onPress={() => setShowAddModal(false)}>
                                 Cancel
                             </Button>
-                            <Button mode="contained" onPress={handleAddTask} loading={isAdding} disabled={isAdding || !newTaskTitle.trim()}>
+                            <Button variant="primary" onPress={handleAddTask} loading={isAdding}>
                                 Add
                             </Button>
                         </View>
@@ -321,33 +316,41 @@ export default function SubTopicDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
+    container: { flex: 1, backgroundColor: background.primary },
     scrollContent: { paddingBottom: 100 },
-    headerCard: { margin: 16, backgroundColor: "#1E293B" },
-    breadcrumb: { color: "#9CA3AF", marginBottom: 4 },
-    title: { color: "#E5E7EB", fontWeight: "bold" },
-    statsRow: { flexDirection: "row", alignItems: "center", marginTop: 12, gap: 12 },
-    statChip: { backgroundColor: "#334155" },
-    statChipText: { color: "#9CA3AF", fontSize: 12 },
-    addAllButton: { borderRadius: 8 },
-    section: { paddingHorizontal: 16 },
-    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-    sectionTitle: { color: "#E5E7EB", fontWeight: "600" },
-    emptyCard: { backgroundColor: "#1E293B" },
-    emptyContent: { alignItems: "center", paddingVertical: 32 },
-    emptyText: { color: "#9CA3AF", marginTop: 12 },
-    taskCard: { marginBottom: 10, backgroundColor: "#1E293B" },
+    // Header
+    headerCard: { marginHorizontal: spacing.md, marginTop: spacing.md, borderRadius: borderRadius.lg },
+    headerContent: { padding: spacing.md },
+    breadcrumb: { color: text.secondary, marginBottom: 4 },
+    title: { color: text.primary, fontWeight: "600" },
+    statsRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.sm, gap: spacing.sm },
+    // Section
+    section: { paddingHorizontal: spacing.md, marginTop: spacing.lg },
+    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
+    sectionTitle: { color: text.primary, fontWeight: "600" },
+    // Empty State
+    emptyCard: {},
+    emptyContent: { alignItems: "center", paddingVertical: spacing.xl },
+    emptyIconContainer: { width: 64, height: 64, borderRadius: 32, backgroundColor: `${pastel.beige}50`, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+    emptyText: { color: text.primary, fontWeight: "500" },
+    emptyHint: { color: text.muted, marginTop: 4 },
+    emptyButton: { marginTop: spacing.md },
+    // Task Cards
+    taskCard: { marginBottom: spacing.sm },
     taskCompleted: { opacity: 0.6 },
-    taskContent: { flexDirection: "row", alignItems: "center" },
-    taskInfo: { flex: 1, marginLeft: 4 },
-    taskTitle: { color: "#E5E7EB" },
-    taskTitleCompleted: { color: "#9CA3AF", textDecorationLine: "line-through" },
-    modal: { backgroundColor: "#1E293B", margin: 20, padding: 24, borderRadius: 16 },
-    modalTitle: { color: "#E5E7EB", fontWeight: "bold", marginBottom: 16 },
-    modalInput: { marginBottom: 12, backgroundColor: "#0F172A" },
-    priorityLabel: { color: "#9CA3AF", marginBottom: 8 },
-    priorityRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-    priorityChip: { backgroundColor: "#334155" },
-    modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 12 },
-    snackbar: { backgroundColor: "#1E293B" },
+    taskContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    taskInfo: { flex: 1, marginLeft: spacing.xs },
+    taskTitle: { color: text.primary },
+    taskTitleCompleted: { color: text.muted, textDecorationLine: "line-through" },
+    addButton: { padding: spacing.xs, marginLeft: spacing.xs },
+    todayIcon: { marginLeft: spacing.xs },
+    // Modal
+    modal: { backgroundColor: background.card, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, ...shadows.elevated },
+    modalTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
+    modalInput: { marginBottom: spacing.sm, backgroundColor: background.primary },
+    priorityLabel: { color: text.secondary, marginBottom: spacing.xs },
+    priorityRow: { flexDirection: "row", gap: spacing.xs, marginBottom: spacing.md },
+    modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.sm },
+    // Snackbar
+    snackbar: { backgroundColor: pastel.slate },
 });
