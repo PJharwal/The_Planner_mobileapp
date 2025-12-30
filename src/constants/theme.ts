@@ -97,6 +97,25 @@ export const borderRadius = {
 };
 
 // ============================================
+// GRADIENT PRESETS (for LinearGradient)
+// ============================================
+export const gradients = {
+    // Warm beige gradient (default cards)
+    warm: ['#EDE2DD', '#E9DDD8'] as const,
+    // Sage mint gradient (success, timer)
+    mint: ['#D3E3E2', '#C9DDDC'] as const,
+    // Soft peach gradient (streak, alerts)
+    peach: ['#F9D5D3', '#F7CBC9'] as const,
+    // Light sage (buttons, focus)
+    sage: ['#DDEAEA', '#D5E5E5'] as const,
+    // Glass/frosted effect
+    glass: ['rgba(247, 247, 247, 0.6)', 'rgba(247, 247, 247, 0.4)'] as const,
+    // App background
+    background: ['#F9F9F9', '#F7F7F7'] as const,
+};
+
+
+// ============================================
 // TYPOGRAPHY
 // ============================================
 export const fontSize = {

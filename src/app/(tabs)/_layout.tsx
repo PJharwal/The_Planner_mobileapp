@@ -6,18 +6,13 @@ import Animated, {
     useAnimatedStyle,
     withTiming,
     useSharedValue,
-    Easing
 } from "react-native-reanimated";
 import { useEffect } from "react";
-import { pastel, text } from "../../constants/theme";
+import { pastel, background } from "../../constants/theme";
 
-// Design tokens per spec
-const TAB_BAR_HEIGHT = 68; // 64-72px ✓
-const TAB_BAR_RADIUS = 34;
-const ICON_SIZE = 22; // 22-24px ✓
-const BUBBLE_SIZE = 42; // 40-44px ✓
+const ICON_SIZE = 24;
 
-// Animated bubble icon wrapper with Reanimated
+// Simple tab icon with animated indicator dot
 function TabIcon({
     focused,
     children,
@@ -25,30 +20,16 @@ function TabIcon({
     focused: boolean;
     children: React.ReactNode;
 }) {
-    const scale = useSharedValue(focused ? 1 : 0.8);
-    const opacity = useSharedValue(focused ? 1 : 0);
-    const iconScale = useSharedValue(focused ? 1.1 : 1);
+    const dotOpacity = useSharedValue(focused ? 1 : 0);
+    const iconScale = useSharedValue(focused ? 1.05 : 1);
 
     useEffect(() => {
-        // Animate bubble scale/fade
-        scale.value = withTiming(focused ? 1 : 0.5, {
-            duration: 180,
-            easing: Easing.out(Easing.cubic)
-        });
-        opacity.value = withTiming(focused ? 1 : 0, {
-            duration: 180,
-            easing: Easing.out(Easing.cubic)
-        });
-        // Slightly larger icon when focused
-        iconScale.value = withTiming(focused ? 1.1 : 1, {
-            duration: 180,
-            easing: Easing.out(Easing.cubic)
-        });
+        dotOpacity.value = withTiming(focused ? 1 : 0, { duration: 200 });
+        iconScale.value = withTiming(focused ? 1.05 : 1, { duration: 200 });
     }, [focused]);
 
-    const bubbleStyle = useAnimatedStyle(() => ({
-        transform: [{ scale: scale.value }],
-        opacity: opacity.value,
+    const dotStyle = useAnimatedStyle(() => ({
+        opacity: dotOpacity.value,
     }));
 
     const iconContainerStyle = useAnimatedStyle(() => ({
@@ -57,12 +38,11 @@ function TabIcon({
 
     return (
         <View style={styles.tabIconContainer}>
-            {/* Animated bubble background */}
-            <Animated.View style={[styles.bubble, bubbleStyle]} />
-            {/* Animated icon with scale */}
             <Animated.View style={[styles.iconWrapper, iconContainerStyle]}>
                 {children}
             </Animated.View>
+            {/* Small dot indicator below icon */}
+            <Animated.View style={[styles.indicator, dotStyle]} />
         </View>
     );
 }
@@ -74,31 +54,28 @@ export default function TabLayout() {
         <Tabs
             screenOptions={{
                 headerShown: false,
-                tabBarShowLabel: false, // Icon-only ✓
+                tabBarShowLabel: false,
                 tabBarStyle: {
                     position: "absolute",
-                    bottom: insets.bottom + 12,
-                    left: 16,
-                    right: 16,
-                    height: TAB_BAR_HEIGHT,
-                    borderRadius: TAB_BAR_RADIUS,
-                    // Semi-transparent pastel background ✓
-                    backgroundColor: "rgba(247, 247, 247, 0.92)",
-                    // Soft neumorphic shadow ✓
-                    shadowColor: pastel.slate,
-                    shadowOpacity: 0.08,
-                    shadowRadius: 24,
-                    shadowOffset: { width: 0, height: 6 },
-                    elevation: 8,
-                    borderTopWidth: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: 60 + insets.bottom,
+                    paddingBottom: insets.bottom,
+                    backgroundColor: background.primary,
+                    borderTopWidth: 1,
+                    borderTopColor: "rgba(93, 107, 107, 0.1)",
+                    elevation: 0,
+                    shadowOpacity: 0,
                 },
                 tabBarItemStyle: {
                     flex: 1,
                     alignItems: "center",
                     justifyContent: "center",
+                    paddingTop: 8,
                 },
                 tabBarActiveTintColor: pastel.slate,
-                tabBarInactiveTintColor: `${text.muted}99`, // 60% opacity for inactive
+                tabBarInactiveTintColor: "rgba(93, 107, 107, 0.4)",
             }}
         >
             <Tabs.Screen
@@ -166,19 +143,17 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
     tabIconContainer: {
-        width: 48, // Tap area ≥44px ✓
-        height: 48,
         alignItems: "center",
         justifyContent: "center",
-    },
-    bubble: {
-        position: "absolute",
-        width: BUBBLE_SIZE,
-        height: BUBBLE_SIZE,
-        borderRadius: BUBBLE_SIZE / 2,
-        backgroundColor: pastel.mint,
+        paddingVertical: 4,
     },
     iconWrapper: {
-        zIndex: 1,
+        marginBottom: 4,
+    },
+    indicator: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: pastel.peach,
     },
 });

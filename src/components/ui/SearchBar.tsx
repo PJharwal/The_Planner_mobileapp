@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { borderRadius, pastel, background, text, shadows, spacing } from '../../constants/theme';
+import { borderRadius, gradients, text, spacing } from '../../constants/theme';
 
 interface SearchBarProps {
     value: string;
@@ -13,10 +14,10 @@ interface SearchBarProps {
 }
 
 /**
- * Soft-UI SearchBar Component
- * - Floating rounded search bar
- * - Soft elevation
- * - Clear button when text present
+ * Calm UI SearchBar Component
+ * - Warm gradient background
+ * - 20px rounded corners
+ * - Soft shadow
  */
 export function SearchBar({
     value,
@@ -32,18 +33,23 @@ export function SearchBar({
     };
 
     return (
-        <View style={[styles.container, style]}>
+        <LinearGradient
+            colors={gradients.warm}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.container, style]}
+        >
             <Ionicons
                 name="search-outline"
-                size={20}
-                color={text.muted}
+                size={18}
+                color="rgba(93, 107, 107, 0.65)"
                 style={styles.searchIcon}
             />
             <TextInput
                 value={value}
                 onChangeText={onChangeText}
                 placeholder={placeholder}
-                placeholderTextColor={text.muted}
+                placeholderTextColor="rgba(93, 107, 107, 0.65)"
                 style={styles.input}
                 autoFocus={autoFocus}
                 returnKeyType="search"
@@ -54,10 +60,10 @@ export function SearchBar({
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={styles.clearButton}
                 >
-                    <Ionicons name="close-circle" size={20} color={text.muted} />
+                    <Ionicons name="close-circle" size={18} color="rgba(93, 107, 107, 0.65)" />
                 </TouchableOpacity>
             )}
-        </View>
+        </LinearGradient>
     );
 }
 
@@ -65,13 +71,15 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: background.card,
-        borderRadius: borderRadius.lg,
-        paddingHorizontal: spacing.lg,
-        minHeight: 48,
-        ...shadows.soft,
-        borderWidth: 1,
-        borderColor: pastel.beige,
+        borderRadius: borderRadius.lg, // 20px
+        paddingHorizontal: 20,
+        minHeight: 56,
+        // Soft shadow
+        shadowColor: 'rgba(93, 107, 107, 1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 24,
+        elevation: 3,
     },
     searchIcon: {
         marginRight: spacing.sm,

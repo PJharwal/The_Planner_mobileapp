@@ -127,28 +127,28 @@ export default function ProfileScreen() {
 
                 {/* Stats */}
                 <View style={styles.statsRow}>
-                    <Card style={[styles.statCard, { borderColor: pastel.mint }]}>
+                    <Card gradient="mint" style={styles.statCard}>
                         <View style={styles.statContent}>
                             <Text variant="headlineSmall" style={styles.statValue}>
                                 {loadingStats ? "-" : stats.totalSubjects}
                             </Text>
-                            <Text variant="bodySmall" style={{ color: text.secondary }}>Subjects</Text>
+                            <Text variant="bodySmall" style={{ color: 'rgba(93, 107, 107, 0.65)' }}>Subjects</Text>
                         </View>
                     </Card>
-                    <Card style={[styles.statCard, { borderColor: pastel.peach }]}>
+                    <Card gradient="peach" style={styles.statCard}>
                         <View style={styles.statContent}>
                             <Text variant="headlineSmall" style={styles.statValue}>
                                 {loadingStats ? "-" : stats.completedTasks}
                             </Text>
-                            <Text variant="bodySmall" style={{ color: text.secondary }}>Completed</Text>
+                            <Text variant="bodySmall" style={{ color: 'rgba(93, 107, 107, 0.65)' }}>Completed</Text>
                         </View>
                     </Card>
-                    <Card style={[styles.statCard, { borderColor: pastel.mistBlue }]}>
+                    <Card gradient="sage" style={styles.statCard}>
                         <View style={styles.statContent}>
                             <Text variant="headlineSmall" style={styles.statValue}>
                                 {loadingStats ? "-" : `${stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0}%`}
                             </Text>
-                            <Text variant="bodySmall" style={{ color: text.secondary }}>Progress</Text>
+                            <Text variant="bodySmall" style={{ color: 'rgba(93, 107, 107, 0.65)' }}>Progress</Text>
                         </View>
                     </Card>
                 </View>
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     userInfo: { marginLeft: 16, flex: 1 },
     userName: { color: text.primary, fontWeight: "600" },
     statsRow: { flexDirection: "row", paddingHorizontal: 24, gap: 12, marginBottom: 20 },
-    statCard: { flex: 1, padding: 12, borderWidth: 1 },
+    statCard: { flex: 1, padding: 0 },
     statContent: { alignItems: "center", paddingVertical: 8 },
     statValue: { color: text.primary, fontWeight: "bold" },
     menuCard: { marginHorizontal: 24, marginBottom: 24, padding: 0, overflow: "hidden" },

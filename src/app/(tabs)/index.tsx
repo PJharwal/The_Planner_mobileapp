@@ -431,28 +431,28 @@ export default function HomeScreen() {
 
                     {/* Stats Cards */}
                     <View style={styles.statsRow}>
-                        <Card style={[styles.statCard, { borderLeftColor: pastel.mint, borderLeftWidth: 3 }]}>
+                        <Card gradient="mint" style={styles.statCard}>
                             <View style={styles.statHeader}>
-                                <Ionicons name="checkmark-circle" size={16} color={pastel.mint} />
-                                <Text variant="labelSmall" style={{ color: pastel.mint, marginLeft: 4 }}>Today</Text>
+                                <Ionicons name="checkmark-circle" size={18} color="#5D6B6B" />
+                                <Text variant="labelSmall" style={{ color: 'rgba(93, 107, 107, 0.65)', marginLeft: 4 }}>Today</Text>
                             </View>
                             <Text variant="titleLarge" style={styles.statValue}>{completedCount}/{totalCount}</Text>
-                            <ProgressBar progress={progress} color={pastel.mint} height={4} style={{ marginTop: 8 }} />
+                            <ProgressBar progress={progress} color="#5D6B6B" height={4} style={{ marginTop: 8 }} />
                         </Card>
-                        <Card style={[styles.statCard, { borderLeftColor: pastel.peach, borderLeftWidth: 3 }]}>
+                        <Card gradient="peach" style={styles.statCard}>
                             <View style={styles.statHeader}>
-                                <Ionicons name="flame" size={16} color="#D89080" />
-                                <Text variant="labelSmall" style={{ color: pastel.peach, marginLeft: 4 }}>Streak</Text>
+                                <Ionicons name="flame" size={18} color="#5D6B6B" />
+                                <Text variant="labelSmall" style={{ color: 'rgba(93, 107, 107, 0.65)', marginLeft: 4 }}>Streak</Text>
                             </View>
                             <Text variant="titleLarge" style={styles.statValue}>
                                 {isLoadingStreak ? "-" : `${streak}d`}
                             </Text>
                         </Card>
                         <TouchableOpacity onPress={() => (router as any).push("/focus")}>
-                            <Card style={[styles.statCard, { borderLeftColor: pastel.mistBlue, borderLeftWidth: 3 }]}>
+                            <Card gradient="sage" style={styles.statCard}>
                                 <View style={styles.statHeader}>
-                                    <Ionicons name="timer" size={16} color="#6AABAC" />
-                                    <Text variant="labelSmall" style={{ color: pastel.mint, marginLeft: 4 }}>Focus</Text>
+                                    <Ionicons name="timer" size={18} color="#5D6B6B" />
+                                    <Text variant="labelSmall" style={{ color: 'rgba(93, 107, 107, 0.65)', marginLeft: 4 }}>Focus</Text>
                                 </View>
                                 <Text variant="titleLarge" style={styles.statValue}>Start</Text>
                             </Card>

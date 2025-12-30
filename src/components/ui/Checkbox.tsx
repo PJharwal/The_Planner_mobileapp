@@ -1,14 +1,13 @@
 import React from 'react';
 import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withSpring,
     withTiming,
-    interpolateColor,
 } from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { borderRadius, pastel, semantic, text } from '../../constants/theme';
+import { pastel, gradients, text } from '../../constants/theme';
 
 interface CheckboxProps {
     checked: boolean;
@@ -19,10 +18,10 @@ interface CheckboxProps {
 }
 
 /**
- * Soft-UI Checkbox Component
- * - Rounded checkbox with gentle fill animation
- * - Soft success color
- * - No loud tick marks
+ * Calm UI Circular Checkbox Component
+ * - Fully circular design (rounded-full)
+ * - Gradient fill when checked (mint)
+ * - Inner dot indicator
  */
 export function Checkbox({ checked, onToggle, size = 'md', disabled = false, testID }: CheckboxProps) {
     const scale = useSharedValue(1);
@@ -55,19 +54,9 @@ export function Checkbox({ checked, onToggle, size = 'md', disabled = false, tes
 
     const animatedContainerStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
-        backgroundColor: interpolateColor(
-            progress.value,
-            [0, 1],
-            [pastel.white, semantic.success]
-        ),
-        borderColor: interpolateColor(
-            progress.value,
-            [0, 1],
-            [pastel.beige, semantic.success]
-        ),
     }));
 
-    const animatedCheckStyle = useAnimatedStyle(() => ({
+    const animatedInnerStyle = useAnimatedStyle(() => ({
         opacity: progress.value,
         transform: [{ scale: progress.value }],
     }));
@@ -86,19 +75,25 @@ export function Checkbox({ checked, onToggle, size = 'md', disabled = false, tes
                     {
                         width: boxSize,
                         height: boxSize,
-                        borderRadius: boxSize * 0.35,
                         opacity: disabled ? 0.5 : 1,
+                        backgroundColor: checked ? undefined : 'transparent',
+                        borderColor: checked ? gradients.mint[1] : 'rgba(93, 107, 107, 0.3)',
                     },
                     animatedContainerStyle,
                 ]}
             >
-                <Animated.View style={animatedCheckStyle}>
-                    <Ionicons
-                        name="checkmark"
-                        size={boxSize * 0.6}
-                        color={pastel.white}
-                    />
-                </Animated.View>
+                {checked && (
+                    <LinearGradient
+                        colors={gradients.mint}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.gradientFill, { width: boxSize - 4, height: boxSize - 4 }]}
+                    >
+                        <Animated.View style={animatedInnerStyle}>
+                            <View style={[styles.innerDot, { width: boxSize * 0.5, height: boxSize * 0.5 }]} />
+                        </Animated.View>
+                    </LinearGradient>
+                )}
             </Animated.View>
         </TouchableOpacity>
     );
@@ -109,6 +104,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
+        borderRadius: 9999, // Fully circular
+        overflow: 'hidden',
+    },
+    gradientFill: {
+        borderRadius: 9999,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    innerDot: {
+        backgroundColor: '#5D6B6B',
+        borderRadius: 9999,
     },
 });
 
