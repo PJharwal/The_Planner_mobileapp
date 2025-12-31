@@ -9,3 +9,14 @@ export { Chip } from './Chip';
 export { SearchBar } from './SearchBar';
 export { ProgressBar } from './ProgressBar';
 export { TaskRow } from './TaskRow';
+export { ToastContainer } from './Toast';
+
+// Learning Intelligence Components
+export { ConfidencePicker } from './ConfidencePicker';
+export { DifficultyTag } from './DifficultyTag';
+export { SessionQualityModal } from './SessionQualityModal';
+export { InsightCard } from './InsightCard';
+
+// Onboarding & Feature Components
+export { OnboardingTutorial, resetTutorial } from './OnboardingTutorial';
+export { FeatureDropdownCard } from './FeatureDropdownCard';

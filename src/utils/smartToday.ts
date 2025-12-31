@@ -1,14 +1,19 @@
 // Smart Today - AI-powered task suggestions
 // Suggests today's study plan based on priorities
 
-import { Task, Subject } from '../types';
 import { supabase } from '../lib/supabase';
 import { format, subDays, differenceInDays, parseISO } from 'date-fns';
+import type { Task } from '../types/database';
+import type { TaskWithRelations } from '../types/app';
+import { handleError } from '../lib/errorHandler';
 
-export type SuggestionReason = 'exam_soon' | 'missed_yesterday' | 'due_soon' | 'balanced' | 'high_priority';
+// Pagination constant to prevent loading too many tasks at once
+const MAX_TASKS_TO_FETCH = 100;
+
+export type SuggestionReason = 'exam_soon' | 'missed_yesterday' | 'due_soon' | 'balanced' | 'high_priority' | 'low_confidence' | 'needs_revision';
 
 export interface SuggestedTask {
-    task: Task;
+    task: TaskWithRelations;
     reason: SuggestionReason;
     reasonText: string;
     priority: number; // 1-100, higher = more urgent
@@ -30,8 +35,10 @@ export interface SmartTodayResult {
  * 3. High priority pending tasks
  * 4. Tasks with nearest due date
  * 5. Balance across subjects
+ * 
+ * PROFILE-AWARE: Respects user's daily task limit from their adaptive plan
  */
-export async function getSmartTodaySuggestions(userId: string): Promise<SmartTodayResult> {
+export async function getSmartTodaySuggestions(userId: string, maxSuggestions: number = 8): Promise<SmartTodayResult> {
     const today = format(new Date(), 'yyyy-MM-dd');
     const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
 
@@ -59,16 +66,17 @@ export async function getSmartTodaySuggestions(userId: string): Promise<SmartTod
                         .from('tasks')
                         .select('*, topics(name, subjects(name, color))')
                         .in('id', examTaskIds)
-                        .eq('is_completed', false);
+                        .eq('is_completed', false)
+                        .limit(MAX_TASKS_TO_FETCH);
 
-                    examTasks?.forEach(task => {
+                    (examTasks as TaskWithRelations[])?.forEach(task => {
                         suggestions.push({
                             task,
                             reason: 'exam_soon',
                             reasonText: `Exam in ${examDaysAway} days`,
                             priority: 100 - examDaysAway!,
-                            subjectName: (task as any).topics?.subjects?.name,
-                            subjectColor: (task as any).topics?.subjects?.color,
+                            subjectName: task.topics?.subjects?.name,
+                            subjectColor: task.topics?.subjects?.color,
                         });
                     });
                 }
@@ -82,17 +90,17 @@ export async function getSmartTodaySuggestions(userId: string): Promise<SmartTod
             .eq('is_completed', false)
             .lt('due_date', today)
             .order('due_date', { ascending: true })
-            .limit(5);
+            .limit(MAX_TASKS_TO_FETCH);
 
-        missedTasks?.forEach(task => {
+        (missedTasks as TaskWithRelations[])?.forEach(task => {
             if (!suggestions.find(s => s.task.id === task.id)) {
                 suggestions.push({
                     task,
                     reason: 'missed_yesterday',
                     reasonText: 'Missed - carry forward',
                     priority: 85,
-                    subjectName: (task as any).topics?.subjects?.name,
-                    subjectColor: (task as any).topics?.subjects?.color,
+                    subjectName: task.topics?.subjects?.name,
+                    subjectColor: task.topics?.subjects?.color,
                 });
             }
         });
@@ -103,17 +111,17 @@ export async function getSmartTodaySuggestions(userId: string): Promise<SmartTod
             .select('*, topics(name, subjects(name, color))')
             .eq('is_completed', false)
             .eq('priority', 'high')
-            .limit(5);
+            .limit(MAX_TASKS_TO_FETCH);
 
-        highPriorityTasks?.forEach(task => {
+        (highPriorityTasks as TaskWithRelations[])?.forEach(task => {
             if (!suggestions.find(s => s.task.id === task.id)) {
                 suggestions.push({
                     task,
                     reason: 'high_priority',
                     reasonText: 'High priority',
                     priority: 80,
-                    subjectName: (task as any).topics?.subjects?.name,
-                    subjectColor: (task as any).topics?.subjects?.color,
+                    subjectName: task.topics?.subjects?.name,
+                    subjectColor: task.topics?.subjects?.color,
                 });
             }
         });
@@ -125,9 +133,9 @@ export async function getSmartTodaySuggestions(userId: string): Promise<SmartTod
             .eq('is_completed', false)
             .gte('due_date', today)
             .order('due_date', { ascending: true })
-            .limit(10);
+            .limit(MAX_TASKS_TO_FETCH);
 
-        dueSoonTasks?.forEach(task => {
+        (dueSoonTasks as TaskWithRelations[])?.forEach(task => {
             if (!suggestions.find(s => s.task.id === task.id)) {
                 const daysUntilDue = task.due_date ? differenceInDays(parseISO(task.due_date), new Date()) : 30;
                 suggestions.push({
@@ -135,8 +143,8 @@ export async function getSmartTodaySuggestions(userId: string): Promise<SmartTod
                     reason: 'due_soon',
                     reasonText: daysUntilDue === 0 ? 'Due today' : `Due in ${daysUntilDue} days`,
                     priority: 70 - Math.min(daysUntilDue, 30),
-                    subjectName: (task as any).topics?.subjects?.name,
-                    subjectColor: (task as any).topics?.subjects?.color,
+                    subjectName: task.topics?.subjects?.name,
+                    subjectColor: task.topics?.subjects?.color,
                 });
             }
         });
@@ -155,11 +163,11 @@ export async function getSmartTodaySuggestions(userId: string): Promise<SmartTod
             .select('*', { count: 'exact', head: true })
             .eq('is_completed', false);
 
-        // Sort by priority and limit to top 8
+        // Sort by priority and limit to profile-based max (or default 8)
         suggestions.sort((a, b) => b.priority - a.priority);
 
         return {
-            suggestions: suggestions.slice(0, 8),
+            suggestions: suggestions.slice(0, maxSuggestions),
             totalPending: totalPending || 0,
             examDaysAway,
         };

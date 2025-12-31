@@ -1,7 +1,7 @@
 // Network Status Hook - Monitor connectivity and auto-sync
 import React, { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
-import { processQueue, getQueueCount } from '../utils/offlineQueue';
+import { offlineQueue } from '../utils/offlineQueue';
 
 interface NetworkStatus {
     isConnected: boolean;
@@ -20,7 +20,7 @@ export function useNetworkStatus(): NetworkStatus {
     const [isSyncing, setIsSyncing] = useState(false);
 
     const updateQueueCount = useCallback(async () => {
-        const count = await getQueueCount();
+        const count = await offlineQueue.getSize();
         setQueueCount(count);
     }, []);
 
@@ -29,7 +29,7 @@ export function useNetworkStatus(): NetworkStatus {
 
         setIsSyncing(true);
         try {
-            await processQueue();
+            await offlineQueue.process();
             await updateQueueCount();
         } catch (error) {
             console.error('[NetworkStatus] Sync error:', error);

@@ -2,21 +2,16 @@
 import { supabase } from '../lib/supabase';
 import { format } from 'date-fns';
 import { Alert, Clipboard, Platform } from 'react-native';
-
-export interface ExportData {
-    exportVersion: string;
-    exportedAt: string;
-    user: { id: string; email: string | undefined };
-    subjects: any[];
-    topics: any[];
-    subTopics: any[];
-    tasks: any[];
-    todayTasks: any[];
-    focusSessions: any[];
-    dailyNotes: any[];
-    dailyReflections: any[];
-    examModes: any[];
-}
+import { handleError } from '../lib/errorHandler';
+import type {
+    Subject,
+    Topic,
+    SubTopic,
+    Task,
+    FocusSession,
+    DailyNote
+} from '../types/database';
+import type { ExportData, DailyReflection, ExamMode } from '../types/app';
 
 /**
  * Fetch all user data for export
@@ -44,7 +39,7 @@ export async function fetchExportData(): Promise<ExportData | null> {
             supabase.from('topics').select('*').order('created_at'),
             supabase.from('sub_topics').select('*').order('created_at'),
             supabase.from('tasks').select('*').order('created_at'),
-            supabase.from('today_tasks').select('*').order('added_at'),
+            supabase.from('today_tasks').select('task:tasks(*)').order('added_at'),
             supabase.from('focus_sessions').select('*').order('started_at'),
             supabase.from('daily_notes').select('*').order('created_at'),
             supabase.from('daily_reflections').select('*').order('reflection_date'),
@@ -52,24 +47,23 @@ export async function fetchExportData(): Promise<ExportData | null> {
         ]);
 
         const exportData: ExportData = {
-            exportVersion: '1.0',
             exportedAt: new Date().toISOString(),
-            user: { id: user.id, email: user.email },
-            subjects: subjects || [],
-            topics: topics || [],
-            subTopics: subTopics || [],
-            tasks: tasks || [],
-            todayTasks: todayTasks || [],
-            focusSessions: focusSessions || [],
-            dailyNotes: dailyNotes || [],
-            dailyReflections: dailyReflections || [],
-            examModes: examModes || [],
+            version: '1.0',
+            subjects: (subjects as Subject[]) || [],
+            topics: (topics as Topic[]) || [],
+            subTopics: (subTopics as SubTopic[]) || [],
+            tasks: (tasks as Task[]) || [],
+            todayTasks: (todayTasks?.map((tt: any) => tt.task).filter(Boolean) as Task[]) || [],
+            focusSessions: (focusSessions as FocusSession[]) || [],
+            dailyNotes: (dailyNotes as DailyNote[]) || [],
+            dailyReflections: (dailyReflections as DailyReflection[]) || [],
+            examModes: (examModes as ExamMode[]) || [],
         };
 
         return exportData;
 
     } catch (error) {
-        console.error('[DataExport] Error fetching data:', error);
+        await handleError.silent(error, { context: 'dataExport.fetchExportData' });
         return null;
     }
 }
@@ -128,11 +122,11 @@ export async function exportAndShare(): Promise<{ success: boolean; message: str
             message: `Copied to clipboard!\n\n${summary}`
         };
 
-    } catch (error: any) {
-        console.error('[DataExport] Export error:', error);
+    } catch (error) {
+        await handleError.critical(error, 'Failed to export data. Please try again.');
         return {
             success: false,
-            message: error.message || 'Export failed'
+            message: 'Export failed'
         };
     }
 }
@@ -167,7 +161,7 @@ export async function getDataCounts(): Promise<Record<string, number>> {
             notes: notes || 0,
         };
     } catch (error) {
-        console.error('[DataExport] Error getting counts:', error);
+        await handleError.silent(error, { context: 'dataExport.getDataCounts' });
         return {};
     }
 }

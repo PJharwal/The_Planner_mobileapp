@@ -27,7 +27,7 @@ describe('Card Component', () => {
     // Test: Peach variant renders
     it('renders peach variant', () => {
         const { getByText } = render(
-            <Card variant="peach">
+            <Card gradient="peach">
                 <Text>Peach Card</Text>
             </Card>
         );
@@ -37,22 +37,14 @@ describe('Card Component', () => {
     // Test: Mint variant renders
     it('renders mint variant', () => {
         const { getByText } = render(
-            <Card variant="mint">
+            <Card gradient="mint">
                 <Text>Mint Card</Text>
             </Card>
         );
         expect(getByText('Mint Card')).toBeTruthy();
     });
 
-    // Test: Elevated variant renders
-    it('renders elevated variant', () => {
-        const { getByText } = render(
-            <Card variant="elevated">
-                <Text>Elevated Card</Text>
-            </Card>
-        );
-        expect(getByText('Elevated Card')).toBeTruthy();
-    });
+
 
     // Test: noPadding prop removes padding
     it('renders without padding when noPadding is true', () => {

@@ -1,9 +1,10 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
 import { borderRadius, pastel, text, shadows, spacing } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ButtonProps {
-    children: string;
+    children: React.ReactNode;
     onPress: () => void;
     variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
     size?: 'sm' | 'md' | 'lg';
@@ -13,6 +14,8 @@ interface ButtonProps {
     textStyle?: TextStyle;
     fullWidth?: boolean;
     testID?: string;
+    icon?: keyof typeof Ionicons.glyphMap;
+    textColor?: string;
 }
 
 /**
@@ -32,6 +35,8 @@ export function Button({
     textStyle,
     fullWidth = false,
     testID,
+    icon,
+    textColor,
 }: ButtonProps) {
     const getColors = () => {
         switch (variant) {
@@ -113,18 +118,32 @@ export function Button({
             {loading ? (
                 <ActivityIndicator size="small" color={colors.text} />
             ) : (
-                <Text
-                    style={[
-                        styles.text,
-                        { color: disabled ? text.disabled : colors.text },
-                        sizeStyles.text,
-                        textStyle,
-                    ]}
-                >
-                    {children}
-                </Text>
+                <>
+                    {icon && (
+                        <Ionicons
+                            name={icon}
+                            size={18}
+                            color={textColor || (disabled ? text.disabled : colors.text)}
+                            style={{ marginRight: 8 }}
+                        />
+                    )}
+                    {typeof children === 'string' ? (
+                        <Text
+                            style={[
+                                styles.text,
+                                { color: textColor || (disabled ? text.disabled : colors.text) },
+                                sizeStyles.text,
+                                textStyle,
+                            ]}
+                        >
+                            {children}
+                        </Text>
+                    ) : (
+                        children
+                    )}
+                </>
             )}
-        </TouchableOpacity>
+        </TouchableOpacity >
     );
 }
 

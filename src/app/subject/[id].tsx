@@ -20,7 +20,7 @@ export default function SubjectDetailScreen() {
 
     useEffect(() => {
         if (id) fetchSubjectWithTopics(id);
-    }, [id]);
+    }, [id, fetchSubjectWithTopics]);
 
     const handleCreateTopic = async () => {
         if (!newTopicName.trim()) return;

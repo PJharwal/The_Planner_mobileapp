@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, RefreshControl, ActivityIndicator, TouchableOpacity, Alert } from "react-native";
 import { Text, Portal, Modal, TextInput, Snackbar } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
@@ -77,7 +77,7 @@ export default function NotesScreen() {
         }
     };
 
-    const fetchTasksForDate = async () => {
+    const fetchTasksForDate = useCallback(async () => {
         if (!user) return;
         try {
             const dateStr = format(selectedDate, "yyyy-MM-dd");
@@ -90,13 +90,13 @@ export default function NotesScreen() {
         } catch (error) {
             console.warn("Tasks fetch failed");
         }
-    };
+    }, [selectedDate, user]);
 
-    const fetchDailyNotes = () => {
+    const fetchDailyNotes = useCallback(() => {
         const dateStr = format(selectedDate, "yyyy-MM-dd");
         const filtered = notes.filter(note => note.date === dateStr);
         setDailyNotes(filtered);
-    };
+    }, [selectedDate, notes]);
 
     useEffect(() => {
         const loadAll = async () => {
@@ -110,7 +110,7 @@ export default function NotesScreen() {
     useEffect(() => {
         fetchDailyNotes();
         fetchTasksForDate();
-    }, [selectedDate, notes]);
+    }, [fetchDailyNotes, fetchTasksForDate]);
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -373,7 +373,7 @@ export default function NotesScreen() {
 
                         {/* Future Date Banner */}
                         {isFutureDate && (
-                            <Card variant="mint" style={styles.futureBanner}>
+                            <Card gradient="mint" style={styles.futureBanner}>
                                 <View style={styles.futureBannerContent}>
                                     <Ionicons name="calendar-outline" size={20} color={text.primary} />
                                     <Text variant="bodySmall" style={{ color: text.primary, marginLeft: 8 }}>
@@ -415,7 +415,7 @@ export default function NotesScreen() {
                             <View style={styles.notesContainer}>
                                 <Text variant="labelLarge" style={styles.sectionLabel}>Notes</Text>
                                 {dailyNotes.map((note) => (
-                                    <Card key={note.id} style={styles.noteCard} variant="mint">
+                                    <Card key={note.id} style={styles.noteCard} gradient="mint">
                                         <View style={styles.noteHeader}>
                                             <Text variant="titleMedium" style={{ color: text.primary, flex: 1 }}>{note.title}</Text>
                                             <View style={styles.noteActions}>
@@ -453,41 +453,52 @@ export default function NotesScreen() {
 
                 {/* Note Modal */}
                 <Portal>
-                    <Modal visible={noteModalVisible} onDismiss={() => { setNoteModalVisible(false); setEditingNote(null); }} contentContainerStyle={styles.modal}>
-                        <View style={styles.modalHeader}>
-                            <Text variant="titleLarge" style={styles.modalTitle}>{editingNote ? "Edit Note" : "New Note"}</Text>
-                            <Text variant="bodySmall" style={{ color: text.secondary }}>{format(selectedDate, "MMMM d, yyyy")}</Text>
-                        </View>
-                        <TextInput
-                            label="Title"
-                            value={noteTitle}
-                            onChangeText={setNoteTitle}
-                            mode="outlined"
-                            style={styles.modalInput}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                        />
-                        <TextInput
-                            label="Content (optional)"
-                            value={noteContent}
-                            onChangeText={setNoteContent}
-                            mode="outlined"
-                            multiline
-                            numberOfLines={4}
-                            style={styles.modalInput}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                        />
-                        <Button
-                            onPress={handleSaveNote}
-                            loading={isSaving}
-                            disabled={isSaving || !noteTitle.trim()}
-                            fullWidth
+                    <Modal visible={noteModalVisible} onDismiss={() => { setNoteModalVisible(false); setEditingNote(null); }} contentContainerStyle={{ padding: 20 }}>
+                        <KeyboardAvoidingView
+                            behavior={Platform.OS === "ios" ? "position" : "height"}
+                            keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
                         >
-                            {editingNote ? "Update Note" : "Save Note"}
-                        </Button>
+                            <View style={{ backgroundColor: background.card, borderRadius: borderRadius.lg, padding: 24 }}>
+                                <ScrollView
+                                    showsVerticalScrollIndicator={false}
+                                    keyboardShouldPersistTaps="handled"
+                                >
+                                    <View style={styles.modalHeader}>
+                                        <Text variant="titleLarge" style={styles.modalTitle}>{editingNote ? "Edit Note" : "New Note"}</Text>
+                                        <Text variant="bodySmall" style={{ color: text.secondary }}>{format(selectedDate, "MMMM d, yyyy")}</Text>
+                                    </View>
+                                    <TextInput
+                                        label="Title"
+                                        value={noteTitle}
+                                        onChangeText={setNoteTitle}
+                                        mode="outlined"
+                                        style={styles.modalInput}
+                                        outlineColor={pastel.beige}
+                                        activeOutlineColor={pastel.mint}
+                                        textColor={text.primary}
+                                    />
+                                    <TextInput
+                                        label="Content (optional)"
+                                        value={noteContent}
+                                        onChangeText={setNoteContent}
+                                        mode="outlined"
+                                        multiline
+                                        style={[styles.modalInput, { maxHeight: 200 }]}
+                                        outlineColor={pastel.beige}
+                                        activeOutlineColor={pastel.mint}
+                                        textColor={text.primary}
+                                    />
+                                    <Button
+                                        onPress={handleSaveNote}
+                                        loading={isSaving}
+                                        disabled={isSaving || !noteTitle.trim()}
+                                        fullWidth
+                                    >
+                                        {editingNote ? "Update Note" : "Save Note"}
+                                    </Button>
+                                </ScrollView>
+                            </View>
+                        </KeyboardAvoidingView>
                     </Modal>
                 </Portal>
 

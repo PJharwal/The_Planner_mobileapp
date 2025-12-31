@@ -1,21 +1,27 @@
 import { useState, useEffect } from "react";
 import { View, ScrollView, StyleSheet, AppState, Platform } from "react-native";
-import { Text, IconButton, Portal, Modal, TextInput } from "react-native-paper";
-import { Stack, useRouter } from "expo-router";
+import { Text, IconButton, Portal, Modal, TextInput, Snackbar } from "react-native-paper";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useTimerStore, formatTime, formatMinutes, formatCountdown, TIMER_PRESETS } from "../../store/timerStore";
 import { useTaskStore } from "../../store/taskStore";
 import { getSmartTodaySuggestions, SuggestedTask } from "../../utils/smartToday";
 import { useAuthStore } from "../../store/authStore";
+import { useProfileStore } from "../../store/profileStore";
+import { ADAPTIVE_PLANS } from "../../utils/adaptivePlans";
 
 // Design tokens
 import { focus, pastel, text, spacing, borderRadius, shadows } from "../../constants/theme";
 // UI Components
-import { Card, Button, Chip } from "../../components/ui";
+import { Card, Button, Chip, SessionQualityModal } from "../../components/ui";
+import { saveFocusSession } from "../../utils/sessionTaskLinker";
+import { SessionQualityPrompt } from "../../components/session/SessionQualityPrompt";
 
 export default function FocusModeScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
     const { user } = useAuthStore();
+    const { profile } = useProfileStore();
     const {
         isRunning,
         isPaused,
@@ -31,15 +37,68 @@ export default function FocusModeScreen() {
         fetchTodayTotal,
         getTimeRemaining,
         getProgress,
+        showQualityPrompt,
+        lastSessionMinutes,
+        submitSessionQuality,
+        dismissQualityPrompt,
     } = useTimerStore();
     const { toggleTaskComplete } = useTaskStore();
 
+    // Get default session length from user's adaptive plan
+    const getDefaultSessionLength = () => {
+        if (!profile?.selected_plan_id) return 25 * 60; // Default 25 min
+        const selectedPlan = ADAPTIVE_PLANS.find(p => p.id === profile.selected_plan_id);
+        return selectedPlan ? selectedPlan.default_session_length * 60 : 25 * 60;
+    };
+
     const [suggestions, setSuggestions] = useState<SuggestedTask[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedDuration, setSelectedDuration] = useState(25 * 60);
+    const [selectedDuration, setSelectedDuration] = useState(getDefaultSessionLength());
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [customMinutes, setCustomMinutes] = useState("30");
     const [selectedTask, setSelectedTask] = useState<SuggestedTask | null>(null);
+    const [breakSnackbarVisible, setBreakSnackbarVisible] = useState(false);
+    const [showLocalQualityPrompt, setShowLocalQualityPrompt] = useState(false);
+    const [completedSessionMinutes, setCompletedSessionMinutes] = useState(0);
+    const [pendingSessionQuality, setPendingSessionQuality] = useState<'focused' | 'okay' | 'distracted' | null>(null);
+
+    // Session config from route params (when started from Home)
+    const sessionConfig = {
+        subjectId: typeof params.subjectId === 'string' ? params.subjectId : '',
+        topicId: typeof params.topicId === 'string' && params.topicId ? params.topicId : undefined,
+        subTopicId: typeof params.subTopicId === 'string' && params.subTopicId ? params.subTopicId : undefined,
+        note: typeof params.note === 'string' && params.note ? params.note : undefined,
+    };
+
+    // Update default duration when profile changes
+    useEffect(() => {
+        setSelectedDuration(getDefaultSessionLength());
+    }, [profile?.selected_plan_id]);
+
+    // Feature: Break Guidance (profile-aware)
+    useEffect(() => {
+        const selectedPlan = profile?.selected_plan_id
+            ? ADAPTIVE_PLANS.find(p => p.id === profile.selected_plan_id)
+            : null;
+        const breakFrequency = selectedPlan?.break_frequency || 60; // minutes
+
+        // Suggest break based on profile
+        if (elapsed > 0 && elapsed % (breakFrequency * 60) === 0) {
+            setBreakSnackbarVisible(true);
+        }
+    }, [elapsed, profile?.selected_plan_id]);
+
+    // Auto-start if coming from Home with session config
+    useEffect(() => {
+        if (params.autoStart === 'true' && sessionConfig.subjectId && !isRunning) {
+            const duration = params.duration ? parseInt(params.duration as string) * 60 : selectedDuration;
+            setSelectedDuration(duration);
+            // Use setTimeout to ensure state is ready
+            setTimeout(() => {
+                startTimer(duration);
+            }, 100);
+        }
+    }, [params.autoStart]);
 
     useEffect(() => {
         if (user) loadData();
@@ -61,12 +120,9 @@ export default function FocusModeScreen() {
         return () => clearInterval(interval);
     }, [isRunning, tick]);
 
-    useEffect(() => {
-        const subscription = AppState.addEventListener("change", (nextState) => {
-            if (nextState === "background" && isRunning) pauseTimer();
-        });
-        return () => subscription?.remove();
-    }, [isRunning]);
+    // AppState listener removed to allow timer to run in background
+    // Timer store uses diff-based calculation (now - start) so it auto-recovers on resume
+
 
     const handleSelectTask = (suggestion: SuggestedTask) => setSelectedTask(suggestion);
 
@@ -89,8 +145,48 @@ export default function FocusModeScreen() {
     };
 
     const handleStop = async () => {
+        const sessionMinutes = Math.floor(elapsed / 60);
+        const requireQuality = profile?.selected_plan_id
+            ? ADAPTIVE_PLANS.find(p => p.id === profile.selected_plan_id)?.require_session_quality
+            : false;
+
+        // Save session if we have session config from Home
+        if (sessionConfig.subjectId && elapsed > 0) {
+            // Show quality prompt if required by plan
+            if (requireQuality && sessionMinutes >= 1) {
+                setCompletedSessionMinutes(sessionMinutes);
+                setShowLocalQualityPrompt(true);
+            } else {
+                // Save without quality
+                await saveFocusSession(
+                    {
+                        ...sessionConfig,
+                        sessionDuration: Math.floor(targetDuration / 60),
+                    },
+                    elapsed,
+                    undefined
+                );
+            }
+        }
+
         await stopTimer();
         await loadData();
+    };
+
+    const handleQualitySelect = async (quality: 'focused' | 'okay' | 'distracted') => {
+        // Save session with quality rating
+        if (sessionConfig.subjectId) {
+            await saveFocusSession(
+                {
+                    ...sessionConfig,
+                    sessionDuration: completedSessionMinutes,
+                },
+                completedSessionMinutes * 60,
+                quality
+            );
+        }
+        setShowLocalQualityPrompt(false);
+        setPendingSessionQuality(null);
     };
 
     const handleCustomDuration = () => {
@@ -307,6 +403,38 @@ export default function FocusModeScreen() {
                     </Button>
                 </Modal>
             </Portal>
+
+            {/* Session Quality Modal */}
+            <SessionQualityModal
+                visible={showQualityPrompt}
+                onDismiss={dismissQualityPrompt}
+                onSubmit={submitSessionQuality}
+                sessionMinutes={lastSessionMinutes}
+            />
+
+            {/* New Session Quality Prompt (for profile-aware plans) */}
+            <SessionQualityPrompt
+                visible={showLocalQualityPrompt}
+                sessionMinutes={completedSessionMinutes}
+                onQualitySelect={handleQualitySelect}
+                onDismiss={() => setShowLocalQualityPrompt(false)}
+            />
+
+            <Snackbar
+                visible={breakSnackbarVisible}
+                onDismiss={() => setBreakSnackbarVisible(false)}
+                duration={5000}
+                action={{
+                    label: "Take Break",
+                    onPress: () => {
+                        pauseTimer();
+                        setBreakSnackbarVisible(false);
+                    }
+                }}
+                style={{ backgroundColor: focus.accent, marginBottom: 100 }}
+            >
+                You've been focused for a while. Time to stretch?
+            </Snackbar>
         </View>
     );
 }

@@ -7,6 +7,8 @@ import { useTaskStore } from "../../store/taskStore";
 import { useAuthStore } from "../../store/authStore";
 import { useReflectionStore } from "../../store/reflectionStore";
 import { useUserStore, getGreeting } from "../../store/userStore";
+import { useProfileStore } from "../../store/profileStore";
+import { ADAPTIVE_PLANS } from "../../utils/adaptivePlans";
 import { Task } from "../../types";
 import { format, subDays } from "date-fns";
 import { supabase } from "../../lib/supabase";
@@ -19,6 +21,7 @@ import { addSubjectToToday, addTopicToToday, addSubTopicToToday, addTaskToToday 
 import { pastel, background, text, semantic, priority, spacing, borderRadius, shadows, paperTheme } from "../../constants/theme";
 // UI Components
 import { Card, Checkbox, Chip, Button, SearchBar, ProgressBar, TaskRow } from "../../components/ui";
+import { StartSessionModal, SessionConfig } from "../../components/session/StartSessionModal";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -101,6 +104,10 @@ export default function HomeScreen() {
     const [editName, setEditName] = useState("");
     const [isSavingName, setIsSavingName] = useState(false);
 
+    // Start Session modal
+    const [startSessionModalVisible, setStartSessionModalVisible] = useState(false);
+    const { profile } = useProfileStore();
+
     // Task edit modal
     const [taskEditVisible, setTaskEditVisible] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -113,6 +120,9 @@ export default function HomeScreen() {
 
     // Smart Today expanded state
     const [smartExpanded, setSmartExpanded] = useState(false);
+
+    // Features expanded state
+    const [featuresExpanded, setFeaturesExpanded] = useState(true);
 
     // Search snackbar
     const [searchSnackbarVisible, setSearchSnackbarVisible] = useState(false);
@@ -209,23 +219,17 @@ export default function HomeScreen() {
         if (!quickTaskTitle.trim() || !user) return;
         setIsAddingTask(true);
         try {
-            // Get first sub_topic with its topic_id
+            // Try to get a sub_topic, but don't require it
             const { data: subTopics } = await supabase
                 .from("sub_topics")
                 .select("id, topic_id")
                 .limit(1);
 
-            if (!subTopics || subTopics.length === 0) {
-                // No sub-topics exist yet
-                setIsAddingTask(false);
-                return;
-            }
-
-            // Insert task with all required foreign keys
+            // Insert task - works with or without subject/topic
             const { error } = await supabase.from("tasks").insert({
                 user_id: user.id,
-                sub_topic_id: subTopics[0].id,
-                topic_id: subTopics[0].topic_id,
+                sub_topic_id: subTopics && subTopics.length > 0 ? subTopics[0].id : null,
+                topic_id: subTopics && subTopics.length > 0 ? subTopics[0].topic_id : null,
                 title: quickTaskTitle.trim(),
                 priority: "medium",
                 due_date: format(new Date(), "yyyy-MM-dd"),
@@ -234,6 +238,8 @@ export default function HomeScreen() {
             if (!error) {
                 setQuickTaskTitle("");
                 await Promise.all([fetchTodayTasks(), fetchSmartToday()]);
+            } else {
+                console.error("Error adding task:", error);
             }
         } catch (error) {
             console.error(error);
@@ -266,6 +272,21 @@ export default function HomeScreen() {
         setReflectionVisible(false);
         setReflectionLearned("");
         setReflectionDifficult("");
+    };
+
+    const handleStartSession = (config: SessionConfig) => {
+        // Navigate to Focus Mode with session configuration
+        router.push({
+            pathname: '/focus',
+            params: {
+                duration: config.duration.toString(),
+                subjectId: config.subjectId,
+                topicId: config.topicId || '',
+                subTopicId: config.subTopicId || '',
+                note: config.note || '',
+                autoStart: 'true',
+            },
+        });
     };
 
     const handleOpenNameModal = () => {
@@ -416,6 +437,30 @@ export default function HomeScreen() {
                             </Card>
                         )}
                     </View>
+
+                    {/* Start Focus Session Card - NEW */}
+                    {profile && (
+                        <Card style={styles.startSessionCard}>
+                            <TouchableOpacity
+                                onPress={() => setStartSessionModalVisible(true)}
+                                style={styles.sessionCardContent}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.sessionIcon}>
+                                    <Ionicons name="play-circle" size={32} color={pastel.mint} />
+                                </View>
+                                <View style={styles.sessionInfo}>
+                                    <Text variant="titleMedium" style={styles.sessionTitle}>
+                                        Start Focus Session
+                                    </Text>
+                                    <Text variant="bodySmall" style={styles.sessionSubtitle}>
+                                        {ADAPTIVE_PLANS.find(p => p.id === profile.selected_plan_id)?.default_session_length || 25} min · Based on your plan
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                            </TouchableOpacity>
+                        </Card>
+                    )}
 
                     {/* Exam Alert */}
                     {examDaysAway !== null && examDaysAway <= 7 && (
@@ -599,6 +644,97 @@ export default function HomeScreen() {
                         </View>
                     </Card>
 
+                    {/* Explore Features Section */}
+                    <View style={styles.section}>
+                        <TouchableOpacity onPress={() => setFeaturesExpanded(!featuresExpanded)} activeOpacity={0.7}>
+                            <View style={styles.sectionHeader}>
+                                <View style={styles.sectionTitleRow}>
+                                    <Ionicons name="apps" size={20} color={pastel.mint} />
+                                    <Text variant="titleMedium" style={styles.sectionTitle}>Explore Features</Text>
+                                </View>
+                                <Ionicons
+                                    name={featuresExpanded ? "chevron-up" : "chevron-down"}
+                                    size={20}
+                                    color={text.muted}
+                                />
+                            </View>
+                        </TouchableOpacity>
+
+                        {featuresExpanded && (
+                            <View style={{ gap: 12, marginTop: 12 }}>
+                                {/* Focus Timer */}
+                                <TouchableOpacity onPress={() => router.push('/focus')} activeOpacity={0.7}>
+                                    <Card style={styles.featureCard}>
+                                        <View style={styles.featureIcon}>
+                                            <Ionicons name="timer" size={24} color={pastel.mint} />
+                                        </View>
+                                        <View style={styles.featureContent}>
+                                            <Text variant="titleSmall" style={styles.featureTitle}>Focus Timer</Text>
+                                            <Text variant="bodySmall" style={styles.featureDesc}>Pomodoro sessions with quality tracking</Text>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                                    </Card>
+                                </TouchableOpacity>
+
+                                {/* Analytics */}
+                                <TouchableOpacity onPress={() => router.push('/analytics')} activeOpacity={0.7}>
+                                    <Card style={styles.featureCard}>
+                                        <View style={styles.featureIcon}>
+                                            <Ionicons name="analytics" size={24} color={pastel.slate} />
+                                        </View>
+                                        <View style={styles.featureContent}>
+                                            <Text variant="titleSmall" style={styles.featureTitle}>Analytics</Text>
+                                            <Text variant="bodySmall" style={styles.featureDesc}>Track progress and insights</Text>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                                    </Card>
+                                </TouchableOpacity>
+
+                                {/* Subjects */}
+                                <TouchableOpacity onPress={() => router.push('/subjects')} activeOpacity={0.7}>
+                                    <Card style={styles.featureCard}>
+                                        <View style={styles.featureIcon}>
+                                            <Ionicons name="book" size={24} color={pastel.peach} />
+                                        </View>
+                                        <View style={styles.featureContent}>
+                                            <Text variant="titleSmall" style={styles.featureTitle}>Subjects & Topics</Text>
+                                            <Text variant="bodySmall" style={styles.featureDesc}>Organize by subject and topic</Text>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                                    </Card>
+                                </TouchableOpacity>
+
+                                {/* Notes */}
+                                <TouchableOpacity onPress={() => router.push('/notes')} activeOpacity={0.7}>
+                                    <Card style={styles.featureCard}>
+                                        <View style={styles.featureIcon}>
+                                            <Ionicons name="document-text" size={24} color={pastel.slate} />
+                                        </View>
+                                        <View style={styles.featureContent}>
+                                            <Text variant="titleSmall" style={styles.featureTitle}>Notes</Text>
+                                            <Text variant="bodySmall" style={styles.featureDesc}>Quick notes for each day</Text>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                                    </Card>
+                                </TouchableOpacity>
+
+                                {/* Profile Settings */}
+                                <TouchableOpacity onPress={() => router.push('/profile-settings')} activeOpacity={0.7}>
+                                    <Card style={styles.featureCard}>
+                                        <View style={styles.featureIcon}>
+                                            <Ionicons name="person" size={24} color={pastel.mint} />
+                                        </View>
+                                        <View style={styles.featureContent}>
+                                            <Text variant="titleSmall" style={styles.featureTitle}>Study Profile</Text>
+                                            <Text variant="bodySmall" style={styles.featureDesc}>Personalize your study plan</Text>
+                                        </View>
+                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                                    </Card>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </View>
+
                 </ScrollView>
 
                 {/* Modals */}
@@ -705,6 +841,18 @@ export default function HomeScreen() {
                     </Modal>
                 </Portal>
 
+                {/* Start Session Modal */}
+                <StartSessionModal
+                    visible={startSessionModalVisible}
+                    onDismiss={() => setStartSessionModalVisible(false)}
+                    onStart={handleStartSession}
+                    defaultDuration={
+                        profile?.selected_plan_id
+                            ? (ADAPTIVE_PLANS.find(p => p.id === profile.selected_plan_id)?.default_session_length || 25)
+                            : 25
+                    }
+                />
+
                 <Snackbar
                     visible={searchSnackbarVisible}
                     onDismiss={() => setSearchSnackbarVisible(false)}
@@ -763,4 +911,49 @@ const styles = StyleSheet.create({
     modalInput: { marginBottom: 12, backgroundColor: background.primary },
     modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 8 },
     priorityRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
+    startSessionCard: {
+        marginHorizontal: 24,
+        marginBottom: 16,
+        marginTop: 8,
+    },
+    sessionCardContent: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: spacing.md,
+    },
+    sessionIcon: {
+        marginRight: spacing.md,
+    },
+    sessionInfo: {
+        flex: 1,
+    },
+    sessionTitle: {
+        color: text.primary,
+        fontWeight: "600",
+    },
+    sessionSubtitle: {
+        color: text.secondary,
+        marginTop: 2,
+    },
+
+    // Feature Cards
+    featureCard: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: spacing.md,
+    },
+    featureIcon: {
+        marginRight: spacing.md,
+    },
+    featureContent: {
+        flex: 1,
+    },
+    featureTitle: {
+        color: text.primary,
+        fontWeight: "600",
+        marginBottom: 2,
+    },
+    featureDesc: {
+        color: text.secondary,
+    },
 });

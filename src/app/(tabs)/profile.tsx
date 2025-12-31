@@ -3,12 +3,15 @@ import { Text, Avatar, Divider, Snackbar } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
+import { useProfileStore } from "../../store/profileStore";
+import { ADAPTIVE_PLANS } from "../../utils/adaptivePlans";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { exportAndShare } from "../../utils/dataExport";
 
+import { LinearGradient } from "expo-linear-gradient";
 // Design tokens
-import { pastel, background, text, semantic, spacing, borderRadius, shadows } from "../../constants/theme";
+import { pastel, background, text, semantic, spacing, borderRadius, shadows, gradients } from "../../constants/theme";
 // UI Components
 import { Card, Button } from "../../components/ui";
 
@@ -21,14 +24,18 @@ interface UserStats {
 export default function ProfileScreen() {
     const router = useRouter();
     const { user, logout, isLoading } = useAuthStore();
+    const { profile, fetchProfile } = useProfileStore();
     const [stats, setStats] = useState<UserStats>({ totalTasks: 0, completedTasks: 0, totalSubjects: 0 });
     const [loadingStats, setLoadingStats] = useState(true);
     const [isExporting, setIsExporting] = useState(false);
     const [snackbarVisible, setSnackbarVisible] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState("");
 
+
+
     useEffect(() => {
         fetchStats();
+        fetchProfile();
     }, [user]);
 
     const fetchStats = async () => {
@@ -86,9 +93,16 @@ export default function ProfileScreen() {
         }
     };
 
+    const currentPlan = profile?.selected_plan_id
+        ? ADAPTIVE_PLANS.find(p => p.id === profile.selected_plan_id)
+        : null;
+
     const menuItems = [
+        { icon: "person-outline" as const, title: "Edit Profile", subtitle: "Personalize your study settings", onPress: () => router.push("/profile-settings") },
+        { icon: "analytics-outline" as const, title: "Insights", subtitle: "View study patterns & progress", onPress: () => router.push("/analytics") },
         { icon: "timer-outline" as const, title: "Exam Mode", subtitle: "Set up exam countdown", onPress: () => router.push("/exam/setup") },
         { icon: "download-outline" as const, title: "Export Data", subtitle: "Backup your study data", onPress: handleExportData, loading: isExporting },
+        { icon: "shield-checkmark-outline" as const, title: "Data & Privacy", subtitle: "How we handle your data", onPress: () => router.push("/data-trust") },
     ];
 
     if (isLoading) {
@@ -153,6 +167,22 @@ export default function ProfileScreen() {
                     </Card>
                 </View>
 
+                {/* Current Plan Badge (if profile exists) */}
+                {currentPlan && (
+                    <Card style={styles.planCard}>
+                        <View style={styles.planContent}>
+                            <Text style={styles.planEmoji}>{currentPlan.emoji}</Text>
+                            <View style={styles.planInfo}>
+                                <Text variant="bodySmall" style={styles.planLabel}>Your Study Plan</Text>
+                                <Text variant="titleSmall" style={styles.planName}>{currentPlan.name}</Text>
+                                <Text variant="bodySmall" style={styles.planDescription}>{currentPlan.description}</Text>
+                            </View>
+                        </View>
+                    </Card>
+                )}
+
+
+
                 {/* Menu Items */}
                 <Card style={styles.menuCard}>
                     {menuItems.map((item, index) => (
@@ -192,6 +222,8 @@ export default function ProfileScreen() {
             >
                 {snackbarMessage}
             </Snackbar>
+
+
         </View>
     );
 }
@@ -218,4 +250,33 @@ const styles = StyleSheet.create({
     menuDesc: { color: text.secondary },
     divider: { backgroundColor: pastel.beige },
     version: { textAlign: "center", color: text.muted, marginTop: 24 },
+    planCard: {
+        marginHorizontal: 24,
+        marginBottom: 20,
+        padding: 16,
+        backgroundColor: `${pastel.mint}15`
+    },
+    planContent: {
+        flexDirection: "row",
+        alignItems: "center"
+    },
+    planEmoji: {
+        fontSize: 32,
+        marginRight: 12
+    },
+    planInfo: {
+        flex: 1
+    },
+    planLabel: {
+        color: text.secondary,
+        marginBottom: 2
+    },
+    planName: {
+        color: text.primary,
+        fontWeight: "600",
+        marginBottom: 2
+    },
+    planDescription: {
+        color: text.secondary
+    },
 });
