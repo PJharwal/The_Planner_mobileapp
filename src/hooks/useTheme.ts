@@ -1,5 +1,6 @@
 /**
  * useTheme Hook - Access theme colors based on current mode
+ * Comprehensive theming with dark mode support
  */
 import { useMemo } from 'react';
 import { useThemeStore } from '../store/themeStore';
@@ -10,7 +11,9 @@ import {
     semantic,
     focus,
     darkMode,
-    priority
+    priority,
+    cardSystem,
+    animation,
 } from '../constants/theme';
 
 export function useTheme() {
@@ -26,11 +29,21 @@ export function useTheme() {
                 focus: darkMode.focus,
                 priority: darkMode.priority,
                 components: darkMode.components,
-                navigation: darkMode.navigation,
+                tabBar: darkMode.tabBar,
+                searchBar: darkMode.searchBar,
+                tints: darkMode.tints,
+                streak: darkMode.streak,
+                heatmap: darkMode.heatmap,
             };
         }
         return {
-            background,
+            background: {
+                ...background,
+                gradientTop: '#F7F7F7',
+                gradientMiddle: '#F5F5F5',
+                gradientBottom: '#F3F3F3',
+                divider: 'rgba(93, 107, 107, 0.12)',
+            },
             text,
             pastel,
             semantic,
@@ -42,11 +55,32 @@ export function useTheme() {
                 buttonPrimaryBg: pastel.mint,
                 buttonPrimaryText: text.primary,
                 buttonSecondaryBorder: pastel.beige,
+                buttonSecondaryBg: 'transparent',
             },
-            navigation: {
-                background: background.primary,
+            tabBar: {
+                background: 'rgba(255,255,255,0.95)',
                 activeIcon: text.primary,
                 inactiveIcon: text.muted,
+                activeDot: pastel.mint,
+            },
+            searchBar: {
+                background: background.secondary,
+                border: 'rgba(93, 107, 107, 0.12)',
+                placeholder: text.muted,
+            },
+            tints: {
+                mint: `${pastel.mint}20`,
+                peach: `${pastel.peach}20`,
+                mistBlue: `${pastel.mistBlue}20`,
+                beige: `${pastel.beige}20`,
+            },
+            streak: {
+                glow: `${pastel.peach}60`,
+                icon: pastel.peach,
+            },
+            heatmap: {
+                empty: background.secondary,
+                active: pastel.mint,
             },
         };
     }, [mode]);
@@ -56,5 +90,7 @@ export function useTheme() {
         toggleTheme,
         isDark: isDark(),
         colors,
+        cardSystem,
+        animation,
     };
 }

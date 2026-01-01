@@ -117,88 +117,156 @@ export const gradients = {
 };
 
 // ============================================
-// DARK MODE COLORS (Professional Study Mode)
+// DARK MODE COLORS (Premium Study System)
 // ============================================
-// Philosophy: Calm, premium, distraction-free
+// Philosophy: Calm, premium, discipline-focused
 // Designed for hours of continuous usage
-// Reduces eye strain and mental fatigue
+// No visual noise, no gamified chaos
 // ============================================
 export const darkMode = {
-    // Background colors - No pure black, no gradients in core screens
+    // BACKGROUND SYSTEM - Soft charcoal gradient, never pure black
     background: {
-        primary: '#0E0F12',           // App root background
-        secondary: '#15171C',         // Primary surface (Cards, Lists)
-        card: '#15171C',              // Primary surface (Cards, Lists)
-        elevated: '#1B1E24',          // Elevated surface (Sheets, Modals)
-        cardAlt: '#1B1E24',           // Elevated alternative
-        cardMint: '#15171C',          // Same as card (no tinting)
-        overlay: 'rgba(0, 0, 0, 0.6)',// Modal overlay
-        divider: 'rgba(255, 255, 255, 0.06)', // Hairline dividers
+        // Gradient colors (top to bottom)
+        gradientTop: '#0E1113',
+        gradientMiddle: '#0C0F11',
+        gradientBottom: '#0A0D0F',
+        // Solid fallbacks
+        primary: '#0C0F11',              // App root background
+        secondary: 'rgba(255,255,255,0.06)', // Default card surface
+        card: 'rgba(255,255,255,0.06)',  // Card container
+        elevated: '#1B1E24',             // Sheets, Modals
+        cardAlt: '#1B1E24',              // Elevated alternative
+        cardMint: 'rgba(201,221,220,0.18)', // Mint tinted (16-20%)
+        cardPeach: 'rgba(247,203,201,0.18)', // Peach tinted
+        cardMist: 'rgba(213,229,229,0.18)', // Mist Blue tinted
+        cardBeige: 'rgba(233,221,216,0.16)', // Beige tinted
+        overlay: 'rgba(0, 0, 0, 0.5)',   // Modal dim background
+        divider: 'rgba(255, 255, 255, 0.08)', // Divider lines
     },
-    // Text colors - No pure white, proper contrast ratios
+    // TEXT COLORS - No pure white
     text: {
         primary: 'rgba(255, 255, 255, 0.92)',   // Most content
-        secondary: 'rgba(255, 255, 255, 0.68)', // Descriptions, subtitles
-        muted: 'rgba(255, 255, 255, 0.42)',     // Dates, labels, hints
+        secondary: 'rgba(255, 255, 255, 0.65)', // Descriptions, subtitles
+        muted: 'rgba(255, 255, 255, 0.40)',     // Dates, labels, hints
         disabled: 'rgba(255, 255, 255, 0.25)', // Disabled, inactive
-        inverse: '#0E0F12',                     // Dark text on light bg
+        inverse: '#0C0F11',                     // Dark text on light bg
     },
-    // Accent colors - Used sparingly and meaningfully
-    // Accent backgrounds must be ≤15% opacity
+    // PASTEL TINTS - Used at 16-20% opacity only
     pastel: {
-        mint: '#7ED9C4',              // Focus / Success / Primary CTA
-        peach: '#F2B8A2',             // Warnings / Burnout / Capacity alerts
-        mistBlue: '#9DB7D8',          // Information / Neutral actions
-        beige: '#E6DED6',             // Secondary highlights
-        white: '#15171C',             // Maps to card bg
-        slate: 'rgba(255, 255, 255, 0.68)', // Secondary text
+        mint: '#C9DDDC',              // Focus / Success / Primary CTA
+        peach: '#F7CBC9',             // Warnings / Burnout / Alerts
+        mistBlue: '#D5E5E5',          // Information / Neutral
+        beige: '#E9DDD8',             // Secondary highlights
+        white: 'rgba(255,255,255,0.06)', // Maps to card bg
+        slate: 'rgba(255, 255, 255, 0.65)', // Secondary text
     },
-    // Semantic colors
+    // PASTEL TINT BACKGROUNDS (16-20% opacity)
+    tints: {
+        mint: 'rgba(201,221,220,0.18)',
+        peach: 'rgba(247,203,201,0.18)',
+        mistBlue: 'rgba(213,229,229,0.18)',
+        beige: 'rgba(233,221,216,0.16)',
+    },
+    // SEMANTIC COLORS
     semantic: {
-        success: '#7ED9C4',                    // Mint
-        successLight: 'rgba(126, 217, 196, 0.15)', // 15% mint bg
-        warning: '#F2B8A2',                    // Peach
-        warningLight: 'rgba(242, 184, 162, 0.15)', // 15% peach bg
+        success: '#C9DDDC',                    // Mint
+        successLight: 'rgba(201,221,220,0.18)', // 18% mint bg
+        warning: '#F7CBC9',                    // Peach
+        warningLight: 'rgba(247,203,201,0.18)', // 18% peach bg
         error: '#E88A8A',                      // Muted error
-        errorLight: 'rgba(232, 138, 138, 0.15)',   // 15% error bg
-        info: '#9DB7D8',                       // Mist Blue
-        infoLight: 'rgba(157, 183, 216, 0.15)',    // 15% info bg
+        errorLight: 'rgba(232, 138, 138, 0.15)',
+        info: '#D5E5E5',                       // Mist Blue
+        infoLight: 'rgba(213,229,229,0.18)',
     },
-    // Focus mode - Ultra dark for immersion
+    // FOCUS MODE - Ultra dark (#080B0D)
     focus: {
-        background: '#0B0C0F',        // Darker than root
-        card: '#12141A',              // Subtle cards
-        accent: '#7ED9C4',            // Mint accent
-        text: 'rgba(255, 255, 255, 0.92)', // Primary text
+        background: '#080B0D',        // Darker than root
+        card: 'rgba(255,255,255,0.04)',
+        accent: '#C9DDDC',            // Mint accent
+        progressRing: '#C9DDDC',      // Pastel accent only
+        text: 'rgba(255, 255, 255, 0.92)',
     },
-    // Priority colors for dark mode
+    // PRIORITY COLORS
     priority: {
         high: '#E88A8A',
         highBg: 'rgba(232, 138, 138, 0.15)',
-        medium: '#F2B8A2',
-        mediumBg: 'rgba(242, 184, 162, 0.15)',
-        low: '#7ED9C4',
-        lowBg: 'rgba(126, 217, 196, 0.15)',
+        medium: '#F7CBC9',
+        mediumBg: 'rgba(247,203,201,0.18)',
+        low: '#C9DDDC',
+        lowBg: 'rgba(201,221,220,0.18)',
     },
-    // Navigation
-    navigation: {
-        background: '#0E0F12',
+    // TAB BAR - Floating pill style
+    tabBar: {
+        background: 'rgba(255,255,255,0.08)',
         activeIcon: 'rgba(255, 255, 255, 0.92)',
-        inactiveIcon: 'rgba(255, 255, 255, 0.42)',
+        inactiveIcon: 'rgba(255, 255, 255, 0.40)',
+        activeDot: '#C9DDDC',
     },
-    // Component-specific
+    // SEARCH BAR - Recessed style
+    searchBar: {
+        background: 'rgba(255,255,255,0.06)',
+        border: 'rgba(255,255,255,0.08)',
+        placeholder: 'rgba(255, 255, 255, 0.40)',
+    },
+    // COMPONENT STYLES
     components: {
         cardBorder: 'rgba(255, 255, 255, 0.04)',
-        inputBackground: '#1B1E24',
-        buttonPrimaryBg: '#7ED9C4',
-        buttonPrimaryText: '#0E0F12',
+        inputBackground: 'rgba(255,255,255,0.06)',
+        buttonPrimaryBg: '#C9DDDC',
+        buttonPrimaryText: '#0C0F11',
         buttonSecondaryBorder: 'rgba(255, 255, 255, 0.12)',
+        buttonSecondaryBg: 'transparent',
     },
-    // Heatmap (Consistency View)
+    // HEATMAP
     heatmap: {
         empty: '#1C1F26',
-        active: '#7ED9C4',
+        active: '#C9DDDC',
     },
+    // STREAK ICON
+    streak: {
+        glow: 'rgba(247,203,201,0.4)',
+        icon: '#F7CBC9',
+    },
+};
+
+// ============================================
+// CARD SYSTEM (Single Source of Truth)
+// ============================================
+export const cardSystem = {
+    borderRadius: 20,
+    padding: {
+        default: 16,
+        large: 18,
+    },
+    shadow: {
+        color: 'rgba(0,0,0,0.35)',
+        blur: 20,
+        yOffset: 8,
+    },
+    spacing: {
+        vertical: 14,
+        horizontal: 12,
+    },
+};
+
+// ============================================
+// ANIMATION SYSTEM (Strict Rules)
+// ============================================
+export const animation = {
+    duration: {
+        fast: 200,
+        normal: 400,
+        slow: 800,
+        max: 1200,
+    },
+    easing: 'easeOutCubic',
+    // Allowed animations only
+    allowed: {
+        fade: true,
+        translateY: { min: -8, max: 8 },
+        scale: { min: 0.98, max: 1.02 },
+    },
+    // Never use: bounce, spring, elastic
 };
 
 // Helper function to get theme colors
