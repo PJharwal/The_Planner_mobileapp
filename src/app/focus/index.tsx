@@ -3,7 +3,8 @@ import { View, ScrollView, StyleSheet, AppState, Platform } from "react-native";
 import { Text, IconButton, Portal, Modal, TextInput, Snackbar } from "react-native-paper";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useTimerStore, formatTime, formatMinutes, formatCountdown, TIMER_PRESETS } from "../../store/timerStore";
+import { useTimerStore, formatTime, formatMinutes, formatCountdown, getTimerPresets } from "../../store/timerStore";
+import { useCapacityStore } from "../../store/capacityStore";
 import { useTaskStore } from "../../store/taskStore";
 import { getSmartTodaySuggestions, SuggestedTask } from "../../utils/smartToday";
 import { useAuthStore } from "../../store/authStore";
@@ -53,7 +54,13 @@ export default function FocusModeScreen() {
 
     const [suggestions, setSuggestions] = useState<SuggestedTask[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedDuration, setSelectedDuration] = useState(getDefaultSessionLength());
+
+    // Get capacity for personalized defaults
+    const { capacity } = useCapacityStore();
+    const timerPresets = getTimerPresets(capacity);
+    const defaultDuration = capacity ? capacity.default_focus_minutes * 60 : 25 * 60;
+
+    const [selectedDuration, setSelectedDuration] = useState(defaultDuration);
     const [showCustomModal, setShowCustomModal] = useState(false);
     const [customMinutes, setCustomMinutes] = useState("30");
     const [selectedTask, setSelectedTask] = useState<SuggestedTask | null>(null);
@@ -273,8 +280,13 @@ export default function FocusModeScreen() {
                 {!isSessionActive && (
                     <View style={styles.durationSection}>
                         <Text variant="titleMedium" style={styles.sectionTitle}>Duration</Text>
+                        {capacity && (
+                            <Text variant="bodySmall" style={{ color: text.secondary, marginBottom: spacing.xs }}>
+                                Recommended for you: {capacity.default_focus_minutes} minutes
+                            </Text>
+                        )}
                         <View style={styles.durationChips}>
-                            {TIMER_PRESETS.map((preset) => (
+                            {timerPresets.map((preset) => (
                                 <Chip
                                     key={preset.value}
                                     variant={selectedDuration === preset.value ? "primary" : "default"}
@@ -285,7 +297,7 @@ export default function FocusModeScreen() {
                                 </Chip>
                             ))}
                             <Chip
-                                variant={selectedDuration > 90 * 60 ? "primary" : "default"}
+                                variant={timerPresets.every(p => p.value !== selectedDuration) ? "primary" : "default"}
                                 onPress={() => setShowCustomModal(true)}
                             >
                                 Custom
@@ -337,6 +349,29 @@ export default function FocusModeScreen() {
                         </View>
                     </View>
                 </Card>
+
+                {/* Advanced Focus Mode Card */}
+                {!isSessionActive && (
+                    <Card
+                        style={styles.advancedCard}
+                        onPress={() => router.push('/focus/prepare')}
+                    >
+                        <View style={styles.advancedContent}>
+                            <View style={styles.advancedIcon}>
+                                <Ionicons name="rocket-outline" size={28} color={pastel.mint} />
+                            </View>
+                            <View style={styles.advancedInfo}>
+                                <Text variant="titleMedium" style={{ color: text.primary, fontWeight: '600' }}>
+                                    Try Advanced Focus
+                                </Text>
+                                <Text variant="bodySmall" style={{ color: text.secondary }}>
+                                    Fullscreen immersive mode with guided breaks
+                                </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                        </View>
+                    </Card>
+                )}
 
                 {/* Task Selection */}
                 {!isSessionActive && (
@@ -495,4 +530,9 @@ const styles = StyleSheet.create({
     modalTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
     modalInput: { marginBottom: spacing.xs, backgroundColor: focus.background },
     modalHint: { color: text.secondary, marginBottom: spacing.md },
+    // Advanced Focus Mode styles
+    advancedCard: { marginHorizontal: spacing.lg, marginBottom: spacing.md, backgroundColor: `${pastel.mint}15` },
+    advancedContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    advancedIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: `${pastel.mint}20`, alignItems: "center", justifyContent: "center", marginRight: spacing.md },
+    advancedInfo: { flex: 1 },
 });

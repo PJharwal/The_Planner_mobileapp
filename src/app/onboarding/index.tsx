@@ -59,7 +59,16 @@ export default function OnboardingScreen() {
                 }
             });
 
+            // Save profile (this derives persona and selects plan)
             await saveProfile(profileData);
+
+            // Calculate and save capacity based on profile
+            const { profile } = useProfileStore.getState();
+            if (profile) {
+                const capacityStore = (await import('../../store/capacityStore')).useCapacityStore;
+                await capacityStore.getState().calculateAndSaveCapacity(profile);
+            }
+
             router.replace('/(tabs)');
         } catch (error: any) {
             Alert.alert('Error', error.message || 'Failed to save profile');

@@ -10,14 +10,17 @@ import { QuestionCard } from '../../components/onboarding/QuestionCard';
 import { background, text, pastel, spacing, borderRadius } from '../../constants/theme';
 import { ONBOARDING_QUESTIONS, getSectionNames, getQuestionsBySection } from '../../utils/onboardingQuestions';
 import { useProfileStore } from '../../store/profileStore';
+import { useCapacityStore } from '../../store/capacityStore';
 import { UserProfileInsights } from '../../types/profile';
 import { ADAPTIVE_PLANS } from '../../utils/adaptivePlans';
 import { getPersonaDescription } from '../../utils/personaDerivation';
+import { CapacityEditor } from '../../components/profile/CapacityEditor';
 
 export default function ProfileSettingsScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const { profile, updateProfile } = useProfileStore();
+    const { calculateAndSaveCapacity } = useCapacityStore();
 
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
@@ -62,6 +65,16 @@ export default function ProfileSettingsScreen() {
             Alert.alert('Error', error.message || 'Failed to update profile');
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleRecalculateCapacity = async () => {
+        if (!profile) return;
+        try {
+            await calculateAndSaveCapacity(profile);
+            Alert.alert('Success', 'Capacity recalculated from your profile');
+        } catch (error: any) {
+            Alert.alert('Error', 'Failed to recalculate capacity');
         }
     };
 
@@ -123,6 +136,9 @@ export default function ProfileSettingsScreen() {
                         We never share this information.
                     </Text>
                 </Card>
+
+                {/* Capacity Editor */}
+                <CapacityEditor onRecalculate={handleRecalculateCapacity} />
 
                 {/* Questions by Section */}
                 {sectionNames.map((sectionName) => {

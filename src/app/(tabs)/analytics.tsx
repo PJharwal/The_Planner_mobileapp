@@ -18,6 +18,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { pastel, background, text, semantic, spacing, borderRadius, shadows, gradients } from "../../constants/theme";
 // UI Components
 import { Card, Chip, ProgressBar, InsightCard, Button } from "../../components/ui";
+import { CapacityInsightsCard } from "../../components/analytics/CapacityInsightsCard";
+import { getCapacityInsights, CapacityInsights } from "../../utils/capacityInsights";
 
 
 
@@ -64,6 +66,9 @@ export default function AnalyticsScreen() {
     // NEW: Insights & Revisions
     const [insights, setInsights] = useState<StudyInsight[]>([]);
     const [revisions, setRevisions] = useState<RevisionSuggestion[]>([]);
+
+    // Capacity insights
+    const [capacityInsights, setCapacityInsights] = useState<CapacityInsights | null>(null);
 
     const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -137,12 +142,14 @@ export default function AnalyticsScreen() {
             await fetchStudyTime();
 
             // NEW: Fetch Insights & Revisions
-            const [insightsData, revisionsData] = await Promise.all([
+            const [insightsData, revisionsData, capacityData] = await Promise.all([
                 getAllInsights(user.id),
                 getRevisionSuggestions(user.id, 5),
+                getCapacityInsights(user.id),
             ]);
             setInsights(insightsData);
             setRevisions(revisionsData);
+            setCapacityInsights(capacityData);
 
         } catch (error) {
             console.error("Error fetching analytics:", error);
@@ -409,6 +416,11 @@ export default function AnalyticsScreen() {
                                 </View>
                             </View>
                         </Card>
+
+                        {/* Capacity Insights */}
+                        {capacityInsights && (
+                            <CapacityInsightsCard insights={capacityInsights} />
+                        )}
 
                         {/* Weekly Chart */}
                         <Card style={styles.chartCard}>

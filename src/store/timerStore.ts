@@ -3,13 +3,28 @@ import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { Vibration } from 'react-native';
 import { SessionQuality } from '../types';
+import { UserCapacity } from '../types/database';
 
-// Timer presets in seconds
-export const TIMER_PRESETS = [
-    { label: '25 min', value: 25 * 60 },
-    { label: '40 min', value: 40 * 60 },
-    { label: '90 min', value: 90 * 60 },
-];
+/**
+ * Get timer presets based on user capacity
+ * Falls back to standard presets if no capacity provided
+ */
+export function getTimerPresets(capacity?: UserCapacity | null) {
+    if (capacity) {
+        return [
+            { label: `${capacity.default_focus_minutes} min`, value: capacity.default_focus_minutes * 60, isDefault: true },
+            { label: `${Math.floor(capacity.default_focus_minutes * 0.6)} min`, value: Math.floor(capacity.default_focus_minutes * 0.6) * 60 },
+            { label: `${Math.floor(capacity.default_focus_minutes * 1.5)} min`, value: Math.floor(capacity.default_focus_minutes * 1.5) * 60 },
+        ];
+    }
+
+    // Fallback presets
+    return [
+        { label: '25 min', value: 25 * 60, isDefault: true },
+        { label: '40 min', value: 40 * 60 },
+        { label: '90 min', value: 90 * 60 },
+    ];
+}
 
 interface FocusContext {
     taskId?: string;

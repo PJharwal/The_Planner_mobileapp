@@ -11,10 +11,24 @@ export { ProgressBar } from './ProgressBar';
 export { TaskRow } from './TaskRow';
 export { ToastContainer } from './Toast';
 
+// Typography Components
+export {
+    AppText,
+    DisplayText,
+    HeadlineText,
+    TitleText,
+    BodyText,
+    LabelText,
+    UIText,
+    NumericText,
+    TimerText
+} from './AppText';
+
 // Learning Intelligence Components
 export { ConfidencePicker } from './ConfidencePicker';
 export { DifficultyTag } from './DifficultyTag';
 export { SessionQualityModal } from './SessionQualityModal';
+export { TaskLimitModal } from './TaskLimitModal';
 export { InsightCard } from './InsightCard';
 
 // Onboarding & Feature Components

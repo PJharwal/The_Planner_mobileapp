@@ -250,6 +250,71 @@ export interface Database {
                     updated_at?: string;
                 };
             };
+
+            // User Capacity
+            user_capacity: {
+                Row: {
+                    user_id: string;
+                    max_tasks_per_day: number;
+                    default_focus_minutes: number;
+                    default_break_minutes: number;
+                    max_daily_focus_minutes: number;
+                    recommended_sessions_per_day: number;
+                    created_at: string;
+                    updated_at: string;
+                };
+                Insert: {
+                    user_id: string;
+                    max_tasks_per_day?: number;
+                    default_focus_minutes?: number;
+                    default_break_minutes?: number;
+                    max_daily_focus_minutes?: number;
+                    recommended_sessions_per_day?: number;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+                Update: {
+                    user_id?: string;
+                    max_tasks_per_day?: number;
+                    default_focus_minutes?: number;
+                    default_break_minutes?: number;
+                    max_daily_focus_minutes?: number;
+                    recommended_sessions_per_day?: number;
+                    created_at?: string;
+                    updated_at?: string;
+                };
+            };
+
+            // Capacity Overrides (for analytics)
+            capacity_overrides: {
+                Row: {
+                    id: string;
+                    user_id: string;
+                    override_type: 'task_limit' | 'focus_limit';
+                    original_limit: number;
+                    override_value: number;
+                    reason: string | null;
+                    created_at: string;
+                };
+                Insert: {
+                    id?: string;
+                    user_id: string;
+                    override_type: 'task_limit' | 'focus_limit';
+                    original_limit: number;
+                    override_value: number;
+                    reason?: string | null;
+                    created_at?: string;
+                };
+                Update: {
+                    id?: string;
+                    user_id?: string;
+                    override_type?: 'task_limit' | 'focus_limit';
+                    original_limit?: number;
+                    override_value?: number;
+                    reason?: string | null;
+                    created_at?: string;
+                };
+            };
         };
     };
 }
@@ -282,3 +347,12 @@ export type UserProfileUpdate = Database['public']['Tables']['user_profiles']['U
 export type DailyNote = Database['public']['Tables']['daily_notes']['Row'];
 export type DailyNoteInsert = Database['public']['Tables']['daily_notes']['Insert'];
 export type DailyNoteUpdate = Database['public']['Tables']['daily_notes']['Update'];
+
+export type UserCapacity = Database['public']['Tables']['user_capacity']['Row'];
+export type UserCapacityInsert = Database['public']['Tables']['user_capacity']['Insert'];
+export type UserCapacityUpdate = Database['public']['Tables']['user_capacity']['Update'];
+
+export type CapacityOverride = Database['public']['Tables']['capacity_overrides']['Row'];
+export type CapacityOverrideInsert = Database['public']['Tables']['capacity_overrides']['Insert'];
+export type CapacityOverrideUpdate = Database['public']['Tables']['capacity_overrides']['Update'];
+

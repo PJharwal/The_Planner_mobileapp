@@ -2,6 +2,8 @@
 // Optimized for student productivity with gentle, distraction-free aesthetics
 // Color palette from user-provided reference
 
+import { Platform, TextStyle } from 'react-native';
+
 // ============================================
 // PRIMARY PASTEL PALETTE
 // ============================================
@@ -116,8 +118,152 @@ export const gradients = {
 
 
 // ============================================
-// TYPOGRAPHY
+// TYPOGRAPHY (Semantic Role System)
+// Figtree = content/learning/reflection (warm, human)
+// System Font = UI/controls/numbers (precise, professional)
 // ============================================
+
+// Font families
+export const fontFamily = {
+    // Content fonts (Figtree) - for thinking, reading, reflection
+    content: {
+        regular: 'Figtree_400Regular',
+        medium: 'Figtree_500Medium',
+        semibold: 'Figtree_600SemiBold',
+        bold: 'Figtree_700Bold',
+    },
+    // UI fonts (System) - for buttons, tabs, numbers
+    ui: Platform.select({
+        ios: 'System',
+        android: 'sans-serif',
+        default: 'System',
+    }),
+    // Numeric fonts (System monospace variant) - for timers, stats
+    numeric: Platform.select({
+        ios: 'System',
+        android: 'monospace',
+        default: 'monospace',
+    }),
+};
+
+// Semantic typography roles
+export const typography = {
+    // Display - Large emotional headings (Figtree)
+    display: {
+        fontFamily: 'Figtree_600SemiBold',
+        fontSize: 32,
+        lineHeight: 40,
+        letterSpacing: -0.5,
+    } as TextStyle,
+
+    // Headline - Screen titles (Figtree)
+    headline: {
+        fontFamily: 'Figtree_600SemiBold',
+        fontSize: 28,
+        lineHeight: 34,
+        letterSpacing: -0.3,
+    } as TextStyle,
+
+    // Title - Section headers (Figtree)
+    title: {
+        fontFamily: 'Figtree_500Medium',
+        fontSize: 20,
+        lineHeight: 26,
+    } as TextStyle,
+
+    // Subtitle - Card titles (Figtree)
+    subtitle: {
+        fontFamily: 'Figtree_500Medium',
+        fontSize: 16,
+        lineHeight: 22,
+    } as TextStyle,
+
+    // Body - Reading text (Figtree)
+    body: {
+        fontFamily: 'Figtree_400Regular',
+        fontSize: 16,
+        lineHeight: 24,
+    } as TextStyle,
+
+    // BodySmall - Secondary text (Figtree)
+    bodySmall: {
+        fontFamily: 'Figtree_400Regular',
+        fontSize: 14,
+        lineHeight: 20,
+    } as TextStyle,
+
+    // Label - Form labels, hints (System)
+    label: {
+        fontFamily: fontFamily.ui,
+        fontSize: 14,
+        lineHeight: 18,
+    } as TextStyle,
+
+    // UI - Buttons, tabs, controls (System)
+    ui: {
+        fontFamily: fontFamily.ui,
+        fontSize: 14,
+        lineHeight: 18,
+        fontWeight: '500',
+    } as TextStyle,
+
+    // UISmall - Small buttons, chips (System)
+    uiSmall: {
+        fontFamily: fontFamily.ui,
+        fontSize: 12,
+        lineHeight: 16,
+        fontWeight: '500',
+    } as TextStyle,
+
+    // Numeric - Timers, stats, numbers (System monospace)
+    numeric: {
+        fontFamily: fontFamily.numeric,
+        fontSize: 16,
+        lineHeight: 20,
+        fontVariant: ['tabular-nums'],
+    } as TextStyle,
+
+    // NumericLarge - Timer display (System monospace)
+    numericLarge: {
+        fontFamily: fontFamily.numeric,
+        fontSize: 48,
+        lineHeight: 56,
+        fontVariant: ['tabular-nums'],
+        fontWeight: '300',
+    } as TextStyle,
+
+    // Caption - Smallest text (System)
+    caption: {
+        fontFamily: fontFamily.ui,
+        fontSize: 11,
+        lineHeight: 14,
+    } as TextStyle,
+};
+
+// Mode-based typography variants
+export type TypographyMode = 'default' | 'focus' | 'exam';
+
+export function getTypography(mode: TypographyMode = 'default') {
+    if (mode === 'focus') {
+        // Focus mode: slightly increased line height, lighter feel
+        return {
+            ...typography,
+            body: { ...typography.body, lineHeight: 26, letterSpacing: 0.1 },
+            title: { ...typography.title, fontFamily: 'Figtree_400Regular' },
+        };
+    }
+    if (mode === 'exam') {
+        // Exam mode: tighter, more contrast
+        return {
+            ...typography,
+            title: { ...typography.title, fontFamily: 'Figtree_600SemiBold' },
+            body: { ...typography.body, lineHeight: 22 },
+        };
+    }
+    return typography;
+}
+
+// Legacy support
 export const fontSize = {
     xs: 12,
     sm: 14,
@@ -295,6 +441,114 @@ export const paperTheme = {
             level3: '#F5FBFB',
             level4: '#F2F9F9',
             level5: '#EFF7F7',
+        },
+    },
+    // Figtree fonts for all Paper Text variants
+    fonts: {
+        displayLarge: {
+            fontFamily: 'Figtree_700Bold',
+            fontSize: 57,
+            fontWeight: '400',
+            letterSpacing: 0,
+            lineHeight: 64,
+        },
+        displayMedium: {
+            fontFamily: 'Figtree_600SemiBold',
+            fontSize: 45,
+            fontWeight: '400',
+            letterSpacing: 0,
+            lineHeight: 52,
+        },
+        displaySmall: {
+            fontFamily: 'Figtree_600SemiBold',
+            fontSize: 36,
+            fontWeight: '400',
+            letterSpacing: 0,
+            lineHeight: 44,
+        },
+        headlineLarge: {
+            fontFamily: 'Figtree_600SemiBold',
+            fontSize: 32,
+            fontWeight: '400',
+            letterSpacing: 0,
+            lineHeight: 40,
+        },
+        headlineMedium: {
+            fontFamily: 'Figtree_500Medium',
+            fontSize: 28,
+            fontWeight: '400',
+            letterSpacing: 0,
+            lineHeight: 36,
+        },
+        headlineSmall: {
+            fontFamily: 'Figtree_500Medium',
+            fontSize: 24,
+            fontWeight: '400',
+            letterSpacing: 0,
+            lineHeight: 32,
+        },
+        titleLarge: {
+            fontFamily: 'Figtree_500Medium',
+            fontSize: 22,
+            fontWeight: '400',
+            letterSpacing: 0,
+            lineHeight: 28,
+        },
+        titleMedium: {
+            fontFamily: 'Figtree_500Medium',
+            fontSize: 16,
+            fontWeight: '500',
+            letterSpacing: 0.15,
+            lineHeight: 24,
+        },
+        titleSmall: {
+            fontFamily: 'Figtree_500Medium',
+            fontSize: 14,
+            fontWeight: '500',
+            letterSpacing: 0.1,
+            lineHeight: 20,
+        },
+        bodyLarge: {
+            fontFamily: 'Figtree_400Regular',
+            fontSize: 16,
+            fontWeight: '400',
+            letterSpacing: 0.15,
+            lineHeight: 24,
+        },
+        bodyMedium: {
+            fontFamily: 'Figtree_400Regular',
+            fontSize: 14,
+            fontWeight: '400',
+            letterSpacing: 0.25,
+            lineHeight: 20,
+        },
+        bodySmall: {
+            fontFamily: 'Figtree_400Regular',
+            fontSize: 12,
+            fontWeight: '400',
+            letterSpacing: 0.4,
+            lineHeight: 16,
+        },
+        labelLarge: {
+            fontFamily: fontFamily.ui,
+            fontSize: 14,
+            fontWeight: '500',
+            letterSpacing: 0.1,
+            lineHeight: 20,
+        },
+        labelMedium: {
+            fontFamily: fontFamily.ui,
+            fontSize: 12,
+            fontWeight: '500',
+            letterSpacing: 0.5,
+            lineHeight: 16,
+        },
+        labelSmall: {
+            fontFamily: fontFamily.ui,
+            fontSize: 11,
+            fontWeight: '500',
+            letterSpacing: 0.5,
+            lineHeight: 16,
         },
     },
 };

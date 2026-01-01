@@ -1,7 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator, Platform } from 'react-native';
 import { borderRadius, pastel, text, shadows, spacing } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+
+// System font for UI elements
+const uiFont = Platform.select({ ios: 'System', android: 'sans-serif', default: 'System' });
 
 interface ButtonProps {
     children: React.ReactNode;
@@ -22,7 +25,7 @@ interface ButtonProps {
  * Soft-UI Pill Button Component
  * - Pill-shaped (fully rounded)
  * - Soft pastel colors
- * - No harsh contrast
+ * - Uses system font for UI consistency
  */
 export function Button({
     children,
@@ -156,6 +159,7 @@ const styles = StyleSheet.create({
         minHeight: 44, // Accessibility: minimum tap target
     },
     text: {
+        fontFamily: uiFont,
         fontWeight: '600',
     },
     fullWidth: {

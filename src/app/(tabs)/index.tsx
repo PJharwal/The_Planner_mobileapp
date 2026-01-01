@@ -8,6 +8,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useReflectionStore } from "../../store/reflectionStore";
 import { useUserStore, getGreeting } from "../../store/userStore";
 import { useProfileStore } from "../../store/profileStore";
+import { useCapacityStore } from "../../store/capacityStore";
 import { ADAPTIVE_PLANS } from "../../utils/adaptivePlans";
 import { Task } from "../../types";
 import { format, subDays } from "date-fns";
@@ -20,8 +21,11 @@ import { addSubjectToToday, addTopicToToday, addSubTopicToToday, addTaskToToday 
 // Design tokens
 import { pastel, background, text, semantic, priority, spacing, borderRadius, shadows, paperTheme } from "../../constants/theme";
 // UI Components
-import { Card, Checkbox, Chip, Button, SearchBar, ProgressBar, TaskRow } from "../../components/ui";
+import { Card, Checkbox, Chip, Button, SearchBar, ProgressBar, TaskRow, TaskLimitModal } from "../../components/ui";
 import { StartSessionModal, SessionConfig } from "../../components/session/StartSessionModal";
+import { StreakIcon } from "../../components/home/StreakIcon";
+import { StreakModal } from "../../components/home/StreakModal";
+import { useStreakStore } from "../../store/streakStore";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -128,15 +132,28 @@ export default function HomeScreen() {
     const [searchSnackbarVisible, setSearchSnackbarVisible] = useState(false);
     const [searchSnackbarMessage, setSearchSnackbarMessage] = useState("");
 
+    // Capacity system
+    const { capacity, usage, fetchCapacity, getTodayUsage, canAddTask, logOverride } = useCapacityStore();
+    const [taskLimitModalVisible, setTaskLimitModalVisible] = useState(false);
+
+    // Streak system
+    const { fetchStreak: loadStreak, recordActivity } = useStreakStore();
+    const [streakModalVisible, setStreakModalVisible] = useState(false);
+
+    const fetchStreakData = async () => {
+        if (user) await loadStreak(user.id);
+    };
+
     useEffect(() => {
         if (user) {
             fetchTodayTasks();
-            fetchStreak();
             fetchPendingCount();
             fetchSmartToday();
             fetchMissedTasks();
             fetchTodayReflection();
             fetchProfile();
+            fetchCapacity(); // Fetch capacity data
+            fetchStreakData(); // Fetch streak data
         }
     }, [user]);
 
@@ -163,25 +180,6 @@ export default function HomeScreen() {
         setMissedTasks(missed.slice(0, 3));
     };
 
-    const fetchStreak = async () => {
-        if (!user) return;
-        setIsLoadingStreak(true);
-        let currentStreak = 0;
-        for (let i = 0; i < 30; i++) {
-            const dateStr = format(subDays(new Date(), i), "yyyy-MM-dd");
-            const { count } = await supabase
-                .from("tasks")
-                .select("*", { count: "exact", head: true })
-                .eq("is_completed", true)
-                .gte("completed_at", `${dateStr}T00:00:00`)
-                .lt("completed_at", `${dateStr}T23:59:59`);
-            if (count && count > 0) currentStreak++;
-            else if (i > 0) break;
-        }
-        setStreak(currentStreak);
-        setIsLoadingStreak(false);
-    };
-
     const fetchPendingCount = async () => {
         if (!user) return;
         const { count } = await supabase
@@ -193,7 +191,7 @@ export default function HomeScreen() {
 
     const onRefresh = async () => {
         setRefreshing(true);
-        await Promise.all([fetchTodayTasks(), fetchStreak(), fetchPendingCount(), fetchSmartToday(), fetchMissedTasks()]);
+        await Promise.all([fetchTodayTasks(), fetchStreakData(), fetchPendingCount(), fetchSmartToday(), fetchMissedTasks()]);
         setRefreshing(false);
     };
 
@@ -217,6 +215,13 @@ export default function HomeScreen() {
 
     const handleQuickAdd = async () => {
         if (!quickTaskTitle.trim() || !user) return;
+
+        // Check capacity limit before adding
+        if (!canAddTask()) {
+            setTaskLimitModalVisible(true);
+            return;
+        }
+
         setIsAddingTask(true);
         try {
             // Try to get a sub_topic, but don't require it
@@ -237,7 +242,7 @@ export default function HomeScreen() {
 
             if (!error) {
                 setQuickTaskTitle("");
-                await Promise.all([fetchTodayTasks(), fetchSmartToday()]);
+                await Promise.all([fetchTodayTasks(), fetchSmartToday(), getTodayUsage()]);
             } else {
                 console.error("Error adding task:", error);
             }
@@ -254,6 +259,8 @@ export default function HomeScreen() {
     const handleToggleSmart = async (taskId: string) => {
         await toggleTaskComplete(taskId);
         await fetchSmartToday();
+        // Record activity for streak tracking
+        if (user) await recordActivity(user.id);
     };
 
     const handleReschedule = async (taskId: string) => {
@@ -371,6 +378,76 @@ export default function HomeScreen() {
         setTodayCollapsed(!todayCollapsed);
     };
 
+    //Task Limit Modal handlers
+    const handleReplaceTask = async (taskId: string) => {
+        // Delete the selected task
+        await handleDeleteTask(taskId);
+        // Then add the new task
+        await handleQuickAdd();
+        setTaskLimitModalVisible(false);
+    };
+
+    const handleScheduleTomorrow = async () => {
+        if (!quickTaskTitle.trim() || !user) return;
+        setIsAddingTask(true);
+        try {
+            const { data: subTopics } = await supabase
+                .from("sub_topics")
+                .select("id, topic_id")
+                .limit(1);
+
+            const tomorrow = format(new Date(Date.now() + 24 * 60 * 60 * 1000), "yyyy-MM-dd");
+
+            await supabase.from("tasks").insert({
+                user_id: user.id,
+                sub_topic_id: subTopics && subTopics.length > 0 ? subTopics[0].id : null,
+                topic_id: subTopics && subTopics.length > 0 ? subTopics[0].topic_id : null,
+                title: quickTaskTitle.trim(),
+                priority: "medium",
+                due_date: tomorrow,
+            });
+
+            setQuickTaskTitle("");
+            setTaskLimitModalVisible(false);
+            setSearchSnackbarMessage("Task scheduled for tomorrow");
+            setSearchSnackbarVisible(true);
+        } catch (error) {
+            console.error("Error scheduling task:", error);
+        }
+        setIsAddingTask(false);
+    };
+
+    const handleAddAnyway = async () => {
+        // Log override for analytics
+        await logOverride('task_limit');
+        setTaskLimitModalVisible(false);
+        // Proceed with adding task (bypassing capacity check)
+        setIsAddingTask(true);
+        try {
+            const { data: subTopics } = await supabase
+                .from("sub_topics")
+                .select("id, topic_id")
+                .limit(1);
+
+            const { error } = await supabase.from("tasks").insert({
+                user_id: user.id,
+                sub_topic_id: subTopics && subTopics.length > 0 ? subTopics[0].id : null,
+                topic_id: subTopics && subTopics.length > 0 ? subTopics[0].topic_id : null,
+                title: quickTaskTitle.trim(),
+                priority: "medium",
+                due_date: format(new Date(), "yyyy-MM-dd"),
+            });
+
+            if (!error) {
+                setQuickTaskTitle("");
+                await Promise.all([fetchTodayTasks(), fetchSmartToday(), getTodayUsage()]);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+        setIsAddingTask(false);
+    };
+
     const completedCount = todayTasks.filter((t) => t.is_completed).length;
     const totalCount = todayTasks.length;
     const progress = totalCount > 0 ? completedCount / totalCount : 0;
@@ -394,9 +471,12 @@ export default function HomeScreen() {
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text variant="bodyMedium" style={{ color: text.secondary }}>
-                            {format(new Date(), "EEEE, MMMM d")}
-                        </Text>
+                        <View style={styles.headerTop}>
+                            <Text variant="bodyMedium" style={{ color: text.secondary }}>
+                                {format(new Date(), "EEEE, MMMM d")}
+                            </Text>
+                            <StreakIcon onPress={() => setStreakModalVisible(true)} />
+                        </View>
                         <TouchableOpacity onPress={handleOpenNameModal} style={styles.greetingRow}>
                             <Text variant="headlineLarge" style={styles.greeting}>
                                 {getGreeting()}, {displayName || user?.full_name?.split(" ")[0] || "Student"} 👋
@@ -470,6 +550,51 @@ export default function HomeScreen() {
                                 <Text variant="bodyMedium" style={styles.examAlertText}>
                                     Exam in {examDaysAway} days! Focus on exam tasks.
                                 </Text>
+                            </View>
+                        </Card>
+                    )}
+
+                    {/* Capacity Indicator - NEW */}
+                    {capacity && (
+                        <Card style={styles.capacityCard}>
+                            <View style={styles.capacityHeader}>
+                                <View style={styles.capacityTitleRow}>
+                                    <Ionicons name="speedometer-outline" size={18} color={pastel.mint} />
+                                    <Text variant="titleSmall" style={styles.capacityTitle}>Your Capacity Today</Text>
+                                </View>
+                                <Text variant="bodySmall" style={styles.capacityHint}>
+                                    Based on your profile
+                                </Text>
+                            </View>
+
+                            <View style={styles.capacityMetrics}>
+                                <View style={styles.capacityMetric}>
+                                    <Text variant="headlineSmall" style={[
+                                        styles.capacityValue,
+                                        { color: usage.isOverTaskLimit ? pastel.peach : pastel.mint }
+                                    ]}>
+                                        {usage.todayTaskCount} / {capacity.max_tasks_per_day}
+                                    </Text>
+                                    <Text variant="bodySmall" style={styles.capacityLabel}>tasks today</Text>
+                                    <ProgressBar
+                                        progress={Math.min(1, usage.todayTaskCount / capacity.max_tasks_per_day)}
+                                        color={usage.isOverTaskLimit ? pastel.peach : pastel.mint}
+                                        height={4}
+                                        style={{ marginTop: 8 }}
+                                    />
+                                </View>
+
+                                <View style={styles.capacityDivider} />
+
+                                <View style={styles.capacityMetric}>
+                                    <Text variant="headlineSmall" style={[
+                                        styles.capacityValue,
+                                        { color: usage.isOverFocusLimit ? pastel.peach : pastel.slate }
+                                    ]}>
+                                        {usage.remainingFocusMinutes}m
+                                    </Text>
+                                    <Text variant="bodySmall" style={styles.capacityLabel}>focus time left</Text>
+                                </View>
                             </View>
                         </Card>
                     )}
@@ -841,6 +966,18 @@ export default function HomeScreen() {
                     </Modal>
                 </Portal>
 
+                {/* Task Limit Modal */}
+                <TaskLimitModal
+                    visible={taskLimitModalVisible}
+                    currentCount={usage.todayTaskCount}
+                    maxTasks={capacity?.max_tasks_per_day || 5}
+                    todayTasks={todayTasks.filter(t => !t.is_completed).map(t => ({ id: t.id, title: t.title }))}
+                    onDismiss={() => setTaskLimitModalVisible(false)}
+                    onReplaceTask={handleReplaceTask}
+                    onScheduleTomorrow={handleScheduleTomorrow}
+                    onAddAnyway={handleAddAnyway}
+                />
+
                 {/* Start Session Modal */}
                 <StartSessionModal
                     visible={startSessionModalVisible}
@@ -861,6 +998,12 @@ export default function HomeScreen() {
                 >
                     {searchSnackbarMessage}
                 </Snackbar>
+
+                {/* Streak Modal */}
+                <StreakModal
+                    visible={streakModalVisible}
+                    onClose={() => setStreakModalVisible(false)}
+                />
             </View>
         </KeyboardAvoidingView>
     );
@@ -871,6 +1014,7 @@ const styles = StyleSheet.create({
     centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 12 },
+    headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     greeting: { color: text.primary, fontWeight: "bold", marginTop: 4 },
     greetingRow: { flexDirection: "row", alignItems: "center" },
     searchContainer: { paddingHorizontal: 24, marginBottom: 16, zIndex: 100 },
@@ -955,5 +1099,49 @@ const styles = StyleSheet.create({
     },
     featureDesc: {
         color: text.secondary,
+    },
+    // Capacity Card Styles
+    capacityCard: {
+        marginHorizontal: spacing.lg,
+        marginBottom: spacing.lg,
+        padding: spacing.md,
+    },
+    capacityHeader: {
+        marginBottom: spacing.sm,
+    },
+    capacityTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginBottom: 4,
+    },
+    capacityTitle: {
+        color: text.primary,
+        fontWeight: '600',
+    },
+    capacityHint: {
+        color: text.secondary,
+    },
+    capacityMetrics: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: spacing.sm,
+    },
+    capacityMetric: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    capacityValue: {
+        fontWeight: '700',
+        marginBottom: 4,
+    },
+    capacityLabel: {
+        color: text.secondary,
+    },
+    capacityDivider: {
+        width: 1,
+        height: 60,
+        backgroundColor: pastel.beige,
+        marginHorizontal: spacing.md,
     },
 });

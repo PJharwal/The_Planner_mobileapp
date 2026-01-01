@@ -5,18 +5,22 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import { useAuthStore } from "../store/authStore";
 import { useProfileStore } from "../store/profileStore";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
 
 // Import pastel theme - SINGLE SOURCE OF TRUTH
 import { paperTheme, background, pastel } from "../constants/theme";
 import { offlineQueue } from "../utils/offlineQueue";
 import { ToastContainer } from "../components/ui";
+import { useAppFonts } from "../constants/fonts";
 
 export default function RootLayout() {
     const { isLoading: authLoading, isAuthenticated, initialize } = useAuthStore();
     const { hasCompletedOnboarding, checkOnboardingStatus } = useProfileStore();
     const segments = useSegments();
     const router = useRouter();
+
+    // Load custom fonts (Figtree)
+    const { fontsLoaded, fontError } = useAppFonts();
 
     useEffect(() => {
         initialize();
@@ -27,7 +31,7 @@ export default function RootLayout() {
     }, []);
 
     useEffect(() => {
-        if (authLoading) return;
+        if (authLoading || !fontsLoaded) return;
 
         const inAuthGroup = segments[0] === "(auth)";
         const inOnboarding = segments[0] === "onboarding";
@@ -47,12 +51,16 @@ export default function RootLayout() {
             // Redirect to onboarding if not completed
             router.replace("/onboarding");
         }
-    }, [isAuthenticated, segments, authLoading, hasCompletedOnboarding]);
+    }, [isAuthenticated, segments, authLoading, hasCompletedOnboarding, fontsLoaded]);
 
-    if (authLoading) {
+    // Show loading while fonts or auth are loading
+    if (authLoading || !fontsLoaded) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={pastel.mint} />
+                {fontError && (
+                    <Text style={styles.errorText}>Font loading error</Text>
+                )}
             </View>
         );
     }
@@ -77,5 +85,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: background.primary,
+    },
+    errorText: {
+        marginTop: 12,
+        color: pastel.slate,
+        fontSize: 14,
     },
 });
