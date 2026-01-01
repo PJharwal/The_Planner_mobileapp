@@ -9,7 +9,6 @@ import {
     pastel,
     semantic,
     focus,
-    gradients,
     darkMode,
     priority
 } from '../constants/theme';
@@ -25,8 +24,9 @@ export function useTheme() {
                 pastel: darkMode.pastel,
                 semantic: darkMode.semantic,
                 focus: darkMode.focus,
-                gradients: darkMode.gradients,
-                priority,  // Keep priority same for both modes
+                priority: darkMode.priority,
+                components: darkMode.components,
+                navigation: darkMode.navigation,
             };
         }
         return {
@@ -35,8 +35,19 @@ export function useTheme() {
             pastel,
             semantic,
             focus,
-            gradients,
             priority,
+            components: {
+                cardBorder: 'rgba(93, 107, 107, 0.08)',
+                inputBackground: background.secondary,
+                buttonPrimaryBg: pastel.mint,
+                buttonPrimaryText: text.primary,
+                buttonSecondaryBorder: pastel.beige,
+            },
+            navigation: {
+                background: background.primary,
+                activeIcon: text.primary,
+                inactiveIcon: text.muted,
+            },
         };
     }, [mode]);
 

@@ -117,61 +117,87 @@ export const gradients = {
 };
 
 // ============================================
-// DARK MODE COLORS
+// DARK MODE COLORS (Professional Study Mode)
+// ============================================
+// Philosophy: Calm, premium, distraction-free
+// Designed for hours of continuous usage
+// Reduces eye strain and mental fatigue
 // ============================================
 export const darkMode = {
-    // Background colors
+    // Background colors - No pure black, no gradients in core screens
     background: {
-        primary: '#121212',           // Main app background
-        secondary: '#1E1E1E',         // Slightly lighter for sections
-        card: '#1E1E1E',              // Card background
-        cardAlt: '#2A2424',           // Peach-tinted dark card
-        cardMint: '#1E2828',          // Mint-tinted dark card
+        primary: '#0E0F12',           // App root background
+        secondary: '#15171C',         // Primary surface (Cards, Lists)
+        card: '#15171C',              // Primary surface (Cards, Lists)
+        elevated: '#1B1E24',          // Elevated surface (Sheets, Modals)
+        cardAlt: '#1B1E24',           // Elevated alternative
+        cardMint: '#15171C',          // Same as card (no tinting)
         overlay: 'rgba(0, 0, 0, 0.6)',// Modal overlay
+        divider: 'rgba(255, 255, 255, 0.06)', // Hairline dividers
     },
-    // Text colors
+    // Text colors - No pure white, proper contrast ratios
     text: {
-        primary: '#E8E8E8',           // Primary text
-        secondary: 'rgba(232, 232, 232, 0.7)',  // 70% opacity
-        muted: 'rgba(232, 232, 232, 0.5)',      // 50% opacity
-        disabled: 'rgba(232, 232, 232, 0.35)', // 35% opacity
-        inverse: '#1E1E1E',           // Dark text on light backgrounds
+        primary: 'rgba(255, 255, 255, 0.92)',   // Most content
+        secondary: 'rgba(255, 255, 255, 0.68)', // Descriptions, subtitles
+        muted: 'rgba(255, 255, 255, 0.42)',     // Dates, labels, hints
+        disabled: 'rgba(255, 255, 255, 0.25)', // Disabled, inactive
+        inverse: '#0E0F12',                     // Dark text on light bg
     },
-    // Accent colors (slightly muted for dark mode)
+    // Accent colors - Used sparingly and meaningfully
+    // Accent backgrounds must be ≤15% opacity
     pastel: {
-        peach: '#C49A98',             // Muted peach
-        beige: '#3D3836',             // Dark beige
-        white: '#1E1E1E',             // Dark white
-        mistBlue: '#2D4040',          // Dark mist blue
-        mint: '#4A7171',              // Darker mint
-        slate: '#B8C4C4',             // Light slate for dark mode
+        mint: '#7ED9C4',              // Focus / Success / Primary CTA
+        peach: '#F2B8A2',             // Warnings / Burnout / Capacity alerts
+        mistBlue: '#9DB7D8',          // Information / Neutral actions
+        beige: '#E6DED6',             // Secondary highlights
+        white: '#15171C',             // Maps to card bg
+        slate: 'rgba(255, 255, 255, 0.68)', // Secondary text
     },
     // Semantic colors
     semantic: {
-        success: '#5BA3A4',           // Darker mint
-        successLight: '#1E3030',      // Dark success background
-        warning: '#A8895C',           // Muted warning
-        warningLight: '#2E281E',      // Dark warning background
-        error: '#A85C5C',             // Muted error
-        errorLight: '#2E1E1E',        // Dark error background
-        info: '#5C8AB8',              // Muted info
-        infoLight: '#1E2430',         // Dark info background
+        success: '#7ED9C4',                    // Mint
+        successLight: 'rgba(126, 217, 196, 0.15)', // 15% mint bg
+        warning: '#F2B8A2',                    // Peach
+        warningLight: 'rgba(242, 184, 162, 0.15)', // 15% peach bg
+        error: '#E88A8A',                      // Muted error
+        errorLight: 'rgba(232, 138, 138, 0.15)',   // 15% error bg
+        info: '#9DB7D8',                       // Mist Blue
+        infoLight: 'rgba(157, 183, 216, 0.15)',    // 15% info bg
     },
-    // Focus mode
+    // Focus mode - Ultra dark for immersion
     focus: {
-        background: '#0D1515',        // Very dark
-        card: '#151D1D',              // Dark cards
-        accent: '#4A7171',            // Muted accent
-        text: '#B8C4C4',              // Light text
+        background: '#0B0C0F',        // Darker than root
+        card: '#12141A',              // Subtle cards
+        accent: '#7ED9C4',            // Mint accent
+        text: 'rgba(255, 255, 255, 0.92)', // Primary text
     },
-    // Gradients
-    gradients: {
-        warm: ['#2A2424', '#1E1E1E'] as const,
-        mint: ['#1E2828', '#151D1D'] as const,
-        peach: ['#2A2424', '#1E1E1E'] as const,
-        sage: ['#1E2828', '#151D1D'] as const,
-        glass: ['rgba(30, 30, 30, 0.8)', 'rgba(30, 30, 30, 0.6)'] as const,
-        background: ['#151515', '#121212'] as const,
+    // Priority colors for dark mode
+    priority: {
+        high: '#E88A8A',
+        highBg: 'rgba(232, 138, 138, 0.15)',
+        medium: '#F2B8A2',
+        mediumBg: 'rgba(242, 184, 162, 0.15)',
+        low: '#7ED9C4',
+        lowBg: 'rgba(126, 217, 196, 0.15)',
+    },
+    // Navigation
+    navigation: {
+        background: '#0E0F12',
+        activeIcon: 'rgba(255, 255, 255, 0.92)',
+        inactiveIcon: 'rgba(255, 255, 255, 0.42)',
+    },
+    // Component-specific
+    components: {
+        cardBorder: 'rgba(255, 255, 255, 0.04)',
+        inputBackground: '#1B1E24',
+        buttonPrimaryBg: '#7ED9C4',
+        buttonPrimaryText: '#0E0F12',
+        buttonSecondaryBorder: 'rgba(255, 255, 255, 0.12)',
+    },
+    // Heatmap (Consistency View)
+    heatmap: {
+        empty: '#1C1F26',
+        active: '#7ED9C4',
     },
 };
 
@@ -186,7 +212,7 @@ export function getThemeColors(mode: ThemeMode) {
             pastel: darkMode.pastel,
             semantic: darkMode.semantic,
             focus: darkMode.focus,
-            gradients: darkMode.gradients,
+            priority: darkMode.priority,
         };
     }
     return {
@@ -195,7 +221,7 @@ export function getThemeColors(mode: ThemeMode) {
         pastel,
         semantic,
         focus,
-        gradients,
+        priority,
     };
 }
 

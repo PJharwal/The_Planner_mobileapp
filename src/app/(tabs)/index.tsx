@@ -457,21 +457,26 @@ export default function HomeScreen() {
     const totalCount = todayTasks.length;
     const progress = totalCount > 0 ? completedCount / totalCount : 0;
 
+    // Get themedbackground color
+    const themedBg = isDark ? darkMode.background.primary : background.primary;
+    const themedText = isDark ? darkMode.text : text;
+    const themedPastel = isDark ? darkMode.pastel : pastel;
+
     if (tasksLoading && todayTasks.length === 0 && isLoadingSmart) {
         return (
-            <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator size="large" color={pastel.mint} />
-                <Text variant="bodyMedium" style={{ color: text.secondary, marginTop: 16 }}>Loading...</Text>
+            <View style={[styles.container, styles.centered, { backgroundColor: themedBg }]}>
+                <ActivityIndicator size="large" color={themedPastel.mint} />
+                <Text variant="bodyMedium" style={{ color: themedText.secondary, marginTop: 16 }}>Loading...</Text>
             </View>
         );
     }
 
     return (
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={styles.container}>
+        <KeyboardAvoidingView style={{ flex: 1, backgroundColor: themedBg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <View style={[styles.container, { backgroundColor: themedBg }]}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={themedPastel.mint} />}
                     keyboardShouldPersistTaps="handled"
                 >
                     {/* Header */}
