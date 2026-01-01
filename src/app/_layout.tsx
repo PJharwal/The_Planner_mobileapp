@@ -5,10 +5,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import { useAuthStore } from "../store/authStore";
 import { useProfileStore } from "../store/profileStore";
+import { useThemeStore } from "../store/themeStore";
 import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
 
 // Import pastel theme - SINGLE SOURCE OF TRUTH
-import { paperTheme, background, pastel } from "../constants/theme";
+import { paperTheme, background, pastel, darkMode } from "../constants/theme";
 import { offlineQueue } from "../utils/offlineQueue";
 import { ToastContainer } from "../components/ui";
 import { useAppFonts } from "../constants/fonts";
@@ -16,14 +17,19 @@ import { useAppFonts } from "../constants/fonts";
 export default function RootLayout() {
     const { isLoading: authLoading, isAuthenticated, initialize } = useAuthStore();
     const { hasCompletedOnboarding, checkOnboardingStatus } = useProfileStore();
+    const { mode, initialize: initTheme } = useThemeStore();
     const segments = useSegments();
     const router = useRouter();
 
     // Load custom fonts (Figtree)
     const { fontsLoaded, fontError } = useAppFonts();
 
+    const isDark = mode === 'dark';
+    const themeBackground = isDark ? darkMode.background.primary : background.primary;
+
     useEffect(() => {
         initialize();
+        initTheme(); // Initialize theme from storage
         // Try to process offline queue on startup
         setTimeout(() => {
             offlineQueue.process();
@@ -56,10 +62,12 @@ export default function RootLayout() {
     // Show loading while fonts or auth are loading
     if (authLoading || !fontsLoaded) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={pastel.mint} />
+            <View style={[styles.loadingContainer, { backgroundColor: themeBackground }]}>
+                <ActivityIndicator size="large" color={isDark ? darkMode.pastel.mint : pastel.mint} />
                 {fontError && (
-                    <Text style={styles.errorText}>Font loading error</Text>
+                    <Text style={[styles.errorText, { color: isDark ? darkMode.text.secondary : pastel.slate }]}>
+                        Font loading error
+                    </Text>
                 )}
             </View>
         );
@@ -67,8 +75,8 @@ export default function RootLayout() {
 
     return (
         <PaperProvider theme={paperTheme}>
-            <GestureHandlerRootView style={styles.container}>
-                <StatusBar style="dark" />
+            <GestureHandlerRootView style={[styles.container, { backgroundColor: themeBackground }]}>
+                <StatusBar style={isDark ? "light" : "dark"} />
                 <Slot />
                 <ToastContainer />
             </GestureHandlerRootView>
@@ -84,11 +92,9 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: background.primary,
     },
     errorText: {
         marginTop: 12,
-        color: pastel.slate,
         fontSize: 14,
     },
 });

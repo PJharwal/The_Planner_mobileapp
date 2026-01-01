@@ -19,13 +19,14 @@ import { globalSearch, SearchResult, getSearchIcon, getSearchTypeLabel } from ".
 import { addSubjectToToday, addTopicToToday, addSubTopicToToday, addTaskToToday } from "../../utils/addToToday";
 
 // Design tokens
-import { pastel, background, text, semantic, priority, spacing, borderRadius, shadows, paperTheme } from "../../constants/theme";
+import { pastel, background, text, semantic, priority, spacing, borderRadius, shadows, paperTheme, darkMode } from "../../constants/theme";
 // UI Components
 import { Card, Checkbox, Chip, Button, SearchBar, ProgressBar, TaskRow, TaskLimitModal } from "../../components/ui";
 import { StartSessionModal, SessionConfig } from "../../components/session/StartSessionModal";
 import { StreakIcon } from "../../components/home/StreakIcon";
 import { StreakModal } from "../../components/home/StreakModal";
 import { useStreakStore } from "../../store/streakStore";
+import { useThemeStore } from "../../store/themeStore";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -139,6 +140,10 @@ export default function HomeScreen() {
     // Streak system
     const { fetchStreak: loadStreak, recordActivity } = useStreakStore();
     const [streakModalVisible, setStreakModalVisible] = useState(false);
+
+    // Theme system
+    const { mode, toggleTheme } = useThemeStore();
+    const isDark = mode === 'dark';
 
     const fetchStreakData = async () => {
         if (user) await loadStreak(user.id);
@@ -472,10 +477,19 @@ export default function HomeScreen() {
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.headerTop}>
-                            <Text variant="bodyMedium" style={{ color: text.secondary }}>
+                            <Text variant="bodyMedium" style={{ color: isDark ? darkMode.text.secondary : text.secondary }}>
                                 {format(new Date(), "EEEE, MMMM d")}
                             </Text>
-                            <StreakIcon onPress={() => setStreakModalVisible(true)} />
+                            <View style={styles.headerIcons}>
+                                <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+                                    <Ionicons
+                                        name={isDark ? "sunny-outline" : "moon-outline"}
+                                        size={22}
+                                        color={isDark ? darkMode.pastel.mint : pastel.slate}
+                                    />
+                                </TouchableOpacity>
+                                <StreakIcon onPress={() => setStreakModalVisible(true)} />
+                            </View>
                         </View>
                         <TouchableOpacity onPress={handleOpenNameModal} style={styles.greetingRow}>
                             <Text variant="headlineLarge" style={styles.greeting}>
@@ -1015,6 +1029,8 @@ const styles = StyleSheet.create({
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 12 },
     headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    headerIcons: { flexDirection: "row", alignItems: "center", gap: 8 },
+    themeToggle: { padding: 4 },
     greeting: { color: text.primary, fontWeight: "bold", marginTop: 4 },
     greetingRow: { flexDirection: "row", alignItems: "center" },
     searchContainer: { paddingHorizontal: 24, marginBottom: 16, zIndex: 100 },

@@ -116,6 +116,89 @@ export const gradients = {
     background: ['#F9F9F9', '#F7F7F7'] as const,
 };
 
+// ============================================
+// DARK MODE COLORS
+// ============================================
+export const darkMode = {
+    // Background colors
+    background: {
+        primary: '#121212',           // Main app background
+        secondary: '#1E1E1E',         // Slightly lighter for sections
+        card: '#1E1E1E',              // Card background
+        cardAlt: '#2A2424',           // Peach-tinted dark card
+        cardMint: '#1E2828',          // Mint-tinted dark card
+        overlay: 'rgba(0, 0, 0, 0.6)',// Modal overlay
+    },
+    // Text colors
+    text: {
+        primary: '#E8E8E8',           // Primary text
+        secondary: 'rgba(232, 232, 232, 0.7)',  // 70% opacity
+        muted: 'rgba(232, 232, 232, 0.5)',      // 50% opacity
+        disabled: 'rgba(232, 232, 232, 0.35)', // 35% opacity
+        inverse: '#1E1E1E',           // Dark text on light backgrounds
+    },
+    // Accent colors (slightly muted for dark mode)
+    pastel: {
+        peach: '#C49A98',             // Muted peach
+        beige: '#3D3836',             // Dark beige
+        white: '#1E1E1E',             // Dark white
+        mistBlue: '#2D4040',          // Dark mist blue
+        mint: '#4A7171',              // Darker mint
+        slate: '#B8C4C4',             // Light slate for dark mode
+    },
+    // Semantic colors
+    semantic: {
+        success: '#5BA3A4',           // Darker mint
+        successLight: '#1E3030',      // Dark success background
+        warning: '#A8895C',           // Muted warning
+        warningLight: '#2E281E',      // Dark warning background
+        error: '#A85C5C',             // Muted error
+        errorLight: '#2E1E1E',        // Dark error background
+        info: '#5C8AB8',              // Muted info
+        infoLight: '#1E2430',         // Dark info background
+    },
+    // Focus mode
+    focus: {
+        background: '#0D1515',        // Very dark
+        card: '#151D1D',              // Dark cards
+        accent: '#4A7171',            // Muted accent
+        text: '#B8C4C4',              // Light text
+    },
+    // Gradients
+    gradients: {
+        warm: ['#2A2424', '#1E1E1E'] as const,
+        mint: ['#1E2828', '#151D1D'] as const,
+        peach: ['#2A2424', '#1E1E1E'] as const,
+        sage: ['#1E2828', '#151D1D'] as const,
+        glass: ['rgba(30, 30, 30, 0.8)', 'rgba(30, 30, 30, 0.6)'] as const,
+        background: ['#151515', '#121212'] as const,
+    },
+};
+
+// Helper function to get theme colors
+export type ThemeMode = 'light' | 'dark';
+
+export function getThemeColors(mode: ThemeMode) {
+    if (mode === 'dark') {
+        return {
+            background: darkMode.background,
+            text: darkMode.text,
+            pastel: darkMode.pastel,
+            semantic: darkMode.semantic,
+            focus: darkMode.focus,
+            gradients: darkMode.gradients,
+        };
+    }
+    return {
+        background,
+        text,
+        pastel,
+        semantic,
+        focus,
+        gradients,
+    };
+}
+
 
 // ============================================
 // TYPOGRAPHY (Semantic Role System)
