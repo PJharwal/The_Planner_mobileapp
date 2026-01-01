@@ -65,6 +65,33 @@
 - **Background Support** - Timer runs even when app is minimized
 - **Vibration Alerts** - Get notified when timer completes
 
+### 🚀 Advanced Focus Mode (NEW)
+- **Fullscreen Immersive** - Distraction-free dark UI
+- **Auto Phase Transitions** - Focus → Rest → Complete
+- **Guided Breaks** - Hydration, stretch, and eye rest reminders
+- **Tap-to-Control** - Minimal UI that auto-hides
+- **Phase Indicators** - Visual progress through focus cycle
+- **Capacity Warnings** - Alert when over daily limit
+
+### 📊 Character-Based Capacity System (NEW)
+- **Personalized Limits** - Derived from onboarding profile
+- **5 Capacity Metrics:**
+  - Max daily tasks (3-15 based on characteristics)
+  - Max daily focus minutes (30-180)
+  - Default focus session length
+  - Default break duration
+  - Breaks per day
+- **Task Limit Enforcement** - Gentle modal when adding tasks over limit
+- **Override Tracking** - Analytics on when you push past limits
+- **Capacity Editor** - Adjust limits in Profile Settings
+
+### 🔥 Streak System (NEW)
+- **Glowing Fire Icon** - Dynamic glow intensity based on streak
+- **Subtle Motivation** - No numbers on home, just a calm icon
+- **Streak Modal** - Tap to see current/longest streak
+- **Activity Recording** - Counts focus sessions and task completions
+- **Auto-Reset Logic** - Resets only after full missed day
+
 ### 🔍 Universal Search
 - **Lightning Fast** - Real-time search across all content
 - **Multi-Type** - Find subjects, topics, sub-topics, tasks, and notes
@@ -268,8 +295,9 @@ src/
 │   ├── globalSearch.ts        # Universal search
 │   ├── dataExport.ts          # Backup generation
 │   └── ...
-└── constants/
-    └── theme.ts               # Design tokens
+├── constants/
+│   ├── theme.ts               # Design tokens + typography
+│   └── fonts.ts               # Figtree font loading
 ```
 
 ---
@@ -283,6 +311,16 @@ src/
 - 🎭 Semantic colors (Success, Warning, Error)
 - 📐 4px grid spacing system
 - 🔲 Rounded corners (12-28px)
+
+**Typography System (Figtree + SF Pro):**
+- 📝 **Figtree** - Content, learning, reflection (warm, human)
+- ⚙️ **SF Pro/System** - UI, buttons, numbers (precise, professional)
+- 🎯 **12 Semantic Roles:**
+  - Display, Headline, Title, Subtitle (Figtree)
+  - Body, BodySmall (Figtree)
+  - Label, UI, UISmall (System)
+  - Numeric, NumericLarge, Caption (System)
+- 🔄 **Mode Variants** - Focus/Exam modes adjust typography
 
 ---
 
