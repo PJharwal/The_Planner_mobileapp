@@ -74,7 +74,7 @@ export default function RootLayout() {
     }
 
     return (
-        <PaperProvider theme={paperTheme}>
+        <PaperProvider theme={paperTheme as any}>
             <GestureHandlerRootView style={[styles.container, { backgroundColor: themeBackground }]}>
                 <StatusBar style={isDark ? "light" : "dark"} />
                 <Slot />

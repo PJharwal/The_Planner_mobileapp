@@ -429,6 +429,7 @@ export default function HomeScreen() {
         // Proceed with adding task (bypassing capacity check)
         setIsAddingTask(true);
         try {
+            if (!user) return;
             const { data: subTopics } = await supabase
                 .from("sub_topics")
                 .select("id, topic_id")

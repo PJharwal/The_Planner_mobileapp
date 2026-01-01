@@ -137,7 +137,7 @@ export default function FocusModeScreen() {
         const focusContext = selectedTask ? {
             taskId: selectedTask.task.id,
             taskTitle: selectedTask.task.title,
-            topicId: selectedTask.task.topic_id,
+            topicId: selectedTask.task.topic_id || undefined,
             subjectName: selectedTask.subjectName,
         } : {};
         startTimer(selectedDuration, focusContext);

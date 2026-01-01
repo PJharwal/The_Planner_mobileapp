@@ -36,7 +36,7 @@ export default function AdvancedFocusScreen() {
 
     const [phase, setPhase] = useState<FocusPhase>('focus');
     const [showControls, setShowControls] = useState(true);
-    const hideControlsTimeout = useRef<ReturnType<typeof setTimeout>>();
+    const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     // Parse params
     const duration = params.duration ? parseInt(params.duration as string) : (capacity?.default_focus_minutes || 25) * 60;
