@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, StyleSheet, ViewStyle, StyleProp, Platform, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ViewStyle, StyleProp, Platform, TouchableOpacity,} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { glass } from '../../constants/glassTheme';
 import { glassElevation } from '../../constants/glassElevation';
@@ -92,15 +92,22 @@ export const GlassCard = memo(function GlassCard({
     }
 
     const content = (
-        <BlurView
+        <View style={styles.blurWrapper}>
+            <BlurView
             intensity={glass.blur[blur]}
             tint="dark"
-            style={styles.blur}
-        >
-            <View style={[innerStyle, { backgroundColor: glass.background[intensity] }]}>
-                {children}
+            style={StyleSheet.absoluteFill}
+            />
+
+            <View
+            style={[
+                innerStyle,
+                { backgroundColor: glass.background[intensity] },
+            ]}
+            >
+            {children}
             </View>
-        </BlurView>
+        </View>
     );
 
     if (onPress) {
@@ -125,6 +132,13 @@ export const GlassCard = memo(function GlassCard({
 const styles = StyleSheet.create({
     blur: {
         flex: 1,
+        borderRadius: 0,
+        overflow: "hidden"
+    },
+     blurWrapper: {
+        flex: 1,
+        borderRadius: CARD_RADIUS,
+        overflow: 'hidden', 
     },
 });
 
