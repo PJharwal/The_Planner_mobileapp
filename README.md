@@ -7,9 +7,9 @@
 [![Production Ready](https://img.shields.io/badge/Production-Ready-brightgreen)]()
 [![Type Safety](https://img.shields.io/badge/Type%20Safety-99%25-blue)]()
 [![Code Quality](https://img.shields.io/badge/Quality-A++-gold)]()
-[![React Native](https://img.shields.io/badge/React%20Native-0.73-blue)]()
-[![Expo](https://img.shields.io/badge/Expo-50-black)]()
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)]()
+[![React Native](https://img.shields.io/badge/React%20Native-0.81.5-blue)]()
+[![Expo](https://img.shields.io/badge/Expo-SDK%2054-black)]()
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)]()
 
 </div>
 
@@ -204,19 +204,70 @@ SENTRY_DSN=your_dsn_here
 ## 🛠️ Tech Stack
 
 | Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Framework** | React Native 0.73 | Cross-platform mobile |
-| **Build Tool** | Expo 50 | Development & deployment |
-| **Language** | TypeScript 5.3 | Type-safe JavaScript |
-| **Backend** | Supabase | Auth, Database, Real-time |
-| **State** | Zustand | Lightweight state management |
-| **Styling** | NativeWind | Tailwind for React Native |
-| **UI Components** | React Native Paper | Material Design |
-| **Validation** | Zod | Runtime type validation |
-| **Dates** | date-fns | Date manipulation |
-| **Icons** | Ionicons | Icon library |
-| **Network** | NetInfo | Connectivity monitoring |
+|-------|------------|---------|
+| **Framework** | React Native 0.81.5 | Cross-platform mobile |
+| **Build Tool** | Expo SDK 54 | Development & deployment |
+| **Language** | TypeScript 5.9.2 | Type-safe JavaScript |
+| **React** | React 19.1.0 | UI library |
+| **Backend** | Supabase 2.89+ | Auth, Database, Real-time |
+| **State** | Zustand 5.0.9 | Lightweight state management |
+| **Styling** | NativeWind 4.0.1 + TailwindCSS 3.4 | Utility-first styling |
+| **UI Components** | React Native Paper 5.14.5 | Material Design |
+| **Animations** | React Native Reanimated 4.1.1 | Smooth animations |
+| **Blur Effects** | expo-blur 15.0.8 | Glassmorphism UI |
+| **Validation** | Zod 4.3.2 | Runtime type validation |
+| **Dates** | date-fns 4.1.0 | Date manipulation |
+| **Icons** | Phosphor React Native 3.0.2 + Ionicons | Icon libraries |
+| **Network** | NetInfo 11.4.1 | Connectivity monitoring |
 | **Error Tracking** | Sentry (ready) | Production monitoring |
+
+### 📦 Full Dependency List
+
+**Core Dependencies:**
+```
+expo: ~54.0.30
+react: 19.1.0
+react-native: 0.81.5
+typescript: ~5.9.2
+```
+
+**Navigation & Routing:**
+```
+expo-router: ^6.0.21
+react-native-screens: ~4.16.0
+react-native-gesture-handler: ~2.28.0
+react-native-safe-area-context: ~5.6.0
+```
+
+**UI & Styling:**
+```
+react-native-paper: ^5.14.5
+expo-blur: ~15.0.8
+expo-linear-gradient: ~15.0.8
+react-native-reanimated: ~4.1.1
+nativewind: ^4.0.1
+tailwindcss: ^3.4.0
+phosphor-react-native: ^3.0.2
+@expo/vector-icons: ^15.0.3
+```
+
+**Backend & Data:**
+```
+@supabase/supabase-js: ^2.89.0
+zustand: ^5.0.9
+zod: ^4.3.2
+@react-native-async-storage/async-storage: ^2.2.0
+```
+
+**Utilities:**
+```
+date-fns: ^4.1.0
+expo-haptics: ~15.0.8
+expo-file-system: ~19.0.21
+expo-sharing: ~14.0.8
+expo-keep-awake: ^15.0.8
+@react-native-community/netinfo: ^11.4.1
+```
 
 ---
 
