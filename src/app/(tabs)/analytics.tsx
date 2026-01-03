@@ -270,6 +270,7 @@ export default function AnalyticsScreen() {
     if (isLoading) {
         return (
             <View style={[styles.container, styles.centered]}>
+                <MeshGradientBackground />
                 <ActivityIndicator size="large" color={glassAccent.mint} />
                 <Text variant="bodyMedium" style={{ color: glassText.secondary, marginTop: 16 }}>Loading analytics...</Text>
             </View>

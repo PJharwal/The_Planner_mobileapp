@@ -48,16 +48,19 @@ export function QuestionOption({ label, description, selected, onSelect }: Quest
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: 8,
-        padding: 0, // content handled by touchable
+        marginBottom: 10,
+        padding: 0,
         overflow: 'hidden',
+        minHeight: 68, // Fixed height for all cards
     },
     containerSelected: {
-        borderColor: glassAccent.mint,
-        backgroundColor: glassAccent.mintGlow,
+        borderColor: glassAccent.blue, // Blue accent for selection
+        backgroundColor: glassAccent.blueGlow,
     },
     touchable: {
         padding: 16,
+        minHeight: 68, // Fixed height
+        justifyContent: 'center', // Vertically center content
     },
     optionContent: {
         flexDirection: 'row',
@@ -69,9 +72,10 @@ const styles = StyleSheet.create({
     optionLabel: {
         color: glassText.primary,
         fontWeight: '500',
+        fontSize: 16,
     },
     optionLabelSelected: {
-        color: glassAccent.mint,
+        color: glassAccent.blue, // Blue accent for selected text
         fontWeight: '600',
     },
     optionDescription: {
@@ -89,12 +93,12 @@ const styles = StyleSheet.create({
         marginLeft: 12,
     },
     radioSelected: {
-        borderColor: glassAccent.mint,
+        borderColor: glassAccent.blue, // Blue accent for radio
     },
     radioInner: {
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: glassAccent.mint,
+        backgroundColor: glassAccent.blue, // Blue fill for radio
     },
 });
