@@ -164,27 +164,27 @@ export default function AdvancedFocusScreen() {
             {/* Background - Mesh Gradient */}
             <MeshGradientBackground />
 
-            {/* Safe Area Top Controls */}
-            {showControls && phase !== 'complete' && (
-                <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-                    <IconButton
-                        icon="close"
-                        size={28}
-                        iconColor={glassText.primary}
-                        onPress={handleExit}
-                    />
-                    <View style={styles.phaseIndicator}>
-                        <View style={[styles.phaseDot, phase === 'focus' && styles.phaseDotActive]} />
-                        <View style={[styles.phaseDot, phase === 'rest' && styles.phaseDotActive]} />
-                    </View>
-                    <IconButton
-                        icon={isPaused ? 'play' : 'pause'}
-                        size={28}
-                        iconColor={glassText.primary}
-                        onPress={handlePauseResume}
-                    />
-                </View>
-            )}
+            {/* Safe Area Top Controls - Always visible with back button */}
+            <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+                <Pressable onPress={handleExit} style={styles.backButton}>
+                    <Ionicons name="chevron-back" size={28} color={glassText.primary} />
+                    <Text style={styles.backText}>Back</Text>
+                </Pressable>
+                {phase !== 'complete' && (
+                    <>
+                        <View style={styles.phaseIndicator}>
+                            <View style={[styles.phaseDot, phase === 'focus' && styles.phaseDotActive]} />
+                            <View style={[styles.phaseDot, phase === 'rest' && styles.phaseDotActive]} />
+                        </View>
+                        {showControls && (
+                            <Pressable onPress={handlePauseResume} style={styles.controlButton}>
+                                <Ionicons name={isPaused ? 'play' : 'pause'} size={24} color={glassText.primary} />
+                            </Pressable>
+                        )}
+                    </>
+                )}
+                {phase === 'complete' && <View style={{ width: 80 }} />}
+            </View>
 
             {/* Main Content */}
             <View style={styles.content}>
@@ -295,8 +295,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: spacing.sm,
+        paddingHorizontal: spacing.md,
         zIndex: 10,
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: spacing.xs,
+    },
+    backText: {
+        color: glassText.primary,
+        fontSize: 16,
+        marginLeft: 2,
+    },
+    controlButton: {
+        padding: spacing.sm,
+        width: 80,
+        alignItems: 'flex-end',
     },
     phaseIndicator: {
         flexDirection: 'row',
