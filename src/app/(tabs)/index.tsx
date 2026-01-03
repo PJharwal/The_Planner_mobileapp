@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, ScrollView, RefreshControl, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, TouchableOpacity, LayoutAnimation, UIManager } from "react-native";
-import { Text, TextInput, IconButton, Portal, Modal, Snackbar } from "react-native-paper";
+import { Text, TextInput, Portal, Modal, Snackbar } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useTaskStore } from "../../store/taskStore";
@@ -11,7 +11,7 @@ import { useProfileStore } from "../../store/profileStore";
 import { useCapacityStore } from "../../store/capacityStore";
 import { ADAPTIVE_PLANS } from "../../utils/adaptivePlans";
 import { Task } from "../../types";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { supabase } from "../../lib/supabase";
 import { getSmartTodaySuggestions, SuggestedTask, removeSuggestion } from "../../utils/smartToday";
 import { getMissedTasks, MissedTask, rescheduleToToday, skipTask, SkipReason } from "../../utils/missedTasks";
@@ -19,14 +19,17 @@ import { globalSearch, SearchResult, getSearchIcon, getSearchTypeLabel } from ".
 import { addSubjectToToday, addTopicToToday, addSubTopicToToday, addTaskToToday } from "../../utils/addToToday";
 
 // Design tokens
-import { pastel, background, text, semantic, priority, spacing, borderRadius, shadows, paperTheme, darkMode } from "../../constants/theme";
+import { semantic, spacing, borderRadius } from "../../constants/theme";
+import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-import { Card, Checkbox, Chip, Button, SearchBar, ProgressBar, TaskRow, TaskLimitModal } from "../../components/ui";
+import { Checkbox, Chip, SearchBar, ProgressBar, TaskRow, TaskLimitModal } from "../../components/ui";
+import { GlassCard, GlassButton, MeshGradientBackground } from "../../components/glass";
 import { StartSessionModal, SessionConfig } from "../../components/session/StartSessionModal";
 import { StreakIcon } from "../../components/home/StreakIcon";
 import { StreakModal } from "../../components/home/StreakModal";
 import { useStreakStore } from "../../store/streakStore";
-import { useThemeStore } from "../../store/themeStore";
+import { useHealthStore } from "../../store/healthStore";
+import { HealthService } from "../../services/HealthService";
 
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -40,16 +43,16 @@ function SmartTaskCard({ suggestion, onToggle, onDismiss }: {
     onDismiss: (id: string) => void;
 }) {
     const reasonColors: Record<string, string> = {
-        exam_soon: semantic.error,
-        missed_yesterday: semantic.warning,
-        high_priority: pastel.peach,
-        due_soon: pastel.mint,
-        balanced: semantic.success,
+        exam_soon: glassAccent.warm,
+        missed_yesterday: glassAccent.warm,
+        high_priority: glassAccent.warm,
+        due_soon: glassAccent.mint,
+        balanced: glassAccent.mint,
     };
 
     return (
-        <Card style={[styles.smartCard, { borderLeftColor: suggestion.subjectColor || pastel.mint, borderLeftWidth: 4 }]}>
-            <View style={styles.smartContent}>
+        <GlassCard style={styles.smartCard} bordered={false} intensity="light">
+            <View style={[styles.smartContent, { borderLeftColor: suggestion.subjectColor || glassAccent.mint, borderLeftWidth: 4, paddingLeft: 12 }]}>
                 <Checkbox
                     checked={suggestion.task.is_completed}
                     onToggle={() => onToggle(suggestion.task.id)}
@@ -57,19 +60,19 @@ function SmartTaskCard({ suggestion, onToggle, onDismiss }: {
                 <View style={styles.smartInfo}>
                     <Text variant="bodyLarge" style={styles.smartTitle}>{suggestion.task.title}</Text>
                     <View style={styles.smartMeta}>
-                        <Chip size="sm" style={{ backgroundColor: reasonColors[suggestion.reason] + "25" }}>
+                        <Chip size="sm" style={{ backgroundColor: (reasonColors[suggestion.reason] || glassAccent.blue) + "25" }}>
                             {suggestion.reasonText}
                         </Chip>
                         {suggestion.subjectName && (
-                            <Text variant="bodySmall" style={{ color: text.secondary, marginLeft: 8 }}>{suggestion.subjectName}</Text>
+                            <Text variant="bodySmall" style={{ color: glassText.secondary, marginLeft: 8 }}>{suggestion.subjectName}</Text>
                         )}
                     </View>
                 </View>
                 <TouchableOpacity onPress={() => onDismiss(suggestion.task.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Ionicons name="close" size={18} color={text.muted} />
+                    <Ionicons name="close" size={18} color={glassText.muted} />
                 </TouchableOpacity>
             </View>
-        </Card>
+        </GlassCard>
     );
 }
 
@@ -77,8 +80,8 @@ export default function HomeScreen() {
     const router = useRouter();
     const { user } = useAuthStore();
     const { todayTasks, fetchTodayTasks, toggleTaskComplete, createTask, isLoading: tasksLoading } = useTaskStore();
-    const { todayReflection, hasShownPrompt, fetchTodayReflection, saveReflection, markPromptShown } = useReflectionStore();
-    const { displayName, fetchProfile, updateDisplayName } = useUserStore();
+    const { todayReflection, hasShownPrompt, fetchTodayReflection, saveReflection } = useReflectionStore();
+    const { displayName, updateDisplayName } = useUserStore();
     const [refreshing, setRefreshing] = useState(false);
     const [quickTaskTitle, setQuickTaskTitle] = useState("");
     const [streak, setStreak] = useState(0);
@@ -111,7 +114,7 @@ export default function HomeScreen() {
 
     // Start Session modal
     const [startSessionModalVisible, setStartSessionModalVisible] = useState(false);
-    const { profile } = useProfileStore();
+    const { profile, fetchProfile } = useProfileStore();
 
     // Task edit modal
     const [taskEditVisible, setTaskEditVisible] = useState(false);
@@ -122,12 +125,6 @@ export default function HomeScreen() {
 
     // Collapsible Today section
     const [todayCollapsed, setTodayCollapsed] = useState(false);
-
-    // Smart Today expanded state
-    const [smartExpanded, setSmartExpanded] = useState(false);
-
-    // Features expanded state
-    const [featuresExpanded, setFeaturesExpanded] = useState(true);
 
     // Search snackbar
     const [searchSnackbarVisible, setSearchSnackbarVisible] = useState(false);
@@ -141,13 +138,49 @@ export default function HomeScreen() {
     const { fetchStreak: loadStreak, recordActivity } = useStreakStore();
     const [streakModalVisible, setStreakModalVisible] = useState(false);
 
-    // Theme system
-    const { mode, toggleTheme } = useThemeStore();
-    const isDark = mode === 'dark';
-
     const fetchStreakData = async () => {
         if (user) await loadStreak(user.id);
     };
+
+    // Health Integration
+    const { derivedData, hasPermissions, updateHealthData, lastSyncTimestamp, healthInfluenceMode, baseline } = useHealthStore();
+
+    useEffect(() => {
+        const syncHealth = async () => {
+            if (!hasPermissions || healthInfluenceMode === 'disabled') return;
+
+            const now = new Date();
+            const lastSync = lastSyncTimestamp ? new Date(lastSyncTimestamp) : null;
+            const isNewDay = !lastSync || lastSync.getDate() !== now.getDate();
+
+            if (isNewDay && now.getHours() >= 6) {
+                try {
+                    // Fetch metrics
+                    const metrics = await HealthService.fetchDayMetrics();
+
+                    // Calculate readiness
+                    const result = HealthService.calculateReadiness(metrics, baseline);
+
+                    // Update baseline (naive incremental for now)
+                    const newBaseline = {
+                        ...baseline,
+                        daysCollected: baseline.daysCollected + 1,
+                        avgSleep: (baseline.avgSleep * baseline.daysCollected + metrics.sleepHours) / (baseline.daysCollected + 1),
+                        avgHRV: metrics.hrv > 0 ? (baseline.avgHRV * baseline.daysCollected + metrics.hrv) / (baseline.daysCollected + 1) : baseline.avgHRV
+                    };
+
+                    updateHealthData({
+                        baseline: newBaseline,
+                        derived: result,
+                        timestamp: now.toISOString()
+                    });
+                } catch (e) {
+                    console.error("Health sync failed", e);
+                }
+            }
+        };
+        syncHealth();
+    }, [hasPermissions, healthInfluenceMode, lastSyncTimestamp, user]);
 
     useEffect(() => {
         if (user) {
@@ -157,8 +190,8 @@ export default function HomeScreen() {
             fetchMissedTasks();
             fetchTodayReflection();
             fetchProfile();
-            fetchCapacity(); // Fetch capacity data
-            fetchStreakData(); // Fetch streak data
+            fetchCapacity();
+            fetchStreakData();
         }
     }, [user]);
 
@@ -221,7 +254,6 @@ export default function HomeScreen() {
     const handleQuickAdd = async () => {
         if (!quickTaskTitle.trim() || !user) return;
 
-        // Check capacity limit before adding
         if (!canAddTask()) {
             setTaskLimitModalVisible(true);
             return;
@@ -229,13 +261,11 @@ export default function HomeScreen() {
 
         setIsAddingTask(true);
         try {
-            // Try to get a sub_topic, but don't require it
             const { data: subTopics } = await supabase
                 .from("sub_topics")
                 .select("id, topic_id")
                 .limit(1);
 
-            // Insert task - works with or without subject/topic
             const { error } = await supabase.from("tasks").insert({
                 user_id: user.id,
                 sub_topic_id: subTopics && subTopics.length > 0 ? subTopics[0].id : null,
@@ -264,7 +294,6 @@ export default function HomeScreen() {
     const handleToggleSmart = async (taskId: string) => {
         await toggleTaskComplete(taskId);
         await fetchSmartToday();
-        // Record activity for streak tracking
         if (user) await recordActivity(user.id);
     };
 
@@ -287,7 +316,6 @@ export default function HomeScreen() {
     };
 
     const handleStartSession = (config: SessionConfig) => {
-        // Navigate to Focus Mode with session configuration
         router.push({
             pathname: '/focus',
             params: {
@@ -383,11 +411,8 @@ export default function HomeScreen() {
         setTodayCollapsed(!todayCollapsed);
     };
 
-    //Task Limit Modal handlers
     const handleReplaceTask = async (taskId: string) => {
-        // Delete the selected task
         await handleDeleteTask(taskId);
-        // Then add the new task
         await handleQuickAdd();
         setTaskLimitModalVisible(false);
     };
@@ -423,13 +448,11 @@ export default function HomeScreen() {
     };
 
     const handleAddAnyway = async () => {
-        // Log override for analytics
+        if (!user) return;
         await logOverride('task_limit');
         setTaskLimitModalVisible(false);
-        // Proceed with adding task (bypassing capacity check)
         setIsAddingTask(true);
         try {
-            if (!user) return;
             const { data: subTopics } = await supabase
                 .from("sub_topics")
                 .select("id, topic_id")
@@ -458,50 +481,37 @@ export default function HomeScreen() {
     const totalCount = todayTasks.length;
     const progress = totalCount > 0 ? completedCount / totalCount : 0;
 
-    // Get themedbackground color
-    const themedBg = isDark ? darkMode.background.primary : background.primary;
-    const themedText = isDark ? darkMode.text : text;
-    const themedPastel = isDark ? darkMode.pastel : pastel;
-
     if (tasksLoading && todayTasks.length === 0 && isLoadingSmart) {
         return (
-            <View style={[styles.container, styles.centered, { backgroundColor: themedBg }]}>
-                <ActivityIndicator size="large" color={themedPastel.mint} />
-                <Text variant="bodyMedium" style={{ color: themedText.secondary, marginTop: 16 }}>Loading...</Text>
+            <View style={[styles.container, styles.centered]}>
+                <ActivityIndicator size="large" color={glassAccent.mint} />
+                <Text variant="bodyMedium" style={{ color: glassText.secondary, marginTop: 16 }}>Loading...</Text>
             </View>
         );
     }
 
     return (
-        <KeyboardAvoidingView style={{ flex: 1, backgroundColor: themedBg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={[styles.container, { backgroundColor: themedBg }]}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <MeshGradientBackground />
+            <View style={styles.container}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={themedPastel.mint} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={glassAccent.mint} />}
                     keyboardShouldPersistTaps="handled"
                 >
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.headerTop}>
-                            <Text variant="bodyMedium" style={{ color: isDark ? darkMode.text.secondary : text.secondary }}>
+                            <Text variant="bodyMedium" style={{ color: glassText.secondary }}>
                                 {format(new Date(), "EEEE, MMMM d")}
                             </Text>
-                            <View style={styles.headerIcons}>
-                                <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
-                                    <Ionicons
-                                        name={isDark ? "sunny-outline" : "moon-outline"}
-                                        size={22}
-                                        color={isDark ? darkMode.pastel.mint : pastel.slate}
-                                    />
-                                </TouchableOpacity>
-                                <StreakIcon onPress={() => setStreakModalVisible(true)} />
-                            </View>
+                            <StreakIcon onPress={() => setStreakModalVisible(true)} />
                         </View>
                         <TouchableOpacity onPress={handleOpenNameModal} style={styles.greetingRow}>
                             <Text variant="headlineLarge" style={styles.greeting}>
                                 {getGreeting()}, {displayName || user?.full_name?.split(" ")[0] || "Student"} 👋
                             </Text>
-                            <Ionicons name="pencil-outline" size={16} color={text.muted} style={{ marginLeft: 8 }} />
+                            <Ionicons name="pencil-outline" size={16} color={glassText.muted} style={{ marginLeft: 8 }} />
                         </TouchableOpacity>
                     </View>
 
@@ -513,15 +523,15 @@ export default function HomeScreen() {
                             onChangeText={handleSearch}
                         />
                         {searchResults.length > 0 && (
-                            <Card style={styles.searchResults} noPadding>
+                            <GlassCard style={[styles.searchResults, { padding: 0 }]}>
                                 {searchResults.slice(0, 6).map((result) => (
                                     <TouchableOpacity key={result.id} style={styles.searchResultItem} onPress={() => handleSearchSelect(result)}>
-                                        <Ionicons name={getSearchIcon(result.type) as any} size={16} color={result.color || pastel.mint} />
+                                        <Ionicons name={getSearchIcon(result.type) as any} size={16} color={result.color || glassAccent.mint} />
                                         <View style={styles.searchResultInfo}>
-                                            <Text variant="bodyMedium" style={{ color: text.primary }}>{result.title}</Text>
+                                            <Text variant="bodyMedium" style={{ color: glassText.primary }}>{result.title}</Text>
                                             <View style={styles.searchResultMeta}>
                                                 <Chip size="sm">{getSearchTypeLabel(result.type)}</Chip>
-                                                <Text variant="bodySmall" style={{ color: text.secondary }}>{result.subtitle}</Text>
+                                                <Text variant="bodySmall" style={{ color: glassText.secondary }}>{result.subtitle}</Text>
                                             </View>
                                         </View>
                                         {result.type !== "note" && (
@@ -529,25 +539,25 @@ export default function HomeScreen() {
                                                 onPress={() => handleSearchAddToToday(result)}
                                                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                             >
-                                                <Ionicons name="add-circle-outline" size={22} color={pastel.mint} />
+                                                <Ionicons name="add-circle-outline" size={22} color={glassAccent.mint} />
                                             </TouchableOpacity>
                                         )}
                                     </TouchableOpacity>
                                 ))}
-                            </Card>
+                            </GlassCard>
                         )}
                     </View>
 
-                    {/* Start Focus Session Card - NEW */}
+                    {/* Start Focus Session Card */}
                     {profile && (
-                        <Card style={styles.startSessionCard}>
+                        <GlassCard style={styles.startSessionCard} intensity="medium">
                             <TouchableOpacity
                                 onPress={() => setStartSessionModalVisible(true)}
                                 style={styles.sessionCardContent}
                                 activeOpacity={0.7}
                             >
                                 <View style={styles.sessionIcon}>
-                                    <Ionicons name="play-circle" size={32} color={pastel.mint} />
+                                    <Ionicons name="play-circle" size={32} color={glassAccent.mint} />
                                 </View>
                                 <View style={styles.sessionInfo}>
                                     <Text variant="titleMedium" style={styles.sessionTitle}>
@@ -557,33 +567,59 @@ export default function HomeScreen() {
                                         {ADAPTIVE_PLANS.find(p => p.id === profile.selected_plan_id)?.default_session_length || 25} min · Based on your plan
                                     </Text>
                                 </View>
-                                <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                                <Ionicons name="chevron-forward" size={20} color={glassText.muted} />
                             </TouchableOpacity>
-                        </Card>
+                        </GlassCard>
                     )}
 
                     {/* Exam Alert */}
                     {examDaysAway !== null && examDaysAway <= 7 && (
-                        <Card style={styles.examAlert}>
+                        <GlassCard style={styles.examAlert} intensity="light">
                             <View style={styles.examAlertContent}>
                                 <Ionicons name="warning" size={20} color={semantic.error} />
                                 <Text variant="bodyMedium" style={styles.examAlertText}>
                                     Exam in {examDaysAway} days! Focus on exam tasks.
                                 </Text>
                             </View>
-                        </Card>
+                        </GlassCard>
                     )}
 
-                    {/* Capacity Indicator - NEW */}
+                    {/* Apple Health Promo Card */}
+                    {!hasPermissions && (
+                        <GlassCard style={styles.healthPromoCard} intensity="light">
+                            <TouchableOpacity
+                                onPress={() => router.push('/onboarding/health')}
+                                style={styles.healthPromoContent}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.healthPromoIcon}>
+                                    <Ionicons name="heart" size={24} color={glassAccent.warm} />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text variant="titleSmall" style={{ color: glassText.primary }}>
+                                        Optimize with Apple Health
+                                    </Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>
+                                        Adjust focus based on sleep & recovery
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={18} color={glassText.muted} />
+                            </TouchableOpacity>
+                        </GlassCard>
+                    )}
+
+                    {/* Capacity Indicator */}
                     {capacity && (
-                        <Card style={styles.capacityCard}>
+                        <GlassCard style={styles.capacityCard}>
                             <View style={styles.capacityHeader}>
                                 <View style={styles.capacityTitleRow}>
-                                    <Ionicons name="speedometer-outline" size={18} color={pastel.mint} />
+                                    <Ionicons name="speedometer-outline" size={18} color={glassAccent.mint} />
                                     <Text variant="titleSmall" style={styles.capacityTitle}>Your Capacity Today</Text>
                                 </View>
                                 <Text variant="bodySmall" style={styles.capacityHint}>
-                                    Based on your profile
+                                    {healthInfluenceMode === 'adaptive' && hasPermissions
+                                        ? (derivedData.isCalibrating ? "Learning your rhythm..." : "Adjusted gently based on recovery signals")
+                                        : "Based on your profile"}
                                 </Text>
                             </View>
 
@@ -591,14 +627,14 @@ export default function HomeScreen() {
                                 <View style={styles.capacityMetric}>
                                     <Text variant="headlineSmall" style={[
                                         styles.capacityValue,
-                                        { color: usage.isOverTaskLimit ? pastel.peach : pastel.mint }
+                                        { color: usage.isOverTaskLimit ? glassAccent.warm : glassAccent.mint }
                                     ]}>
                                         {usage.todayTaskCount} / {capacity.max_tasks_per_day}
                                     </Text>
                                     <Text variant="bodySmall" style={styles.capacityLabel}>tasks today</Text>
                                     <ProgressBar
                                         progress={Math.min(1, usage.todayTaskCount / capacity.max_tasks_per_day)}
-                                        color={usage.isOverTaskLimit ? pastel.peach : pastel.mint}
+                                        color={usage.isOverTaskLimit ? glassAccent.warm : glassAccent.mint}
                                         height={4}
                                         style={{ marginTop: 8 }}
                                     />
@@ -609,43 +645,43 @@ export default function HomeScreen() {
                                 <View style={styles.capacityMetric}>
                                     <Text variant="headlineSmall" style={[
                                         styles.capacityValue,
-                                        { color: usage.isOverFocusLimit ? pastel.peach : pastel.slate }
+                                        { color: usage.isOverFocusLimit ? glassAccent.warm : glassText.muted }
                                     ]}>
                                         {usage.remainingFocusMinutes}m
                                     </Text>
                                     <Text variant="bodySmall" style={styles.capacityLabel}>focus time left</Text>
                                 </View>
                             </View>
-                        </Card>
+                        </GlassCard>
                     )}
 
                     {/* Stats Cards */}
                     <View style={styles.statsRow}>
-                        <Card gradient="mint" style={styles.statCard}>
+                        <GlassCard style={styles.statCard} bordered={false} intensity="light">
                             <View style={styles.statHeader}>
-                                <Ionicons name="checkmark-circle" size={18} color="#5D6B6B" />
-                                <Text variant="labelSmall" style={{ color: 'rgba(93, 107, 107, 0.65)', marginLeft: 4 }}>Today</Text>
+                                <Ionicons name="checkmark-circle" size={18} color={glassText.secondary} />
+                                <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Today</Text>
                             </View>
                             <Text variant="titleLarge" style={styles.statValue}>{completedCount}/{totalCount}</Text>
-                            <ProgressBar progress={progress} color="#5D6B6B" height={4} style={{ marginTop: 8 }} />
-                        </Card>
-                        <Card gradient="peach" style={styles.statCard}>
+                            <ProgressBar progress={progress} color={glassAccent.mint} height={4} style={{ marginTop: 8 }} />
+                        </GlassCard>
+                        <GlassCard style={styles.statCard} bordered={false} intensity="light">
                             <View style={styles.statHeader}>
-                                <Ionicons name="flame" size={18} color="#5D6B6B" />
-                                <Text variant="labelSmall" style={{ color: 'rgba(93, 107, 107, 0.65)', marginLeft: 4 }}>Streak</Text>
+                                <Ionicons name="flame" size={18} color={glassAccent.warm} />
+                                <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Streak</Text>
                             </View>
                             <Text variant="titleLarge" style={styles.statValue}>
                                 {isLoadingStreak ? "-" : `${streak}d`}
                             </Text>
-                        </Card>
-                        <TouchableOpacity onPress={() => (router as any).push("/focus")}>
-                            <Card gradient="sage" style={styles.statCard}>
+                        </GlassCard>
+                        <TouchableOpacity style={{ flex: 1 }} onPress={() => (router as any).push("/focus")}>
+                            <GlassCard style={styles.statCard} bordered={false} intensity="medium">
                                 <View style={styles.statHeader}>
-                                    <Ionicons name="timer" size={18} color="#5D6B6B" />
-                                    <Text variant="labelSmall" style={{ color: 'rgba(93, 107, 107, 0.65)', marginLeft: 4 }}>Focus</Text>
+                                    <Ionicons name="timer" size={18} color={glassAccent.blue} />
+                                    <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Focus</Text>
                                 </View>
                                 <Text variant="titleLarge" style={styles.statValue}>Start</Text>
-                            </Card>
+                            </GlassCard>
                         </TouchableOpacity>
                     </View>
 
@@ -654,25 +690,25 @@ export default function HomeScreen() {
                         <View style={styles.section}>
                             <View style={styles.sectionHeader}>
                                 <View style={styles.sectionTitleRow}>
-                                    <Ionicons name="alert-circle" size={20} color={semantic.warning} />
+                                    <Ionicons name="alert-circle" size={20} color={glassAccent.warm} />
                                     <Text variant="titleMedium" style={styles.sectionTitle}>Missed Tasks</Text>
                                 </View>
                             </View>
                             {missedTasks.map((missed) => (
-                                <Card key={missed.task.id} style={styles.missedCard}>
-                                    <Text variant="bodyLarge" style={{ color: text.primary }}>{missed.task.title}</Text>
-                                    <Text variant="bodySmall" style={{ color: semantic.warning, marginTop: 4 }}>
+                                <GlassCard key={missed.task.id} style={styles.missedCard} intensity="light">
+                                    <Text variant="bodyLarge" style={{ color: glassText.primary }}>{missed.task.title}</Text>
+                                    <Text variant="bodySmall" style={{ color: glassAccent.warm, marginTop: 4 }}>
                                         Missed {missed.daysMissed} day{missed.daysMissed > 1 ? 's' : ''} ago
                                     </Text>
                                     <View style={styles.missedActions}>
-                                        <Button size="sm" onPress={() => handleReschedule(missed.task.id)}>
+                                        <GlassButton size="sm" onPress={() => handleReschedule(missed.task.id)}>
                                             Reschedule
-                                        </Button>
-                                        <Button variant="ghost" size="sm" onPress={() => handleSkipTask(missed.task.id, 'no_time')}>
+                                        </GlassButton>
+                                        <GlassButton variant="ghost" size="sm" onPress={() => handleSkipTask(missed.task.id, 'no_time')}>
                                             Skip
-                                        </Button>
+                                        </GlassButton>
                                     </View>
-                                </Card>
+                                </GlassCard>
                             ))}
                         </View>
                     )}
@@ -682,7 +718,7 @@ export default function HomeScreen() {
                         <TouchableOpacity onPress={toggleTodayCollapse} activeOpacity={0.7}>
                             <View style={styles.sectionHeader}>
                                 <View style={styles.sectionTitleRow}>
-                                    <Ionicons name="today" size={20} color={text.primary} />
+                                    <Ionicons name="today" size={20} color={glassText.primary} />
                                     <Text variant="titleMedium" style={styles.sectionTitle}>
                                         Today ({totalCount} tasks)
                                     </Text>
@@ -690,7 +726,7 @@ export default function HomeScreen() {
                                 <Ionicons
                                     name={todayCollapsed ? "chevron-forward" : "chevron-down"}
                                     size={20}
-                                    color={text.muted}
+                                    color={glassText.muted}
                                 />
                             </View>
                         </TouchableOpacity>
@@ -698,14 +734,14 @@ export default function HomeScreen() {
                         {!todayCollapsed && (
                             <>
                                 {todayTasks.length === 0 ? (
-                                    <Card style={styles.emptyCard}>
+                                    <GlassCard style={styles.emptyCard} bordered={false}>
                                         <View style={styles.emptyContent}>
-                                            <Ionicons name="checkbox-outline" size={40} color={text.muted} />
-                                            <Text variant="bodyMedium" style={{ color: text.secondary, textAlign: "center", marginTop: 12 }}>
+                                            <Ionicons name="checkbox-outline" size={40} color={glassText.muted} />
+                                            <Text variant="bodyMedium" style={{ color: glassText.secondary, textAlign: "center", marginTop: 12 }}>
                                                 No tasks due today.{"\n"}Add some from Subjects.
                                             </Text>
                                         </View>
-                                    </Card>
+                                    </GlassCard>
                                 ) : (
                                     todayTasks.map((task) => (
                                         <TaskRow
@@ -723,447 +759,190 @@ export default function HomeScreen() {
                         )}
                     </View>
 
-                    {/* Smart Today Section - Below Today Tasks, Collapsible */}
-                    {smartSuggestions.length > 0 && (
-                        <View style={styles.section}>
-                            <TouchableOpacity onPress={() => setSmartExpanded(!smartExpanded)} activeOpacity={0.7}>
-                                <View style={styles.sectionHeader}>
-                                    <View style={styles.sectionTitleRow}>
-                                        <Ionicons name="sparkles" size={20} color={pastel.mint} />
-                                        <Text variant="titleMedium" style={styles.sectionTitle}>Smart Suggestions</Text>
-                                        <Chip size="sm" variant="primary" style={{ marginLeft: 8 }}>{smartSuggestions.length}</Chip>
-                                    </View>
-                                    <Ionicons
-                                        name={smartExpanded ? "chevron-up" : "chevron-down"}
-                                        size={20}
-                                        color={text.muted}
-                                    />
-                                </View>
-                            </TouchableOpacity>
-
-                            {smartExpanded && (
-                                <>
-                                    <Text variant="bodySmall" style={styles.sectionSubtitle}>
-                                        AI-powered suggestions based on your study patterns
-                                    </Text>
-                                    {smartSuggestions.slice(0, 5).map((suggestion) => (
-                                        <SmartTaskCard
-                                            key={suggestion.task.id}
-                                            suggestion={suggestion}
-                                            onToggle={handleToggleSmart}
-                                            onDismiss={handleDismissSuggestion}
-                                        />
-                                    ))}
-                                    {smartSuggestions.length > 5 && (
-                                        <Text variant="bodySmall" style={{ color: text.muted, textAlign: "center", marginTop: 8 }}>
-                                            +{smartSuggestions.length - 5} more suggestions
-                                        </Text>
-                                    )}
-                                </>
-                            )}
-                        </View>
-                    )}
-
                     {/* Quick Add Task */}
-                    <Card style={styles.quickAddCard}>
-                        <View style={styles.quickAddContent}>
-                            <Ionicons name="add-circle-outline" size={20} color={text.muted} style={{ marginRight: 8 }} />
-                            <TextInput
-                                placeholder="Add a quick task..."
-                                placeholderTextColor={text.muted}
-                                value={quickTaskTitle}
-                                onChangeText={setQuickTaskTitle}
-                                mode="flat"
-                                style={styles.quickAddInput}
-                                underlineStyle={{ display: 'none' } as any}
-                                onSubmitEditing={handleQuickAdd}
-                                theme={{ colors: { text: text.primary, primary: pastel.mint } }}
-                            />
-                            <TouchableOpacity
-                                onPress={handleQuickAdd}
-                                disabled={isAddingTask || !quickTaskTitle.trim()}
-                                style={[styles.quickAddButton, (!quickTaskTitle.trim() || isAddingTask) && styles.quickAddButtonDisabled]}
-                            >
-                                <Ionicons name="send" size={18} color={pastel.white} />
-                            </TouchableOpacity>
-                        </View>
-                    </Card>
-
-                    {/* Explore Features Section */}
-                    <View style={styles.section}>
-                        <TouchableOpacity onPress={() => setFeaturesExpanded(!featuresExpanded)} activeOpacity={0.7}>
-                            <View style={styles.sectionHeader}>
-                                <View style={styles.sectionTitleRow}>
-                                    <Ionicons name="apps" size={20} color={pastel.mint} />
-                                    <Text variant="titleMedium" style={styles.sectionTitle}>Explore Features</Text>
-                                </View>
-                                <Ionicons
-                                    name={featuresExpanded ? "chevron-up" : "chevron-down"}
-                                    size={20}
-                                    color={text.muted}
+                    <View style={styles.quickAddContainer}>
+                        <GlassCard style={styles.quickAddCard} padding={0} intensity="medium">
+                            <View style={styles.quickAddRow}>
+                                <TextInput
+                                    placeholder="Add a quick task..."
+                                    value={quickTaskTitle}
+                                    onChangeText={setQuickTaskTitle}
+                                    style={styles.quickAddInput}
+                                    placeholderTextColor={glassText.secondary}
+                                    textColor={glassText.primary}
+                                    underlineColor="transparent"
+                                    activeUnderlineColor="transparent"
+                                    theme={{ colors: { background: "transparent" } }}
+                                    onSubmitEditing={handleQuickAdd}
                                 />
-                            </View>
-                        </TouchableOpacity>
-
-                        {featuresExpanded && (
-                            <View style={{ gap: 12, marginTop: 12 }}>
-                                {/* Focus Timer */}
-                                <TouchableOpacity onPress={() => router.push('/focus')} activeOpacity={0.7}>
-                                    <Card style={styles.featureCard}>
-                                        <View style={styles.featureIcon}>
-                                            <Ionicons name="timer" size={24} color={pastel.mint} />
-                                        </View>
-                                        <View style={styles.featureContent}>
-                                            <Text variant="titleSmall" style={styles.featureTitle}>Focus Timer</Text>
-                                            <Text variant="bodySmall" style={styles.featureDesc}>Pomodoro sessions with quality tracking</Text>
-                                        </View>
-                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
-                                    </Card>
-                                </TouchableOpacity>
-
-                                {/* Analytics */}
-                                <TouchableOpacity onPress={() => router.push('/analytics')} activeOpacity={0.7}>
-                                    <Card style={styles.featureCard}>
-                                        <View style={styles.featureIcon}>
-                                            <Ionicons name="analytics" size={24} color={pastel.slate} />
-                                        </View>
-                                        <View style={styles.featureContent}>
-                                            <Text variant="titleSmall" style={styles.featureTitle}>Analytics</Text>
-                                            <Text variant="bodySmall" style={styles.featureDesc}>Track progress and insights</Text>
-                                        </View>
-                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
-                                    </Card>
-                                </TouchableOpacity>
-
-                                {/* Subjects */}
-                                <TouchableOpacity onPress={() => router.push('/subjects')} activeOpacity={0.7}>
-                                    <Card style={styles.featureCard}>
-                                        <View style={styles.featureIcon}>
-                                            <Ionicons name="book" size={24} color={pastel.peach} />
-                                        </View>
-                                        <View style={styles.featureContent}>
-                                            <Text variant="titleSmall" style={styles.featureTitle}>Subjects & Topics</Text>
-                                            <Text variant="bodySmall" style={styles.featureDesc}>Organize by subject and topic</Text>
-                                        </View>
-                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
-                                    </Card>
-                                </TouchableOpacity>
-
-                                {/* Notes */}
-                                <TouchableOpacity onPress={() => router.push('/notes')} activeOpacity={0.7}>
-                                    <Card style={styles.featureCard}>
-                                        <View style={styles.featureIcon}>
-                                            <Ionicons name="document-text" size={24} color={pastel.slate} />
-                                        </View>
-                                        <View style={styles.featureContent}>
-                                            <Text variant="titleSmall" style={styles.featureTitle}>Notes</Text>
-                                            <Text variant="bodySmall" style={styles.featureDesc}>Quick notes for each day</Text>
-                                        </View>
-                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
-                                    </Card>
-                                </TouchableOpacity>
-
-                                {/* Profile Settings */}
-                                <TouchableOpacity onPress={() => router.push('/profile-settings')} activeOpacity={0.7}>
-                                    <Card style={styles.featureCard}>
-                                        <View style={styles.featureIcon}>
-                                            <Ionicons name="person" size={24} color={pastel.mint} />
-                                        </View>
-                                        <View style={styles.featureContent}>
-                                            <Text variant="titleSmall" style={styles.featureTitle}>Study Profile</Text>
-                                            <Text variant="bodySmall" style={styles.featureDesc}>Personalize your study plan</Text>
-                                        </View>
-                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
-                                    </Card>
+                                <TouchableOpacity
+                                    onPress={handleQuickAdd}
+                                    disabled={!quickTaskTitle.trim() || isAddingTask}
+                                    style={styles.quickAddBtn}
+                                >
+                                    <Ionicons
+                                        name="arrow-up-circle"
+                                        size={32}
+                                        color={quickTaskTitle.trim() ? glassAccent.mint : glassText.muted}
+                                    />
                                 </TouchableOpacity>
                             </View>
-                        )}
+                        </GlassCard>
                     </View>
-
                 </ScrollView>
 
                 {/* Modals */}
                 <Portal>
-                    {/* Reflection Modal */}
-                    <Modal visible={reflectionVisible} onDismiss={() => { setReflectionVisible(false); markPromptShown(); }} contentContainerStyle={styles.modal}>
-                        <View style={styles.modalHeader}>
-                            <Ionicons name="bulb" size={24} color={semantic.warning} />
-                            <Text variant="titleLarge" style={styles.modalTitle}>Daily Reflection</Text>
-                        </View>
-                        <Text variant="bodySmall" style={styles.modalSubtitle}>
-                            Take a moment to reflect on your learning today
-                        </Text>
-                        <TextInput
-                            label="What did you learn today?"
-                            value={reflectionLearned}
-                            onChangeText={setReflectionLearned}
-                            mode="outlined"
-                            style={styles.modalInput}
-                            maxLength={200}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                        />
-                        <TextInput
-                            label="What was difficult?"
-                            value={reflectionDifficult}
-                            onChangeText={setReflectionDifficult}
-                            mode="outlined"
-                            style={styles.modalInput}
-                            maxLength={200}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                        />
-                        <View style={styles.modalButtons}>
-                            <Button variant="ghost" onPress={() => { setReflectionVisible(false); markPromptShown(); }}>
-                                Skip
-                            </Button>
-                            <Button onPress={handleSaveReflection}>
-                                Save
-                            </Button>
-                        </View>
-                    </Modal>
-
                     {/* Name Edit Modal */}
                     <Modal visible={nameModalVisible} onDismiss={() => setNameModalVisible(false)} contentContainerStyle={styles.modal}>
-                        <Text variant="titleLarge" style={styles.modalTitle}>Edit Your Name</Text>
+                        <Text variant="titleLarge" style={styles.modalTitle}>What should we call you?</Text>
                         <TextInput
-                            label="Your name"
                             value={editName}
                             onChangeText={setEditName}
-                            mode="outlined"
                             style={styles.modalInput}
+                            mode="outlined"
                             autoFocus
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
+                            placeholder="Your Name"
+                            outlineColor={glass.border.light}
+                            activeOutlineColor={glassAccent.mint}
+                            textColor={glassText.primary}
+                            theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
-                        <View style={styles.modalButtons}>
-                            <Button variant="ghost" onPress={() => setNameModalVisible(false)}>
-                                Cancel
-                            </Button>
-                            <Button onPress={handleSaveName} loading={isSavingName} disabled={isSavingName || !editName.trim()}>
-                                Save
-                            </Button>
-                        </View>
+                        <GlassButton onPress={handleSaveName} loading={isSavingName} fullWidth>
+                            Save
+                        </GlassButton>
                     </Modal>
 
                     {/* Task Edit Modal */}
                     <Modal visible={taskEditVisible} onDismiss={() => setTaskEditVisible(false)} contentContainerStyle={styles.modal}>
                         <Text variant="titleLarge" style={styles.modalTitle}>Edit Task</Text>
                         <TextInput
-                            label="Task title"
+                            label="Title"
                             value={editTaskTitle}
                             onChangeText={setEditTaskTitle}
-                            mode="outlined"
                             style={styles.modalInput}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
+                            mode="outlined"
+                            outlineColor={glass.border.light}
+                            activeOutlineColor={glassAccent.mint}
+                            textColor={glassText.primary}
+                            theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
-                        <Text variant="bodyMedium" style={{ color: text.secondary, marginBottom: 8 }}>Priority</Text>
-                        <View style={styles.priorityRow}>
-                            {(["low", "medium", "high"] as const).map((p) => (
+                        <Text variant="bodyMedium" style={{ color: glassText.secondary, marginBottom: 8 }}>Priority</Text>
+                        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                            {(['low', 'medium', 'high'] as const).map(p => (
                                 <Chip
                                     key={p}
-                                    variant={`priority-${p}`}
                                     selected={editTaskPriority === p}
                                     onPress={() => setEditTaskPriority(p)}
+                                    // Use variant text logic potentially or just manual styles if Chip isn't fully updated yet
+                                    // Assuming Chip handles selection via props or we need custom logic.
+                                    // Chip component from 'ui' likely accepts variant.
+                                    variant={editTaskPriority === p ? `priority-${p}` as any : 'default'}
                                 >
                                     {p.charAt(0).toUpperCase() + p.slice(1)}
                                 </Chip>
                             ))}
                         </View>
-                        <View style={styles.modalButtons}>
-                            <Button variant="ghost" onPress={() => setTaskEditVisible(false)}>
-                                Cancel
-                            </Button>
-                            <Button onPress={handleSaveTask} loading={isSavingTask} disabled={isSavingTask || !editTaskTitle.trim()}>
-                                Save
-                            </Button>
-                        </View>
+                        <GlassButton onPress={handleSaveTask} loading={isSavingTask} fullWidth>
+                            Save Changes
+                        </GlassButton>
                     </Modal>
                 </Portal>
 
-                {/* Task Limit Modal */}
-                <TaskLimitModal
-                    visible={taskLimitModalVisible}
-                    currentCount={usage.todayTaskCount}
-                    maxTasks={capacity?.max_tasks_per_day || 5}
-                    todayTasks={todayTasks.filter(t => !t.is_completed).map(t => ({ id: t.id, title: t.title }))}
-                    onDismiss={() => setTaskLimitModalVisible(false)}
-                    onReplaceTask={handleReplaceTask}
-                    onScheduleTomorrow={handleScheduleTomorrow}
-                    onAddAnyway={handleAddAnyway}
-                />
-
-                {/* Start Session Modal */}
                 <StartSessionModal
                     visible={startSessionModalVisible}
                     onDismiss={() => setStartSessionModalVisible(false)}
                     onStart={handleStartSession}
-                    defaultDuration={
-                        profile?.selected_plan_id
-                            ? (ADAPTIVE_PLANS.find(p => p.id === profile.selected_plan_id)?.default_session_length || 25)
-                            : 25
-                    }
+                    defaultDuration={ADAPTIVE_PLANS.find(p => p.id === profile?.selected_plan_id)?.default_session_length || 25}
+                />
+
+                <StreakModal
+                    visible={streakModalVisible}
+                    onClose={() => setStreakModalVisible(false)}
+                />
+
+                <TaskLimitModal
+                    visible={taskLimitModalVisible}
+                    onDismiss={() => setTaskLimitModalVisible(false)}
+                    onReplaceTask={handleReplaceTask}
+                    onScheduleTomorrow={handleScheduleTomorrow}
+                    onAddAnyway={handleAddAnyway}
+                    todayTasks={todayTasks}
+                    currentCount={usage.todayTaskCount}
+                    maxTasks={capacity?.max_tasks_per_day || 3}
                 />
 
                 <Snackbar
                     visible={searchSnackbarVisible}
                     onDismiss={() => setSearchSnackbarVisible(false)}
-                    duration={2000}
-                    style={{ backgroundColor: pastel.slate }}
+                    duration={3000}
+                    style={{ backgroundColor: darkBackground.elevated }}
                 >
                     {searchSnackbarMessage}
                 </Snackbar>
-
-                {/* Streak Modal */}
-                <StreakModal
-                    visible={streakModalVisible}
-                    onClose={() => setStreakModalVisible(false)}
-                />
             </View>
         </KeyboardAvoidingView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: background.primary },
+    container: { flex: 1, backgroundColor: 'transparent' },
     centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
-    header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 12 },
-    headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    headerIcons: { flexDirection: "row", alignItems: "center", gap: 8 },
-    themeToggle: { padding: 4 },
-    greeting: { color: text.primary, fontWeight: "bold", marginTop: 4 },
+    header: { paddingHorizontal: 16, paddingTop: 60, paddingBottom: 16 }, // ✅ Canonical inset
+    headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
     greetingRow: { flexDirection: "row", alignItems: "center" },
-    searchContainer: { paddingHorizontal: 24, marginBottom: 16, zIndex: 100 },
-    searchResults: { position: "absolute", top: 56, left: 0, right: 0, zIndex: 999, paddingVertical: 8 },
-    searchResultItem: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 16 },
-    searchResultInfo: { marginLeft: 12, flex: 1 },
-    searchResultMeta: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
-    examAlert: { marginHorizontal: 24, marginBottom: 16, backgroundColor: semantic.errorLight },
-    examAlertContent: { flexDirection: "row", alignItems: "center" },
-    examAlertText: { color: "#C08080", marginLeft: 12, flex: 1 },
-    statsRow: { flexDirection: "row", paddingHorizontal: 24, gap: 10, marginBottom: 20 },
+    greeting: { color: glassText.primary, fontWeight: "bold" },
+    searchContainer: { paddingHorizontal: 16, marginBottom: 24, zIndex: 10 }, // ✅ Canonical inset
+    searchResults: { position: "absolute", top: 56, left: 16, right: 16, zIndex: 100, maxHeight: 300 }, // ✅ Aligned
+    searchResultItem: { flexDirection: "row", alignItems: "center", padding: 12, borderBottomWidth: 0.5, borderBottomColor: glass.border.light },
+    searchResultInfo: { flex: 1, marginLeft: 12 },
+    searchResultMeta: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 8 },
+    startSessionCard: { marginHorizontal: 16, marginBottom: 24, padding: 0 }, // ✅ Canonical margin
+    sessionCardContent: { flexDirection: "row", alignItems: "center", padding: 16 },
+    sessionIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: glassAccent.mint + "20", alignItems: "center", justifyContent: "center", marginRight: 16 },
+    sessionInfo: { flex: 1 },
+    sessionTitle: { color: glassText.primary, fontWeight: "600" },
+    sessionSubtitle: { color: glassText.secondary },
+    examAlert: { marginHorizontal: 16, marginBottom: 16, backgroundColor: glassAccent.warm + "15" }, // ✅ Canonical margin
+    examAlertContent: { flexDirection: "row", alignItems: "center", gap: 12 },
+    examAlertText: { color: glassText.primary, flex: 1 },
+    healthPromoCard: { marginHorizontal: 16, marginBottom: 24 }, // ✅ Canonical margin
+    healthPromoContent: { flexDirection: "row", alignItems: "center", gap: 12 },
+    healthPromoIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: glassAccent.warm + "20", alignItems: "center", justifyContent: "center" },
+    capacityCard: { marginHorizontal: 16, marginBottom: 24 }, // ✅ Canonical margin
+    capacityHeader: { marginBottom: 16 },
+    capacityTitleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
+    capacityTitle: { color: glassText.primary },
+    capacityHint: { color: glassText.secondary },
+    capacityMetrics: { flexDirection: "row", gap: 16 },
+    capacityMetric: { flex: 1 },
+    capacityValue: { fontWeight: "bold" },
+    capacityLabel: { color: glassText.secondary },
+    capacityDivider: { width: 1, backgroundColor: glass.border.light },
+    statsRow: { flexDirection: "row", paddingHorizontal: 16, gap: 12, marginBottom: 24 }, // ✅ Canonical padding
     statCard: { flex: 1, padding: 12 },
-    statHeader: { flexDirection: "row", alignItems: "center", marginBottom: 6 },
-    statValue: { color: text.primary, fontWeight: "bold" },
-    section: { paddingHorizontal: 24, marginBottom: 20 },
-    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
-    sectionTitleRow: { flexDirection: "row", alignItems: "center" },
-    sectionTitle: { color: text.primary, fontWeight: "600", marginLeft: 8 },
-    sectionSubtitle: { color: text.secondary, marginBottom: 12 },
-    missedCard: { marginBottom: 10 },
-    missedActions: { flexDirection: "row", gap: 8, marginTop: 12 },
-    smartCard: { marginBottom: 10 },
-    smartContent: { flexDirection: "row", alignItems: "center" },
-    smartInfo: { flex: 1, marginLeft: 8 },
-    smartTitle: { color: text.primary, marginBottom: 4 },
-    smartMeta: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
-    quickAddCard: { marginHorizontal: 24, marginBottom: 20 },
-    quickAddContent: { flexDirection: "row", alignItems: "center" },
-    quickAddInput: { flex: 1, backgroundColor: "transparent", fontSize: 14 },
-    quickAddButton: { backgroundColor: pastel.mint, borderRadius: borderRadius.pill, padding: 10 },
-    quickAddButtonDisabled: { opacity: 0.5 },
+    statHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+    statValue: { color: glassText.primary, fontWeight: "bold" },
+    section: { paddingHorizontal: 16, marginBottom: 24 }, // ✅ Canonical padding
+    sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+    sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+    sectionTitle: { color: glassText.primary, fontWeight: "600" },
+    missedCard: { marginBottom: 12 },
+    missedActions: { flexDirection: "row", gap: 8, marginTop: 12, justifyContent: "flex-end" },
     emptyCard: { padding: 24 },
-    emptyContent: { alignItems: "center" },
-    modal: { backgroundColor: background.card, margin: 20, padding: 24, borderRadius: borderRadius.lg },
-    modalHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-    modalTitle: { color: text.primary, fontWeight: "bold", marginLeft: 12 },
-    modalSubtitle: { color: text.secondary, marginBottom: 20 },
-    modalInput: { marginBottom: 12, backgroundColor: background.primary },
-    modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 8 },
-    priorityRow: { flexDirection: "row", gap: 8, marginBottom: 12 },
-    startSessionCard: {
-        marginHorizontal: 24,
-        marginBottom: 16,
-        marginTop: 8,
-    },
-    sessionCardContent: {
-        flexDirection: "row",
-        alignItems: "center",
-        padding: spacing.md,
-    },
-    sessionIcon: {
-        marginRight: spacing.md,
-    },
-    sessionInfo: {
-        flex: 1,
-    },
-    sessionTitle: {
-        color: text.primary,
-        fontWeight: "600",
-    },
-    sessionSubtitle: {
-        color: text.secondary,
-        marginTop: 2,
-    },
-
-    // Feature Cards
-    featureCard: {
-        flexDirection: "row",
-        alignItems: "center",
-        padding: spacing.md,
-    },
-    featureIcon: {
-        marginRight: spacing.md,
-    },
-    featureContent: {
-        flex: 1,
-    },
-    featureTitle: {
-        color: text.primary,
-        fontWeight: "600",
-        marginBottom: 2,
-    },
-    featureDesc: {
-        color: text.secondary,
-    },
-    // Capacity Card Styles
-    capacityCard: {
-        marginHorizontal: spacing.lg,
-        marginBottom: spacing.lg,
-        padding: spacing.md,
-    },
-    capacityHeader: {
-        marginBottom: spacing.sm,
-    },
-    capacityTitleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        marginBottom: 4,
-    },
-    capacityTitle: {
-        color: text.primary,
-        fontWeight: '600',
-    },
-    capacityHint: {
-        color: text.secondary,
-    },
-    capacityMetrics: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginTop: spacing.sm,
-    },
-    capacityMetric: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    capacityValue: {
-        fontWeight: '700',
-        marginBottom: 4,
-    },
-    capacityLabel: {
-        color: text.secondary,
-    },
-    capacityDivider: {
-        width: 1,
-        height: 60,
-        backgroundColor: pastel.beige,
-        marginHorizontal: spacing.md,
-    },
+    emptyContent: { alignItems: "center", paddingVertical: 20 },
+    quickAddContainer: { paddingHorizontal: 16, paddingBottom: 20 }, // ✅ Canonical padding
+    quickAddCard: { borderRadius: borderRadius.pill || 30 },
+    quickAddRow: { flexDirection: "row", alignItems: "center", paddingLeft: 16, paddingRight: 8, paddingVertical: 4 },
+    quickAddInput: { flex: 1, backgroundColor: "transparent", fontSize: 16 },
+    quickAddBtn: { padding: 4 },
+    smartCard: { marginHorizontal: 16, marginBottom: 16 }, // ✅ Canonical margin
+    smartContent: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    smartInfo: { flex: 1, marginHorizontal: 12 },
+    smartTitle: { color: glassText.primary, fontWeight: "500" },
+    smartMeta: { flexDirection: "row", alignItems: "center", marginTop: 4 },
+    modal: { backgroundColor: darkBackground.elevated, margin: 20, padding: 24, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: glass.border.light },
+    modalTitle: { color: glassText.primary, fontWeight: "bold", marginBottom: 16 },
+    modalInput: { marginBottom: 16, backgroundColor: darkBackground.primary },
 });

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { background, text, pastel, spacing, borderRadius } from '../../constants/theme';
+import { GlassCard } from '../glass/GlassCard';
+import { glassText, glassAccent, glass } from '../../constants/glassTheme';
 
 interface QuestionOptionProps {
     label: string;
@@ -14,60 +15,67 @@ interface QuestionOptionProps {
 
 export function QuestionOption({ label, description, selected, onSelect }: QuestionOptionProps) {
     return (
-        <TouchableOpacity
-            onPress={onSelect}
-            activeOpacity={0.7}
-            style={[styles.option, selected && styles.optionSelected]}
+        <GlassCard
+            intensity="light"
+            style={[styles.container, selected && styles.containerSelected]}
+            bordered={!selected} // Hide default border if selected (we use custom below) or keep it? 
+        // Better: bordered={true} always, but override borderColor if selected
         >
-            <View style={styles.optionContent}>
-                <View style={styles.optionText}>
-                    <Text variant="bodyLarge" style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
-                        {label}
-                    </Text>
-                    {description && (
-                        <Text variant="bodySmall" style={styles.optionDescription}>
-                            {description}
+            <TouchableOpacity
+                onPress={onSelect}
+                activeOpacity={0.7}
+                style={styles.touchable}
+            >
+                <View style={styles.optionContent}>
+                    <View style={styles.optionText}>
+                        <Text variant="bodyLarge" style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
+                            {label}
                         </Text>
-                    )}
+                        {description && (
+                            <Text variant="bodySmall" style={styles.optionDescription}>
+                                {description}
+                            </Text>
+                        )}
+                    </View>
+                    <View style={[styles.radio, selected && styles.radioSelected]}>
+                        {selected && <View style={styles.radioInner} />}
+                    </View>
                 </View>
-                <View style={[styles.radio, selected && styles.radioSelected]}>
-                    {selected && <View style={styles.radioInner} />}
-                </View>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </GlassCard>
     );
 }
 
 const styles = StyleSheet.create({
-    option: {
-        backgroundColor: background.card,
-        borderRadius: borderRadius.lg,
-        marginBottom: spacing.sm,
-        borderWidth: 2,
-        borderColor: 'transparent',
+    container: {
+        marginBottom: 8,
+        padding: 0, // content handled by touchable
+        overflow: 'hidden',
     },
-    optionSelected: {
-        borderColor: pastel.mint,
-        backgroundColor: `${pastel.mint}10`,
+    containerSelected: {
+        borderColor: glassAccent.mint,
+        backgroundColor: glassAccent.mintGlow,
+    },
+    touchable: {
+        padding: 16,
     },
     optionContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: spacing.md,
     },
     optionText: {
         flex: 1,
     },
     optionLabel: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '500',
     },
     optionLabelSelected: {
-        color: pastel.mint,
+        color: glassAccent.mint,
         fontWeight: '600',
     },
     optionDescription: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: 2,
     },
     radio: {
@@ -75,18 +83,18 @@ const styles = StyleSheet.create({
         height: 24,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: text.muted,
+        borderColor: glass.border.light,
         alignItems: 'center',
         justifyContent: 'center',
-        marginLeft: spacing.sm,
+        marginLeft: 12,
     },
     radioSelected: {
-        borderColor: pastel.mint,
+        borderColor: glassAccent.mint,
     },
     radioInner: {
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: pastel.mint,
+        backgroundColor: glassAccent.mint,
     },
 });

@@ -12,9 +12,12 @@ import { useProfileStore } from "../../store/profileStore";
 import { ADAPTIVE_PLANS } from "../../utils/adaptivePlans";
 
 // Design tokens
-import { focus, pastel, text, spacing, borderRadius, shadows } from "../../constants/theme";
+import { spacing, borderRadius, shadows } from "../../constants/theme";
+import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-import { Card, Button, Chip, SessionQualityModal } from "../../components/ui";
+import { Chip, SessionQualityModal } from "../../components/ui";
+// Note: We use GlassCard/GlassButton instead of Card/Button
+import { GlassCard, GlassButton } from "../../components/glass";
 import { saveFocusSession } from "../../utils/sessionTaskLinker";
 import { SessionQualityPrompt } from "../../components/session/SessionQualityPrompt";
 
@@ -139,7 +142,7 @@ export default function FocusModeScreen() {
             taskTitle: selectedTask.task.title,
             topicId: selectedTask.task.topic_id || undefined,
             subjectName: selectedTask.subjectName,
-        } : {};
+        } : undefined;
         startTimer(selectedDuration, focusContext);
     };
 
@@ -213,12 +216,12 @@ export default function FocusModeScreen() {
             <Stack.Screen
                 options={{
                     title: "Focus Mode",
-                    headerStyle: { backgroundColor: focus.background },
-                    headerTintColor: focus.text,
+                    headerStyle: { backgroundColor: darkBackground.primary },
+                    headerTintColor: glassText.primary,
                     headerShadowVisible: false,
                     headerLeft: () => (
                         <IconButton
-                            icon={() => <Ionicons name="close" size={24} color={focus.text} />}
+                            icon={() => <Ionicons name="close" size={24} color={glassText.primary} />}
                             onPress={() => {
                                 if (isRunning) pauseTimer();
                                 router.back();
@@ -263,7 +266,7 @@ export default function FocusModeScreen() {
                     {/* Active task display */}
                     {context.taskTitle && (
                         <View style={styles.activeTaskContainer}>
-                            <View style={[styles.taskDot, { backgroundColor: focus.accent }]} />
+                            <View style={[styles.taskDot, { backgroundColor: glassAccent.blue }]} />
                             <Text variant="titleMedium" style={styles.activeTask} numberOfLines={2}>
                                 {context.taskTitle}
                             </Text>
@@ -281,7 +284,7 @@ export default function FocusModeScreen() {
                     <View style={styles.durationSection}>
                         <Text variant="titleMedium" style={styles.sectionTitle}>Duration</Text>
                         {capacity && (
-                            <Text variant="bodySmall" style={{ color: text.secondary, marginBottom: spacing.xs }}>
+                            <Text variant="bodySmall" style={{ color: glassText.secondary, marginBottom: spacing.xs }}>
                                 Recommended for you: {capacity.default_focus_minutes} minutes
                             </Text>
                         )}
@@ -289,7 +292,20 @@ export default function FocusModeScreen() {
                             {timerPresets.map((preset) => (
                                 <Chip
                                     key={preset.value}
-                                    variant={selectedDuration === preset.value ? "primary" : "default"}
+                                    style={{
+                                        backgroundColor: selectedDuration === preset.value
+                                            ? glassAccent.blue + '20'
+                                            : glass.background.light,
+                                        borderColor: selectedDuration === preset.value
+                                            ? glassAccent.blue
+                                            : glass.border.light,
+                                        borderWidth: 1
+                                    }}
+                                    textStyle={{
+                                        color: selectedDuration === preset.value
+                                            ? glassAccent.blue
+                                            : glassText.secondary
+                                    }}
                                     onPress={() => setSelectedDuration(preset.value)}
                                     selected={selectedDuration === preset.value}
                                 >
@@ -297,7 +313,12 @@ export default function FocusModeScreen() {
                                 </Chip>
                             ))}
                             <Chip
-                                variant={timerPresets.every(p => p.value !== selectedDuration) ? "primary" : "default"}
+                                style={{
+                                    backgroundColor: glass.background.light,
+                                    borderColor: glass.border.light,
+                                    borderWidth: 1
+                                }}
+                                textStyle={{ color: glassText.secondary }}
                                 onPress={() => setShowCustomModal(true)}
                             >
                                 Custom
@@ -310,67 +331,95 @@ export default function FocusModeScreen() {
                 <View style={styles.controls}>
                     {isRunning ? (
                         <View style={styles.activeControls}>
-                            <Button variant="secondary" onPress={pauseTimer} style={styles.controlButton}>
+                            <GlassButton
+                                variant="secondary"
+                                onPress={pauseTimer}
+                                style={styles.controlButton}
+                                icon={() => <Ionicons name="pause" size={20} color={glassText.primary} />}
+                            >
                                 Pause
-                            </Button>
-                            <Button variant="primary" onPress={handleCompleteTask} style={styles.controlButton}>
+                            </GlassButton>
+                            <GlassButton
+                                variant="primary"
+                                onPress={handleCompleteTask}
+                                style={styles.controlButton}
+                                icon={() => <Ionicons name="checkmark" size={20} color={glassText.inverse} />}
+                            >
                                 Done
-                            </Button>
+                            </GlassButton>
                         </View>
                     ) : isPaused ? (
                         <View style={styles.activeControls}>
-                            <Button variant="primary" onPress={resumeTimer} style={styles.controlButton}>
+                            <GlassButton
+                                variant="primary"
+                                onPress={resumeTimer}
+                                style={styles.controlButton}
+                                icon={() => <Ionicons name="play" size={20} color={glassText.inverse} />}
+                            >
                                 Resume
-                            </Button>
-                            <Button variant="danger" onPress={handleStop} style={styles.controlButton}>
+                            </GlassButton>
+                            <GlassButton
+                                variant="danger"
+                                onPress={handleStop}
+                                style={styles.controlButton}
+                                icon={() => <Ionicons name="square" size={20} color={glassText.inverse} />}
+                            >
                                 Stop
-                            </Button>
+                            </GlassButton>
                         </View>
                     ) : (
-                        <Button variant="primary" onPress={handleStartSession} fullWidth>
+                        <GlassButton
+                            variant="primary"
+                            onPress={handleStartSession}
+                            size="lg"
+                            fullWidth
+                            glow
+                        >
                             Start Focus
-                        </Button>
+                        </GlassButton>
                     )}
                 </View>
 
                 {/* Today's Stats */}
-                <Card style={styles.statsCard}>
+                <GlassCard style={styles.statsCard}>
                     <View style={styles.statsContent}>
                         <View style={styles.statItem}>
-                            <Ionicons name="time-outline" size={20} color={focus.accent} />
-                            <Text variant="titleLarge" style={styles.statValue}>{formatMinutes(todayTotalMinutes)}</Text>
-                            <Text variant="bodySmall" style={styles.statLabel}>Today</Text>
+                            <Ionicons name="time-outline" size={20} color={glassAccent.blue} />
+                            <Text variant="titleLarge" style={[styles.statValue, { color: glassText.primary }]}>{formatMinutes(todayTotalMinutes)}</Text>
+                            <Text variant="bodySmall" style={[styles.statLabel, { color: glassText.secondary }]}>Today</Text>
                         </View>
-                        <View style={styles.statDivider} />
+                        <View style={[styles.statDivider, { backgroundColor: glass.border.light }]} />
                         <View style={styles.statItem}>
-                            <Ionicons name="list-outline" size={20} color={pastel.peach} />
-                            <Text variant="titleLarge" style={styles.statValue}>{suggestions.length}</Text>
-                            <Text variant="bodySmall" style={styles.statLabel}>Tasks</Text>
+                            <Ionicons name="list-outline" size={20} color={glassAccent.warm} />
+                            <Text variant="titleLarge" style={[styles.statValue, { color: glassText.primary }]}>{suggestions.length}</Text>
+                            <Text variant="bodySmall" style={[styles.statLabel, { color: glassText.secondary }]}>Tasks</Text>
                         </View>
                     </View>
-                </Card>
+                </GlassCard>
 
                 {/* Advanced Focus Mode Card */}
                 {!isSessionActive && (
-                    <Card
+                    <GlassCard
                         style={styles.advancedCard}
-                        onPress={() => router.push('/focus/prepare')}
+                        intensity="light"
+                        padding={0}
+                        onPress={() => router.push("/focus/advanced")}
                     >
                         <View style={styles.advancedContent}>
-                            <View style={styles.advancedIcon}>
-                                <Ionicons name="rocket-outline" size={28} color={pastel.mint} />
+                            <View style={[styles.advancedIcon, { backgroundColor: glassAccent.mintGlow }]}>
+                                <Ionicons name="rocket-outline" size={28} color={glassAccent.mint} />
                             </View>
                             <View style={styles.advancedInfo}>
-                                <Text variant="titleMedium" style={{ color: text.primary, fontWeight: '600' }}>
+                                <Text variant="titleMedium" style={{ color: glassText.primary, fontWeight: '600' }}>
                                     Try Advanced Focus
                                 </Text>
-                                <Text variant="bodySmall" style={{ color: text.secondary }}>
+                                <Text variant="bodySmall" style={{ color: glassText.secondary }}>
                                     Fullscreen immersive mode with guided breaks
                                 </Text>
                             </View>
-                            <Ionicons name="chevron-forward" size={20} color={text.muted} />
+                            <Ionicons name="chevron-forward" size={20} color={glassText.muted} />
                         </View>
-                    </Card>
+                    </GlassCard>
                 )}
 
                 {/* Task Selection */}
@@ -381,16 +430,17 @@ export default function FocusModeScreen() {
                         </Text>
 
                         {suggestions.map((suggestion) => (
-                            <Card
+                            <GlassCard
                                 key={suggestion.task.id}
                                 style={[
                                     styles.taskCard,
                                     selectedTask?.task.id === suggestion.task.id && styles.taskCardActive
                                 ]}
                                 onPress={() => handleSelectTask(suggestion)}
+                                intensity={selectedTask?.task.id === suggestion.task.id ? "medium" : "light"}
                             >
                                 <View style={styles.taskContent}>
-                                    <View style={[styles.taskDot, { backgroundColor: suggestion.subjectColor || focus.accent }]} />
+                                    <View style={[styles.taskDot, { backgroundColor: suggestion.subjectColor || glassAccent.blue }]} />
                                     <View style={styles.taskInfo}>
                                         <Text variant="bodyLarge" style={styles.taskTitle}>{suggestion.task.title}</Text>
                                         <Text variant="bodySmall" style={styles.taskMeta}>{suggestion.subjectName}</Text>
@@ -398,21 +448,21 @@ export default function FocusModeScreen() {
                                     <Ionicons
                                         name={selectedTask?.task.id === suggestion.task.id ? "radio-button-on" : "radio-button-off"}
                                         size={20}
-                                        color={selectedTask?.task.id === suggestion.task.id ? focus.accent : text.muted}
+                                        color={selectedTask?.task.id === suggestion.task.id ? glassAccent.blue : glassText.muted}
                                     />
                                 </View>
-                            </Card>
+                            </GlassCard>
                         ))}
 
                         {suggestions.length === 0 && !isLoading && (
-                            <Card style={styles.emptyCard}>
+                            <GlassCard style={styles.emptyCard} intensity="light">
                                 <View style={styles.emptyContent}>
-                                    <Ionicons name="checkmark-done" size={40} color={focus.accent} />
+                                    <Ionicons name="checkmark-done" size={40} color={glassAccent.mint} />
                                     <Text variant="bodyMedium" style={styles.emptyText}>
                                         All caught up! Start a free focus session.
                                     </Text>
                                 </View>
-                            </Card>
+                            </GlassCard>
                         )}
                     </View>
                 )}
@@ -429,13 +479,15 @@ export default function FocusModeScreen() {
                         mode="outlined"
                         keyboardType="number-pad"
                         style={styles.modalInput}
-                        outlineColor={pastel.beige}
-                        activeOutlineColor={focus.accent}
+                        outlineColor={glass.border.light}
+                        activeOutlineColor={glassAccent.blue}
+                        textColor={glassText.primary}
+                        theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
                     />
                     <Text variant="bodySmall" style={styles.modalHint}>Enter 1-180 minutes</Text>
-                    <Button variant="primary" onPress={handleCustomDuration} fullWidth>
+                    <GlassButton variant="primary" onPress={handleCustomDuration} fullWidth>
                         Set Duration
-                    </Button>
+                    </GlassButton>
                 </Modal>
             </Portal>
 
@@ -466,7 +518,7 @@ export default function FocusModeScreen() {
                         setBreakSnackbarVisible(false);
                     }
                 }}
-                style={{ backgroundColor: focus.accent, marginBottom: 100 }}
+                style={{ backgroundColor: glassAccent.blue, marginBottom: 100 }}
             >
                 You've been focused for a while. Time to stretch?
             </Snackbar>
@@ -475,37 +527,36 @@ export default function FocusModeScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: focus.background },
+    container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { paddingBottom: 100 },
     timerSection: { alignItems: "center", paddingTop: 40, paddingBottom: spacing.lg },
     timerRing: {
         width: 200,
         height: 200,
         borderRadius: 100,
-        borderWidth: 4,
-        borderColor: pastel.beige,
+        borderWidth: 3,
+        borderColor: glass.border.default,
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: focus.card,
-        // Shadow
-        shadowColor: '#5D6B6B',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 4,
+        backgroundColor: glass.background.default,
+        // Shadow (iOS only - no elevation to prevent black border on Android)
+        shadowColor: '#4DA3FF',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.20,
+        shadowRadius: 24,
     },
-    timerRingActive: { borderColor: focus.accent },
-    timerRingPaused: { borderColor: pastel.peach },
-    timerText: { fontSize: 48, fontWeight: "600", color: text.primary, fontVariant: ["tabular-nums"] },
-    timerLabel: { fontSize: 14, color: text.secondary, marginTop: 4 },
-    progressContainer: { width: "80%", height: 6, backgroundColor: pastel.beige, borderRadius: 3, marginTop: spacing.lg, overflow: "hidden" },
-    progressBar: { height: "100%", backgroundColor: focus.accent, borderRadius: 3 },
+    timerRingActive: { borderColor: glassAccent.blue },
+    timerRingPaused: { borderColor: glassAccent.warm },
+    timerText: { fontSize: 48, fontWeight: "600", color: glassText.primary, fontVariant: ["tabular-nums"] },
+    timerLabel: { fontSize: 14, color: glassText.secondary, marginTop: 4 },
+    progressContainer: { width: "80%", height: 6, backgroundColor: glass.background.medium, borderRadius: 3, marginTop: spacing.lg, overflow: "hidden" },
+    progressBar: { height: "100%", backgroundColor: glassAccent.blue, borderRadius: 3 },
     activeTaskContainer: { flexDirection: "row", alignItems: "center", marginTop: spacing.md, paddingHorizontal: spacing.lg },
-    activeTask: { color: text.primary, flex: 1 },
-    subjectLabel: { color: text.secondary, marginTop: 4 },
+    activeTask: { color: glassText.primary, flex: 1 },
+    subjectLabel: { color: glassText.secondary, marginTop: 4 },
     taskDot: { width: 10, height: 10, borderRadius: 5, marginRight: spacing.sm },
     durationSection: { paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
-    sectionTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.sm },
+    sectionTitle: { color: glassText.primary, fontWeight: "600", marginBottom: spacing.sm },
     durationChips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs },
     controls: { paddingHorizontal: spacing.lg, marginBottom: spacing.lg },
     activeControls: { flexDirection: "row", gap: spacing.sm },
@@ -513,26 +564,26 @@ const styles = StyleSheet.create({
     statsCard: { marginHorizontal: spacing.lg, marginBottom: spacing.lg },
     statsContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
     statItem: { flex: 1, alignItems: "center" },
-    statValue: { color: text.primary, fontWeight: "600", marginTop: 4 },
-    statLabel: { color: text.secondary },
-    statDivider: { width: 1, height: 40, backgroundColor: pastel.beige },
+    statValue: { color: glassText.primary, fontWeight: "600", marginTop: 4 },
+    statLabel: { color: glassText.secondary },
+    statDivider: { width: 1, height: 40, backgroundColor: glass.border.light },
     taskSection: { paddingHorizontal: spacing.lg },
-    taskCard: { marginBottom: spacing.xs },
-    taskCardActive: { borderColor: focus.accent, borderWidth: 2 },
+    taskCard: { marginBottom: spacing.xs, padding: 0 },
+    taskCardActive: { borderColor: glassAccent.blue, borderWidth: 1 },
     taskContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
     taskInfo: { flex: 1 },
-    taskTitle: { color: text.primary },
-    taskMeta: { color: text.secondary },
+    taskTitle: { color: glassText.primary },
+    taskMeta: { color: glassText.secondary },
     emptyCard: { marginTop: spacing.sm },
     emptyContent: { alignItems: "center", paddingVertical: spacing.xl },
-    emptyText: { color: text.secondary, marginTop: spacing.sm, textAlign: "center" },
-    modal: { backgroundColor: focus.card, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg },
-    modalTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
-    modalInput: { marginBottom: spacing.xs, backgroundColor: focus.background },
-    modalHint: { color: text.secondary, marginBottom: spacing.md },
+    emptyText: { color: glassText.secondary, marginTop: spacing.sm, textAlign: "center" },
+    modal: { backgroundColor: darkBackground.elevated, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: glass.border.light },
+    modalTitle: { color: glassText.primary, fontWeight: "600", marginBottom: spacing.md },
+    modalInput: { marginBottom: spacing.xs, backgroundColor: darkBackground.primary },
+    modalHint: { color: glassText.secondary, marginBottom: spacing.md },
     // Advanced Focus Mode styles
-    advancedCard: { marginHorizontal: spacing.lg, marginBottom: spacing.md, backgroundColor: `${pastel.mint}15` },
+    advancedCard: { marginHorizontal: spacing.lg, marginBottom: spacing.md },
     advancedContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
-    advancedIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: `${pastel.mint}20`, alignItems: "center", justifyContent: "center", marginRight: spacing.md },
+    advancedIcon: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", marginRight: spacing.md },
     advancedInfo: { flex: 1 },
 });

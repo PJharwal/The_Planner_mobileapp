@@ -1,15 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { View, KeyboardAvoidingView, Platform, Alert, StyleSheet, ScrollView, Dimensions, Animated } from "react-native";
 import { Link } from "expo-router";
-import { TextInput, Text, useTheme, ActivityIndicator } from "react-native-paper";
+import { TextInput, Text, useTheme } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "../../store/authStore";
 
 // Design tokens
 import { pastel, background, text, spacing, borderRadius, gradients } from "../../constants/theme";
+import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-import { Card, Button } from "../../components/ui";
+// Button removed
+import { GlassCard, GlassInput, GlassButton } from "../../components/glass";
 
 const { width } = Dimensions.get("window");
 
@@ -51,7 +53,7 @@ function FeatureCard({ feature, index }: { feature: typeof APP_FEATURES[0]; inde
             style={[styles.featureCard, { marginLeft: index === 0 ? spacing.lg : 0 }]}
         >
             <View style={styles.featureIcon}>
-                <Ionicons name={feature.icon as any} size={28} color={text.primary} />
+                <Ionicons name={feature.icon as any} size={28} color={glassText.primary} />
             </View>
             <Text variant="titleMedium" style={styles.featureTitle}>
                 {feature.title}
@@ -123,7 +125,7 @@ export default function LoginScreen() {
                                 end={{ x: 1, y: 1 }}
                                 style={styles.logoGradient}
                             >
-                                <Ionicons name="school" size={40} color={text.primary} />
+                                <Ionicons name="school" size={40} color={glassText.primary} />
                             </LinearGradient>
                         </View>
                         <Text variant="headlineLarge" style={styles.appName}>The Planner</Text>
@@ -163,48 +165,32 @@ export default function LoginScreen() {
                     </View>
 
                     {/* Form Card */}
-                    <Card style={styles.formCard}>
+                    <GlassCard style={styles.formCard} intensity="medium">
                         <Text variant="titleLarge" style={styles.formTitle}>Welcome Back</Text>
 
                         {/* Social Login */}
 
 
-                        <TextInput
+                        <GlassInput
                             label="Email"
                             value={email}
                             onChangeText={setEmail}
-                            mode="outlined"
                             keyboardType="email-address"
-                            autoCapitalize="none"
                             autoComplete="email"
-                            style={styles.input}
-                            outlineColor="rgba(93, 107, 107, 0.15)"
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                            left={<TextInput.Icon icon={() => <Ionicons name="mail-outline" size={20} color={text.muted} />} />}
+                            icon="mail-outline"
                         />
 
-                        <TextInput
+                        <GlassInput
                             label="Password"
                             value={password}
                             onChangeText={setPassword}
-                            mode="outlined"
                             secureTextEntry={!showPassword}
-                            autoCapitalize="none"
-                            style={styles.input}
-                            outlineColor="rgba(93, 107, 107, 0.15)"
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                            left={<TextInput.Icon icon={() => <Ionicons name="lock-closed-outline" size={20} color={text.muted} />} />}
-                            right={
-                                <TextInput.Icon
-                                    icon={showPassword ? "eye-off" : "eye"}
-                                    onPress={() => setShowPassword(!showPassword)}
-                                />
-                            }
+                            icon="lock-closed-outline"
+                            rightIcon={showPassword ? "eye-off" : "eye"}
+                            onRightIconPress={() => setShowPassword(!showPassword)}
                         />
 
-                        <Button
+                        <GlassButton
                             variant="primary"
                             onPress={handleLogin}
                             loading={isLoading}
@@ -212,8 +198,8 @@ export default function LoginScreen() {
                             style={styles.button}
                         >
                             {isLoading ? "Signing In..." : "Sign In"}
-                        </Button>
-                    </Card>
+                        </GlassButton>
+                    </GlassCard>
 
                     <View style={styles.footer}>
                         <Text variant="bodyMedium" style={styles.footerText}>
@@ -226,11 +212,11 @@ export default function LoginScreen() {
 
                     {/* Social Proof */}
                     <View style={styles.socialProof}>
-                        <Ionicons name="star" size={14} color={pastel.peach} />
-                        <Ionicons name="star" size={14} color={pastel.peach} />
-                        <Ionicons name="star" size={14} color={pastel.peach} />
-                        <Ionicons name="star" size={14} color={pastel.peach} />
-                        <Ionicons name="star" size={14} color={pastel.peach} />
+                        <Ionicons name="star" size={14} color={glassAccent.warm} />
+                        <Ionicons name="star" size={14} color={glassAccent.warm} />
+                        <Ionicons name="star" size={14} color={glassAccent.warm} />
+                        <Ionicons name="star" size={14} color={glassAccent.warm} />
+                        <Ionicons name="star" size={14} color={glassAccent.warm} />
                         <Text variant="labelSmall" style={styles.proofText}>
                             Loved by 10,000+ students
                         </Text>
@@ -242,7 +228,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: background.primary },
+    container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { flexGrow: 1 },
     content: { flex: 1, paddingVertical: 40 },
 
@@ -255,14 +241,13 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         alignItems: "center",
         justifyContent: "center",
-        shadowColor: pastel.mint,
+        shadowColor: glassAccent.mint,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
         shadowRadius: 16,
-        elevation: 8,
     },
-    appName: { color: text.primary, fontWeight: "700", letterSpacing: -0.5 },
-    tagline: { color: text.secondary, textAlign: "center", marginTop: spacing.xs },
+    appName: { color: glassText.primary, fontWeight: "700", letterSpacing: -0.5 },
+    tagline: { color: glassText.secondary, textAlign: "center", marginTop: spacing.xs },
 
     // Features
     featureSection: { marginBottom: spacing.xl },
@@ -277,13 +262,13 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 14,
-        backgroundColor: "rgba(255, 255, 255, 0.5)",
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
         alignItems: "center",
         justifyContent: "center",
         marginBottom: spacing.sm,
     },
-    featureTitle: { color: text.primary, fontWeight: "600", marginBottom: 4 },
-    featureDesc: { color: "rgba(93, 107, 107, 0.75)", lineHeight: 18 },
+    featureTitle: { color: glassText.primary, fontWeight: "600", marginBottom: 4 },
+    featureDesc: { color: "rgba(255, 255, 255, 0.75)", lineHeight: 18 },
     pagination: {
         flexDirection: "row",
         justifyContent: "center",
@@ -294,23 +279,23 @@ const styles = StyleSheet.create({
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: "rgba(93, 107, 107, 0.2)",
+        backgroundColor: "rgba(255, 255, 255, 0.2)",
     },
     dotActive: {
         width: 20,
-        backgroundColor: pastel.mint,
+        backgroundColor: glassAccent.mint,
     },
 
     // Form
     formCard: { marginHorizontal: spacing.lg, marginBottom: spacing.lg, padding: spacing.lg },
-    formTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md, textAlign: "center" },
-    input: { backgroundColor: background.primary, marginBottom: spacing.sm },
+    formTitle: { color: glassText.primary, fontWeight: "600", marginBottom: spacing.md, textAlign: "center" },
+    input: { backgroundColor: darkBackground.elevated, marginBottom: spacing.sm },
     button: { marginTop: spacing.sm },
 
     // Footer
     footer: { flexDirection: "row", justifyContent: "center", marginTop: spacing.md },
-    footerText: { color: text.secondary },
-    link: { color: pastel.mint, fontWeight: "600" },
+    footerText: { color: glassText.secondary },
+    link: { color: glassAccent.mint, fontWeight: "600" },
 
     // Social Proof
     socialProof: {
@@ -320,10 +305,10 @@ const styles = StyleSheet.create({
         marginTop: spacing.xl,
         gap: 2,
     },
-    proofText: { color: text.secondary, marginLeft: spacing.xs },
+    proofText: { color: glassText.secondary, marginLeft: spacing.xs },
 
     // Divider
     dividerContainer: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
-    dividerLine: { flex: 1, height: 1, backgroundColor: pastel.beige },
-    dividerText: { marginHorizontal: 16, color: text.muted, fontSize: 12, fontWeight: "600" },
+    dividerLine: { flex: 1, height: 1, backgroundColor: glass.border.light },
+    dividerText: { marginHorizontal: 16, color: glassText.muted, fontSize: 12, fontWeight: "600" },
 });

@@ -10,9 +10,11 @@ import { SubTopic } from "../../types";
 import { addTopicToToday, addSubTopicToToday } from "../../utils/addToToday";
 
 // Design tokens
-import { pastel, background, text, spacing, borderRadius, shadows } from "../../constants/theme";
+import { spacing, borderRadius, shadows } from "../../constants/theme";
+import { glassAccent, glassText, darkBackground, glass } from "../../constants/glassTheme";
 // UI Components
-import { Card, Button, Chip, ProgressBar } from "../../components/ui";
+import { Chip, ProgressBar } from "../../components/ui";
+import { GlassCard, GlassButton } from "../../components/glass";
 
 interface SubTopicWithCount extends SubTopic {
     taskCount: number;
@@ -26,7 +28,7 @@ export default function TopicDetailScreen() {
 
     const [topicName, setTopicName] = useState("");
     const [subjectName, setSubjectName] = useState("");
-    const [subjectColor, setSubjectColor] = useState(pastel.mint);
+    const [subjectColor, setSubjectColor] = useState(glassAccent.mint);
     const [subTopics, setSubTopics] = useState<SubTopicWithCount[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -54,7 +56,7 @@ export default function TopicDetailScreen() {
             if (topicData) {
                 setTopicName(topicData.name);
                 setSubjectName((topicData as any).subjects?.name || "");
-                setSubjectColor((topicData as any).subjects?.color || pastel.mint);
+                setSubjectColor((topicData as any).subjects?.color || glassAccent.mint);
             }
 
             // Fetch sub-topics with task counts
@@ -136,18 +138,18 @@ export default function TopicDetailScreen() {
                 <Stack.Screen
                     options={{
                         title: topicName || "Topic",
-                        headerStyle: { backgroundColor: background.primary },
-                        headerTintColor: text.primary,
+                        headerStyle: { backgroundColor: darkBackground.primary },
+                        headerTintColor: glassText.primary,
                         headerShadowVisible: false,
                         headerLeft: () => (
                             <IconButton
-                                icon={() => <Ionicons name="arrow-back" size={24} color={text.primary} />}
+                                icon={() => <Ionicons name="arrow-back" size={24} color={glassText.primary} />}
                                 onPress={() => router.back()}
                             />
                         ),
                         headerRight: () => (
                             <IconButton
-                                icon={() => <Ionicons name="home-outline" size={22} color={text.secondary} />}
+                                icon={() => <Ionicons name="home-outline" size={22} color={glassText.secondary} />}
                                 onPress={() => router.replace("/(tabs)")}
                             />
                         ),
@@ -156,40 +158,40 @@ export default function TopicDetailScreen() {
 
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={glassAccent.mint} />}
                 >
                     {/* Header Card */}
-                    <Card style={[styles.headerCard, { borderLeftColor: subjectColor, borderLeftWidth: 4 }]}>
+                    <GlassCard style={[styles.headerCard, { borderLeftColor: subjectColor, borderLeftWidth: 4 }]}>
                         <View style={styles.headerContent}>
                             <Text variant="bodySmall" style={styles.breadcrumb}>{subjectName}</Text>
                             <Text variant="headlineSmall" style={styles.title}>{topicName}</Text>
                             <View style={styles.progressInfo}>
                                 <Chip variant="default" size="sm">{completedTasks}/{totalTasks} tasks</Chip>
-                                <Chip variant="default" size="sm">{subTopics.length} sub-topics</Chip>
+                                <Chip variant="default" size="sm" style={{ marginLeft: 8 }}>{subTopics.length} sub-topics</Chip>
                             </View>
                             <ProgressBar progress={progress} color={subjectColor} style={styles.progressBar} />
                             {pendingTasks > 0 && (
-                                <Button variant="primary" onPress={handleAddAllToToday} size="sm" style={styles.addAllButton}>
+                                <GlassButton variant="primary" onPress={handleAddAllToToday} size="sm" style={styles.addAllButton}>
                                     {`Add all to Today (${pendingTasks})`}
-                                </Button>
+                                </GlassButton>
                             )}
                         </View>
-                    </Card>
+                    </GlassCard>
 
                     {/* Sub-Topics Section */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
                             <Text variant="titleMedium" style={styles.sectionTitle}>Sub-Topics</Text>
-                            <Button variant="ghost" size="sm" onPress={() => setModalVisible(true)}>
+                            <GlassButton variant="ghost" size="sm" onPress={() => setModalVisible(true)}>
                                 Add
-                            </Button>
+                            </GlassButton>
                         </View>
 
                         {subTopics.length === 0 ? (
-                            <Card style={styles.emptyCard}>
+                            <GlassCard style={styles.emptyCard} intensity="light">
                                 <View style={styles.emptyContent}>
                                     <View style={styles.emptyIconContainer}>
-                                        <Ionicons name="git-branch-outline" size={32} color={text.muted} />
+                                        <Ionicons name="git-branch-outline" size={32} color={glassText.muted} />
                                     </View>
                                     <Text variant="bodyMedium" style={styles.emptyText}>
                                         No sub-topics yet
@@ -197,47 +199,46 @@ export default function TopicDetailScreen() {
                                     <Text variant="bodySmall" style={styles.emptyHint}>
                                         Break down your topic into smaller parts
                                     </Text>
-                                    <Button variant="primary" onPress={() => setModalVisible(true)} style={styles.emptyButton}>
+                                    <GlassButton variant="primary" onPress={() => setModalVisible(true)} style={styles.emptyButton}>
                                         Add Sub-Topic
-                                    </Button>
+                                    </GlassButton>
                                 </View>
-                            </Card>
+                            </GlassCard>
                         ) : (
                             subTopics.map(st => {
                                 const stProgress = st.taskCount > 0 ? st.completedCount / st.taskCount : 0;
                                 const stPending = st.taskCount - st.completedCount;
 
                                 return (
-                                    <TouchableOpacity
+                                    <GlassCard
                                         key={st.id}
                                         onPress={() => (router as any).push(`/subtopic/${st.id}`)}
-                                        activeOpacity={0.7}
+                                        style={styles.subTopicCard}
+                                        intensity="light"
                                     >
-                                        <Card style={styles.subTopicCard}>
-                                            <View style={styles.subTopicContent}>
-                                                <View style={styles.subTopicHeader}>
-                                                    <View style={styles.subTopicInfo}>
-                                                        <Text variant="titleMedium" style={styles.subTopicName}>{st.name}</Text>
-                                                        <Text variant="bodySmall" style={styles.subTopicStats}>
-                                                            {st.completedCount}/{st.taskCount} tasks completed
-                                                        </Text>
-                                                    </View>
-                                                    <View style={styles.subTopicActions}>
-                                                        {stPending > 0 && (
-                                                            <TouchableOpacity
-                                                                onPress={() => handleAddSubTopicToToday(st.id)}
-                                                                style={styles.addButton}
-                                                            >
-                                                                <Ionicons name="add-circle-outline" size={22} color={pastel.mint} />
-                                                            </TouchableOpacity>
-                                                        )}
-                                                        <Ionicons name="chevron-forward" size={20} color={text.muted} />
-                                                    </View>
+                                        <View style={styles.subTopicContent}>
+                                            <View style={styles.subTopicHeader}>
+                                                <View style={styles.subTopicInfo}>
+                                                    <Text variant="titleMedium" style={styles.subTopicName}>{st.name}</Text>
+                                                    <Text variant="bodySmall" style={styles.subTopicStats}>
+                                                        {st.completedCount}/{st.taskCount} tasks completed
+                                                    </Text>
                                                 </View>
-                                                <ProgressBar progress={stProgress} color={subjectColor} style={styles.subTopicProgress} />
+                                                <View style={styles.subTopicActions}>
+                                                    {stPending > 0 && (
+                                                        <TouchableOpacity
+                                                            onPress={() => handleAddSubTopicToToday(st.id)}
+                                                            style={styles.addButton}
+                                                        >
+                                                            <Ionicons name="add-circle-outline" size={22} color={glassAccent.mint} />
+                                                        </TouchableOpacity>
+                                                    )}
+                                                    <Ionicons name="chevron-forward" size={20} color={glassText.muted} />
+                                                </View>
                                             </View>
-                                        </Card>
-                                    </TouchableOpacity>
+                                            <ProgressBar progress={stProgress} color={subjectColor} style={styles.subTopicProgress} />
+                                        </View>
+                                    </GlassCard>
                                 );
                             })
                         )}
@@ -255,17 +256,18 @@ export default function TopicDetailScreen() {
                             mode="outlined"
                             style={styles.modalInput}
                             placeholder="e.g., Quadratic Equations"
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
+                            outlineColor={glass.border.light}
+                            activeOutlineColor={glassAccent.mint}
+                            textColor={glassText.primary}
+                            theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
                         <View style={styles.modalButtons}>
-                            <Button variant="ghost" onPress={() => setModalVisible(false)}>
+                            <GlassButton variant="ghost" onPress={() => setModalVisible(false)} style={{ flex: 1 }}>
                                 Cancel
-                            </Button>
-                            <Button variant="primary" onPress={handleCreateSubTopic} loading={isCreating}>
+                            </GlassButton>
+                            <GlassButton variant="primary" onPress={handleCreateSubTopic} loading={isCreating} style={{ flex: 1 }}>
                                 Add
-                            </Button>
+                            </GlassButton>
                         </View>
                     </Modal>
                 </Portal>
@@ -284,42 +286,42 @@ export default function TopicDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: background.primary },
+    container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { paddingBottom: 100 },
     // Header
     headerCard: { marginHorizontal: spacing.md, marginTop: spacing.md, borderRadius: borderRadius.lg },
     headerContent: { padding: spacing.md },
-    breadcrumb: { color: text.secondary, marginBottom: 4 },
-    title: { color: text.primary, fontWeight: "600" },
-    progressInfo: { flexDirection: "row", gap: spacing.xs, marginTop: spacing.sm, marginBottom: spacing.sm },
+    breadcrumb: { color: glassText.secondary, marginBottom: 4 },
+    title: { color: glassText.primary, fontWeight: "600" },
+    progressInfo: { flexDirection: "row", alignItems: "center", marginTop: spacing.sm, marginBottom: spacing.sm },
     progressBar: { height: 6, borderRadius: 3 },
     addAllButton: { marginTop: spacing.sm },
     // Section
     section: { paddingHorizontal: spacing.md, marginTop: spacing.lg },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
-    sectionTitle: { color: text.primary, fontWeight: "600" },
+    sectionTitle: { color: glassText.primary, fontWeight: "600" },
     // Empty State
     emptyCard: {},
     emptyContent: { alignItems: "center", paddingVertical: spacing.xl },
-    emptyIconContainer: { width: 64, height: 64, borderRadius: 32, backgroundColor: `${pastel.beige}50`, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
-    emptyText: { color: text.primary, fontWeight: "500" },
-    emptyHint: { color: text.muted, marginTop: 4 },
+    emptyIconContainer: { width: 64, height: 64, borderRadius: 32, backgroundColor: glassText.muted + '20', alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+    emptyText: { color: glassText.primary, fontWeight: "500" },
+    emptyHint: { color: glassText.secondary, marginTop: 4 },
     emptyButton: { marginTop: spacing.md },
     // Sub-Topic Cards
-    subTopicCard: { marginBottom: spacing.sm },
+    subTopicCard: { marginBottom: spacing.sm, padding: 0 },
     subTopicContent: { padding: spacing.md },
     subTopicHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     subTopicInfo: { flex: 1 },
-    subTopicName: { color: text.primary },
-    subTopicStats: { color: text.secondary, marginTop: 4 },
+    subTopicName: { color: glassText.primary },
+    subTopicStats: { color: glassText.secondary, marginTop: 4 },
     subTopicActions: { flexDirection: "row", alignItems: "center" },
     addButton: { padding: spacing.xs, marginRight: spacing.xs },
     subTopicProgress: { height: 4, borderRadius: 2, marginTop: spacing.sm },
     // Modal
-    modal: { backgroundColor: background.card, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, ...shadows.elevated },
-    modalTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
-    modalInput: { marginBottom: spacing.md, backgroundColor: background.primary },
-    modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.sm },
+    modal: { backgroundColor: darkBackground.elevated, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: glass.border.light },
+    modalTitle: { color: glassText.primary, fontWeight: "600", marginBottom: spacing.md },
+    modalInput: { marginBottom: spacing.md, backgroundColor: darkBackground.primary },
+    modalButtons: { flexDirection: "row", gap: spacing.sm },
     // Snackbar
-    snackbar: { backgroundColor: pastel.slate },
+    snackbar: { backgroundColor: glassAccent.blue },
 });

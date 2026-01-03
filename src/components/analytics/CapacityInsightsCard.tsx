@@ -2,8 +2,8 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { Card } from '../ui';
-import { background, text, pastel, spacing, borderRadius } from '../../constants/theme';
+import { GlassCard } from '../glass/GlassCard';
+import { glassText, glassAccent, glass } from '../../constants/glassTheme';
 import { CapacityInsights } from '../../utils/capacityInsights';
 import { getAdherenceFeedback, getAdherenceColor } from '../../utils/capacityInsights';
 
@@ -16,10 +16,10 @@ export function CapacityInsightsCard({ insights }: CapacityInsightsCardProps) {
     const adherenceColor = getAdherenceColor(insights.averageAdherence);
 
     return (
-        <Card style={styles.card}>
+        <GlassCard style={styles.card}>
             <View style={styles.header}>
                 <View style={styles.titleRow}>
-                    <Ionicons name="speedometer-outline" size={20} color={pastel.mint} />
+                    <Ionicons name="speedometer-outline" size={20} color={glassAccent.mint} />
                     <Text variant="titleMedium" style={styles.title}>
                         Capacity Insights
                     </Text>
@@ -78,7 +78,7 @@ export function CapacityInsightsCard({ insights }: CapacityInsightsCardProps) {
                 <View style={styles.metric}>
                     <Text variant="headlineMedium" style={[
                         styles.metricValue,
-                        { color: insights.sessionCompletionRate >= 80 ? pastel.mint : pastel.peach }
+                        { color: insights.sessionCompletionRate >= 80 ? glassAccent.mint : glassAccent.warm }
                     ]}>
                         {insights.sessionCompletionRate}%
                     </Text>
@@ -92,7 +92,7 @@ export function CapacityInsightsCard({ insights }: CapacityInsightsCardProps) {
                 <View style={styles.metric}>
                     <Text variant="headlineMedium" style={[
                         styles.metricValue,
-                        { color: insights.overcapacityDays > 2 ? pastel.peach : pastel.mint }
+                        { color: insights.overcapacityDays > 2 ? glassAccent.warm : glassAccent.mint }
                     ]}>
                         {insights.overcapacityDays}
                     </Text>
@@ -108,18 +108,18 @@ export function CapacityInsightsCard({ insights }: CapacityInsightsCardProps) {
                     {feedback}
                 </Text>
             </View>
-        </Card>
+        </GlassCard>
     );
 }
 
 const styles = StyleSheet.create({
     card: {
-        marginHorizontal: spacing.lg,
-        marginBottom: spacing.lg,
-        padding: spacing.md,
+        marginHorizontal: 24,
+        marginBottom: 24,
+        padding: 16,
     },
     header: {
-        marginBottom: spacing.md,
+        marginBottom: 16,
     },
     titleRow: {
         flexDirection: 'row',
@@ -128,21 +128,21 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     title: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
     },
     subtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
     },
     chartContainer: {
-        marginBottom: spacing.md,
+        marginBottom: 16,
     },
     chart: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-end',
         height: 100,
-        marginBottom: spacing.xs,
+        marginBottom: 4,
     },
     barContainer: {
         flex: 1,
@@ -159,19 +159,19 @@ const styles = StyleSheet.create({
         minHeight: 4,
     },
     dayLabel: {
-        color: text.secondary,
+        color: glassText.secondary,
         fontSize: 10,
     },
     chartHint: {
-        color: text.secondary,
+        color: glassText.secondary,
         textAlign: 'center',
     },
     metrics: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        paddingVertical: spacing.md,
+        paddingVertical: 16,
         borderTopWidth: 1,
-        borderTopColor: `${pastel.beige}50`,
+        borderTopColor: glass.border.light,
     },
     metric: {
         alignItems: 'center',
@@ -181,21 +181,21 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     metricLabel: {
-        color: text.secondary,
+        color: glassText.secondary,
     },
     divider: {
         width: 1,
         height: 40,
-        backgroundColor: pastel.beige,
+        backgroundColor: glass.border.light,
     },
     feedback: {
-        backgroundColor: `${pastel.mint}10`,
-        padding: spacing.sm,
-        borderRadius: borderRadius.md,
-        marginTop: spacing.sm,
+        backgroundColor: glassAccent.mintGlow,
+        padding: 12,
+        borderRadius: 12,
+        marginTop: 8,
     },
     feedbackText: {
-        color: text.primary,
+        color: glassText.primary,
         textAlign: 'center',
     },
 });

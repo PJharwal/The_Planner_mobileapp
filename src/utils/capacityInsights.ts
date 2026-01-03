@@ -132,12 +132,14 @@ export function getAdherenceFeedback(averageAdherence: number, overcapacityDays:
     }
 }
 
+import { glassAccent } from '../constants/glassTheme';
+
 /**
- * Get color for adherence score (always gentle, never red)
+ * Get color for adherence score (Glass Theme: Blue, Mint, Warm)
  */
 export function getAdherenceColor(score: number): string {
-    if (score >= 80) return '#C9DDDC'; // mint - excellent
-    if (score >= 60) return '#8DD7D8'; // success - good
-    if (score >= 40) return '#E8C9A0'; // warning - moderate
-    return '#F7CBC9'; // peach - gentle reminder
+    if (score >= 80) return glassAccent.blue; // Optimal
+    if (score >= 60) return glassAccent.mint; // Healthy
+    if (score >= 40) return glassAccent.warm; // Caution
+    return glassAccent.warm; // Gentle reminder (no red)
 }

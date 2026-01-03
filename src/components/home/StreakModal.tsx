@@ -3,8 +3,9 @@ import { View, StyleSheet, Modal, Pressable } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useStreakStore, getStreakMessage, getGlowColor } from '../../store/streakStore';
-import { text, pastel, spacing, borderRadius } from '../../constants/theme';
-import { Card, Button } from '../ui';
+import { spacing, borderRadius } from '../../constants/theme';
+import { GlassCard, GlassButton } from '../glass';
+import { darkBackground, glassAccent, glassText } from '../../constants/glassTheme';
 
 interface StreakModalProps {
     visible: boolean;
@@ -16,7 +17,7 @@ export function StreakModal({ visible, onClose }: StreakModalProps) {
     const streakDays = streak?.current_streak_days || 0;
     const longestStreak = streak?.longest_streak || 0;
     const intensity = getGlowIntensity();
-    const flameColor = getGlowColor(intensity);
+    const flameColor = getGlowColor(intensity); // This returns a hex color, need to ensure it's compatible
     const message = getStreakMessage(streakDays);
 
     return (
@@ -28,10 +29,10 @@ export function StreakModal({ visible, onClose }: StreakModalProps) {
         >
             <Pressable style={styles.overlay} onPress={onClose}>
                 <Pressable style={styles.content} onPress={e => e.stopPropagation()}>
-                    <Card style={styles.card}>
+                    <GlassCard style={styles.card} intensity="medium">
                         {/* Close Button */}
                         <Pressable style={styles.closeButton} onPress={onClose}>
-                            <Ionicons name="close" size={24} color={text.secondary} />
+                            <Ionicons name="close" size={24} color={glassText.secondary} />
                         </Pressable>
 
                         {/* Flame Icon */}
@@ -70,7 +71,7 @@ export function StreakModal({ visible, onClose }: StreakModalProps) {
 
                         {/* Info */}
                         <View style={styles.infoBox}>
-                            <Ionicons name="information-circle-outline" size={18} color={text.secondary} />
+                            <Ionicons name="information-circle-outline" size={18} color={glassText.secondary} />
                             <Text variant="bodySmall" style={styles.infoText}>
                                 Complete a focus session or task to keep your streak going.
                                 Missing a day resets your streak.
@@ -78,10 +79,10 @@ export function StreakModal({ visible, onClose }: StreakModalProps) {
                         </View>
 
                         {/* Close Button */}
-                        <Button variant="ghost" onPress={onClose} style={styles.doneButton}>
+                        <GlassButton variant="ghost" onPress={onClose} fullWidth>
                             Done
-                        </Button>
-                    </Card>
+                        </GlassButton>
+                    </GlassCard>
                 </Pressable>
             </Pressable>
         </Modal>
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        backgroundColor: 'rgba(0,0,0,0.7)',
     },
     content: {
         width: '85%',
@@ -118,15 +119,15 @@ const styles = StyleSheet.create({
         marginBottom: spacing.md,
     },
     streakNumber: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '700',
     },
     streakLabel: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginBottom: spacing.md,
     },
     message: {
-        color: text.primary,
+        color: glassText.primary,
         textAlign: 'center',
         marginBottom: spacing.lg,
         lineHeight: 24,
@@ -140,16 +141,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: spacing.lg,
     },
     statValue: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
     },
     statLabel: {
-        color: text.secondary,
+        color: glassText.secondary,
     },
     infoBox: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: `${pastel.beige}50`,
+        backgroundColor: glassAccent.warm + "15",
         padding: spacing.sm,
         borderRadius: borderRadius.md,
         marginBottom: spacing.lg,
@@ -157,10 +158,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         flex: 1,
-        color: text.secondary,
+        color: glassText.secondary,
         lineHeight: 18,
-    },
-    doneButton: {
-        width: '100%',
     },
 });

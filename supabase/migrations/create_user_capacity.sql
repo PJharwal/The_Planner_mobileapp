@@ -66,3 +66,20 @@ create policy "Users can insert own overrides"
 -- Create index for overrides
 create index capacity_overrides_user_id_idx on public.capacity_overrides(user_id);
 create index capacity_overrides_created_at_idx on public.capacity_overrides(created_at);
+✅ README Updated and Pushed!
+Commit: 0de8d35 Message: docs: update README with new features - typography, streaks, capacity, advanced focus
+
+New Sections Added
+🚀 Advanced Focus Mode (NEW)
+
+Fullscreen immersive, auto phase transitions, guided breaks
+📊 Character-Based Capacity System (NEW)
+
+Personalized limits, 5 metrics, task limit enforcement
+🔥 Streak System (NEW)
+
+Glowing fire icon, subtle motivation, activity recording
+🎨 Typography System (Figtree + SF Pro)
+
+12 semantic roles, mode variants for focus/exam
+All documentation is now up to date with the latest features! 📚

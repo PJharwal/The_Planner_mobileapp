@@ -5,8 +5,9 @@ import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { Card, Button } from "../../components/ui";
-import { pastel, spacing, borderRadius, background, text } from "../../constants/theme";
+import { GlassCard, GlassButton } from "../../components/glass";
+import { spacing, borderRadius } from "../../constants/theme";
+import { glassAccent, glassText, darkBackground } from "../../constants/glassTheme";
 
 interface DataInfoItemProps {
     icon: string;
@@ -16,17 +17,17 @@ interface DataInfoItemProps {
 
 function DataInfoItem({ icon, title, description }: DataInfoItemProps) {
     return (
-        <Card style={styles.infoCard}>
+        <GlassCard style={styles.infoCard} intensity="light">
             <View style={styles.infoRow}>
-                <View style={styles.iconContainer}>
-                    <Ionicons name={icon as any} size={24} color={pastel.mint} />
+                <View style={[styles.iconContainer, { backgroundColor: glassAccent.mint + '20' }]}>
+                    <Ionicons name={icon as any} size={24} color={glassAccent.mint} />
                 </View>
                 <View style={styles.infoText}>
                     <Text variant="titleSmall" style={styles.infoTitle}>{title}</Text>
                     <Text variant="bodySmall" style={styles.infoDescription}>{description}</Text>
                 </View>
             </View>
-        </Card>
+        </GlassCard>
     );
 }
 
@@ -40,8 +41,8 @@ export default function DataTrustScreen() {
                 options={{
                     headerShown: true,
                     headerTitle: "Data & Privacy",
-                    headerStyle: { backgroundColor: background.primary },
-                    headerTintColor: text.primary,
+                    headerStyle: { backgroundColor: darkBackground.primary },
+                    headerTintColor: glassText.primary,
                     headerShadowVisible: false,
                 }}
             />
@@ -53,8 +54,8 @@ export default function DataTrustScreen() {
             >
                 {/* Header */}
                 <View style={styles.header}>
-                    <View style={styles.headerIcon}>
-                        <Ionicons name="shield-checkmark" size={48} color={pastel.mint} />
+                    <View style={[styles.headerIcon, { backgroundColor: glassAccent.mint + '20' }]}>
+                        <Ionicons name="shield-checkmark" size={48} color={glassAccent.mint} />
                     </View>
                     <Text variant="headlineSmall" style={styles.headerTitle}>
                         Your data is safe
@@ -140,20 +141,20 @@ export default function DataTrustScreen() {
                 </View>
 
                 {/* Footer */}
-                <View style={styles.footer}>
+                <View style={[styles.footer, { backgroundColor: glassAccent.mint + '10' }]}>
                     <Text variant="bodySmall" style={styles.footerText}>
                         We never sell your data or use it for advertising.
                         Your study information is yours alone.
                     </Text>
                 </View>
 
-                <Button
-                    variant="secondary"
+                <GlassButton
+                    variant="ghost"
                     onPress={() => router.back()}
                     style={styles.backButton}
                 >
                     Got it
-                </Button>
+                </GlassButton>
             </ScrollView>
         </View>
     );
@@ -162,7 +163,7 @@ export default function DataTrustScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: background.primary,
+        backgroundColor: darkBackground.primary,
     },
     content: {
         flex: 1,
@@ -179,18 +180,17 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: `${pastel.mint}20`,
         alignItems: "center",
         justifyContent: "center",
         marginBottom: spacing.md,
     },
     headerTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "600",
         textAlign: "center",
     },
     headerSubtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
         textAlign: "center",
         marginTop: spacing.xs,
     },
@@ -198,48 +198,47 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xl,
     },
     sectionTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "600",
         marginBottom: spacing.md,
     },
     infoCard: {
-        padding: spacing.md,
         marginBottom: spacing.sm,
+        padding: 0,
     },
     infoRow: {
         flexDirection: "row",
         alignItems: "flex-start",
+        padding: spacing.md,
     },
     iconContainer: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: `${pastel.mint}15`,
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: 'center',
         marginRight: spacing.sm,
     },
     infoText: {
         flex: 1,
     },
     infoTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "500",
     },
     infoDescription: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: 2,
         lineHeight: 18,
     },
     footer: {
         paddingVertical: spacing.lg,
         paddingHorizontal: spacing.md,
-        backgroundColor: `${pastel.mint}15`,
         borderRadius: borderRadius.lg,
         marginBottom: spacing.lg,
     },
     footerText: {
-        color: text.secondary,
+        color: glassText.secondary,
         textAlign: "center",
         lineHeight: 20,
     },

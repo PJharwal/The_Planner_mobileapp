@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Portal, Modal, Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Button } from '../ui';
+import { GlassCard, GlassButton } from "../glass";
 import { background, text, pastel, spacing, borderRadius, semantic } from '../../constants/theme';
 
 interface SessionQualityPromptProps {
@@ -89,14 +89,14 @@ export function SessionQualityPrompt({
                         </TouchableOpacity>
                     </View>
 
-                    <Button
-                        variant="ghost"
+                    <GlassButton
+                        variant="secondary"
                         onPress={onDismiss}
                         fullWidth
                         style={styles.skipButton}
                     >
                         Skip
-                    </Button>
+                    </GlassButton>
                 </View>
             </Modal>
         </Portal>

@@ -10,8 +10,10 @@ import { useAuthStore } from "../../store/authStore";
 import { getAllInsights, generateWeeklyReview } from "../../utils/studyInsights";
 import { getRevisionSuggestions } from "../../utils/revisionEngine";
 import { StudyInsight, RevisionSuggestion } from "../../types";
-import { Card, InsightCard } from "../../components/ui";
-import { pastel, spacing, borderRadius, background, text } from "../../constants/theme";
+import { InsightCard } from "../../components/ui";
+import { GlassCard } from "../../components/glass";
+import { spacing, borderRadius } from "../../constants/theme";
+import { glassAccent, glassText, darkBackground } from "../../constants/glassTheme";
 
 export default function InsightsScreen() {
     const insets = useSafeAreaInsets();
@@ -77,7 +79,7 @@ export default function InsightsScreen() {
                     style={styles.backButton}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                    <Ionicons name="chevron-back" size={24} color={text.primary} />
+                    <Ionicons name="chevron-back" size={24} color={glassText.primary} />
                 </TouchableOpacity>
                 <View style={styles.headerText}>
                     <Text variant="headlineMedium" style={styles.title}>Insights</Text>
@@ -92,7 +94,7 @@ export default function InsightsScreen() {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={glassAccent.mint} />
                 }
             >
                 {/* Weekly Summary */}
@@ -102,9 +104,9 @@ export default function InsightsScreen() {
                             This Week
                         </Text>
                         <View style={styles.statsRow}>
-                            <Card style={styles.statCard}>
+                            <GlassCard style={styles.statCard} intensity="light">
                                 <View style={styles.statContent}>
-                                    <Ionicons name="checkmark-circle" size={24} color={pastel.mint} />
+                                    <Ionicons name="checkmark-circle" size={24} color={glassAccent.mint} />
                                     <Text variant="headlineSmall" style={styles.statNumber}>
                                         {weeklyReview.tasksCompleted}
                                     </Text>
@@ -112,11 +114,11 @@ export default function InsightsScreen() {
                                         Tasks Done
                                     </Text>
                                 </View>
-                            </Card>
+                            </GlassCard>
 
-                            <Card style={styles.statCard}>
+                            <GlassCard style={styles.statCard} intensity="light">
                                 <View style={styles.statContent}>
-                                    <Ionicons name="time" size={24} color={pastel.peach} />
+                                    <Ionicons name="time" size={24} color={glassAccent.warm} />
                                     <Text variant="headlineSmall" style={styles.statNumber}>
                                         {formatMinutes(weeklyReview.studyMinutes)}
                                     </Text>
@@ -124,11 +126,11 @@ export default function InsightsScreen() {
                                         Study Time
                                     </Text>
                                 </View>
-                            </Card>
+                            </GlassCard>
 
-                            <Card style={styles.statCard}>
+                            <GlassCard style={styles.statCard} intensity="light">
                                 <View style={styles.statContent}>
-                                    <Ionicons name="calendar" size={24} color={pastel.mint} />
+                                    <Ionicons name="calendar" size={24} color={glassAccent.mint} />
                                     <Text variant="headlineSmall" style={styles.statNumber}>
                                         {weeklyReview.daysActive}
                                     </Text>
@@ -136,7 +138,7 @@ export default function InsightsScreen() {
                                         Days Active
                                     </Text>
                                 </View>
-                            </Card>
+                            </GlassCard>
                         </View>
                     </View>
                 )}
@@ -167,9 +169,9 @@ export default function InsightsScreen() {
                             Topics that could use another look
                         </Text>
                         {revisions.map((rev) => (
-                            <Card key={rev.subTopicId} style={styles.revisionCard}>
+                            <GlassCard key={rev.subTopicId} style={styles.revisionCard} intensity="light">
                                 <View style={styles.revisionContent}>
-                                    <View style={[styles.colorDot, { backgroundColor: rev.subjectColor }]} />
+                                    <View style={[styles.colorDot, { backgroundColor: rev.subjectColor || glassAccent.mint }]} />
                                     <View style={styles.revisionText}>
                                         <Text variant="titleSmall" style={styles.revisionTitle}>
                                             {rev.subTopicName}
@@ -182,7 +184,7 @@ export default function InsightsScreen() {
                                         </Text>
                                     </View>
                                 </View>
-                            </Card>
+                            </GlassCard>
                         ))}
                     </View>
                 )}
@@ -190,7 +192,7 @@ export default function InsightsScreen() {
                 {/* Empty State */}
                 {!isLoading && insights.length === 0 && revisions.length === 0 && !weeklyReview && (
                     <View style={styles.emptyState}>
-                        <Ionicons name="analytics-outline" size={48} color="rgba(93, 107, 107, 0.3)" />
+                        <Ionicons name="analytics-outline" size={48} color={glassText.muted} />
                         <Text variant="bodyLarge" style={styles.emptyTitle}>
                             No insights yet
                         </Text>
@@ -207,7 +209,7 @@ export default function InsightsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: background.primary,
+        backgroundColor: darkBackground.primary,
     },
     header: {
         flexDirection: "row",
@@ -226,11 +228,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "600",
     },
     subtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: 2,
     },
     content: {
@@ -244,12 +246,12 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xl,
     },
     sectionTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "600",
         marginBottom: spacing.sm,
     },
     sectionSubtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginBottom: spacing.sm,
     },
     statsRow: {
@@ -257,28 +259,30 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     statCard: {
-        flex: 1,
-        padding: spacing.md,
+        flex: 1, // GlassCard flex works if container allows
+        padding: 0,
     },
     statContent: {
         alignItems: "center",
+        padding: spacing.md,
     },
     statNumber: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "600",
         marginTop: spacing.xs,
     },
     statLabel: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: 2,
     },
     revisionCard: {
-        padding: spacing.md,
         marginBottom: spacing.xs,
+        padding: 0,
     },
     revisionContent: {
         flexDirection: "row",
         alignItems: "flex-start",
+        padding: spacing.md,
     },
     colorDot: {
         width: 8,
@@ -291,15 +295,15 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     revisionTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "500",
     },
     revisionSubtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: 2,
     },
     revisionReason: {
-        color: pastel.peach,
+        color: glassAccent.warm,
         marginTop: 4,
     },
     emptyState: {
@@ -307,11 +311,11 @@ const styles = StyleSheet.create({
         paddingVertical: spacing.xl * 2,
     },
     emptyTitle: {
-        color: text.primary,
+        color: glassText.primary,
         marginTop: spacing.md,
     },
     emptyText: {
-        color: text.secondary,
+        color: glassText.secondary,
         textAlign: "center",
         marginTop: spacing.xs,
     },

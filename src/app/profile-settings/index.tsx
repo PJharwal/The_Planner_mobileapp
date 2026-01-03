@@ -5,9 +5,10 @@ import { Text } from 'react-native-paper';
 import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card } from '../../components/ui';
+import { GlassCard, GlassButton } from '../../components/glass';
 import { QuestionCard } from '../../components/onboarding/QuestionCard';
-import { background, text, pastel, spacing, borderRadius } from '../../constants/theme';
+import { darkBackground, glassText, glassAccent, glass } from '../../constants/glassTheme';
+import { spacing, borderRadius } from '../../constants/theme';
 import { ONBOARDING_QUESTIONS, getSectionNames, getQuestionsBySection } from '../../utils/onboardingQuestions';
 import { useProfileStore } from '../../store/profileStore';
 import { useCapacityStore } from '../../store/capacityStore';
@@ -91,8 +92,8 @@ export default function ProfileSettingsScreen() {
                 options={{
                     headerShown: true,
                     headerTitle: 'Edit Profile',
-                    headerStyle: { backgroundColor: background.primary },
-                    headerTintColor: text.primary,
+                    headerStyle: { backgroundColor: darkBackground.primary },
+                    headerTintColor: glassText.primary,
                     headerShadowVisible: false,
                 }}
             />
@@ -104,7 +105,7 @@ export default function ProfileSettingsScreen() {
             >
                 {/* Current Persona & Plan */}
                 {profile && (
-                    <Card style={styles.personaCard}>
+                    <GlassCard style={styles.personaCard}>
                         <Text variant="titleMedium" style={styles.personaTitle}>
                             Your Study Profile
                         </Text>
@@ -126,16 +127,16 @@ export default function ProfileSettingsScreen() {
                                 </View>
                             </View>
                         )}
-                    </Card>
+                    </GlassCard>
                 )}
 
                 {/* Privacy Notice */}
-                <Card style={styles.privacyCard}>
+                <GlassCard style={styles.privacyCard} intensity="light">
                     <Text variant="bodySmall" style={styles.privacyText}>
                         🔒 Your profile data is private and only used to personalize your experience.
                         We never share this information.
                     </Text>
-                </Card>
+                </GlassCard>
 
                 {/* Capacity Editor */}
                 <CapacityEditor onRecalculate={handleRecalculateCapacity} />
@@ -146,7 +147,7 @@ export default function ProfileSettingsScreen() {
                     const isExpanded = expandedSection === sectionName;
 
                     return (
-                        <Card key={sectionName} style={styles.sectionCard}>
+                        <GlassCard key={sectionName} style={styles.sectionCard} padding={0}>
                             <TouchableOpacity
                                 onPress={() => setExpandedSection(isExpanded ? null : sectionName)}
                                 style={styles.sectionHeader}
@@ -175,19 +176,23 @@ export default function ProfileSettingsScreen() {
                                     ))}
                                 </View>
                             )}
-                        </Card>
+                        </GlassCard>
                     );
                 })}
 
                 {/* Save Button */}
-                <Button
-                    onPress={handleSave}
-                    loading={isSaving}
-                    disabled={isSaving}
-                    style={styles.saveButton}
-                >
-                    Save Changes
-                </Button>
+                <View style={{ paddingHorizontal: 4 }}>
+                    <GlassButton
+                        onPress={handleSave}
+                        loading={isSaving}
+                        disabled={isSaving}
+                        variant="primary"
+                        size="lg"
+                    >
+                        Save Changes
+                    </GlassButton>
+                </View>
+                <View style={{ height: 40 }} />
             </ScrollView>
         </View>
     );
@@ -196,7 +201,7 @@ export default function ProfileSettingsScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: background.primary,
+        backgroundColor: darkBackground.primary,
     },
     content: {
         flex: 1,
@@ -206,44 +211,43 @@ const styles = StyleSheet.create({
         paddingBottom: spacing.xl,
     },
     personaCard: {
-        padding: spacing.md,
-        marginTop: spacing.md,
         marginBottom: spacing.sm,
+        marginTop: spacing.sm,
     },
     personaTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
         marginBottom: spacing.xs,
     },
     personaDescription: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginBottom: spacing.md,
     },
     planBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: `${pastel.mint}15`,
+        backgroundColor: glass.background.light,
         padding: spacing.sm,
         borderRadius: borderRadius.md,
+        borderWidth: 1,
+        borderColor: glass.border.light,
     },
     planEmoji: {
         fontSize: 24,
         marginRight: spacing.sm,
     },
     planName: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
     },
     planDescription: {
-        color: text.secondary,
+        color: glassText.secondary,
     },
     privacyCard: {
-        padding: spacing.md,
         marginBottom: spacing.md,
-        backgroundColor: `${pastel.beige}15`,
     },
     privacyText: {
-        color: text.secondary,
+        color: glassText.secondary,
         textAlign: 'center',
         lineHeight: 18,
     },
@@ -261,21 +265,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     sectionName: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
     },
     sectionCount: {
-        color: text.secondary,
+        color: glassText.secondary,
     },
     sectionQuestions: {
         padding: spacing.md,
         paddingTop: 0,
     },
     questionContainer: {
-        marginBottom: spacing.lg,
-    },
-    saveButton: {
-        marginTop: spacing.md,
         marginBottom: spacing.lg,
     },
 });

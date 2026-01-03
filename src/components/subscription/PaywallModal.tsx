@@ -11,7 +11,8 @@ import { supabase } from '../../lib/supabase';
 
 // Design tokens
 import { pastel, background, text, spacing, borderRadius, gradients } from '../../constants/theme';
-import { Card, Button } from '../ui';
+// Card, Button removed
+import { GlassCard, GlassButton } from "../glass";
 
 interface PaywallModalProps {
     visible: boolean;
@@ -186,7 +187,7 @@ export function PaywallModal({ visible, onDismiss, triggerFeature }: PaywallModa
 
                             {/* Actions */}
                             <View style={styles.actions}>
-                                <Button
+                                <GlassButton
                                     variant="primary"
                                     onPress={handleStartFreeTrial}
                                     loading={isLoading}
@@ -194,7 +195,7 @@ export function PaywallModal({ visible, onDismiss, triggerFeature }: PaywallModa
                                     style={styles.mainButton}
                                 >
                                     Start 7-Day Free Trial
-                                </Button>
+                                </GlassButton>
 
                                 <Text variant="bodySmall" style={styles.termsText}>
                                     Then {billingCycle === 'yearly' ? PRICE_YEARLY : PRICE_MONTHLY}, auto-renews. Cancel anytime.
@@ -297,11 +298,10 @@ const styles = StyleSheet.create({
     },
     toggleActive: {
         backgroundColor: background.primary,
-        shadowColor: '#000',
+        shadowColor: '#4DA3FF',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.12,
         shadowRadius: 4,
-        elevation: 2,
     },
     toggleText: {
         fontWeight: '600',

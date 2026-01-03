@@ -6,9 +6,9 @@ import { format } from "date-fns";
 import { useProfileStore } from "../../store/profileStore";
 import { useAuthStore } from "../../store/authStore";
 import { Ionicons } from '@expo/vector-icons';
-
-import { Button } from '../ui/Button';
-import { background, text, pastel, spacing, borderRadius, semantic } from '../../constants/theme';
+import { darkBackground, glass, glassAccent, glassText } from '../../constants/glassTheme';
+import { GlassSheet, GlassInput, GlassButton, GlassCard } from '../glass';
+import { spacing, borderRadius } from '../../constants/theme';
 import { supabase } from '../../lib/supabase';
 import { SessionConfigSchema } from '../../schemas/session.schema';
 import { handleError } from '../../lib/errorHandler';
@@ -172,211 +172,181 @@ export function StartSessionModal({
     const canStart = selectedSubject && duration && parseInt(duration) > 0;
 
     return (
-        <Portal>
-            <Modal
-                visible={visible}
-                onDismiss={onDismiss}
-                contentContainerStyle={styles.modal}
-            >
-                <ScrollView showsVerticalScrollIndicator={false}>
-                    <View style={styles.header}>
-                        <Text variant="headlineSmall" style={styles.title}>
-                            Start Focus Session
-                        </Text>
-                        <TouchableOpacity onPress={onDismiss}>
-                            <Ionicons name="close" size={24} color={text.secondary} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Plan Warning or Limit Reached */}
-                    {activePlan && (
-                        <View style={{ marginBottom: 16 }}>
-                            {isLimitReached ? (
-                                <View style={[styles.warningCard, { backgroundColor: '#FEE2E2', borderColor: '#EF4444' }]}>
-                                    <Ionicons name="alert-circle" size={20} color="#EF4444" />
-                                    <View style={{ flex: 1 }}>
-                                        <Text variant="titleSmall" style={{ color: '#EF4444', fontWeight: 'bold' }}>Daily Limit Reached</Text>
-                                        <Text variant="bodySmall" style={{ color: '#7F1D1D' }}>
-                                            Your "{activePlan.name}" plan limits you to {activePlan.max_sessions_per_day} sessions per day to prevent burnout.
-                                        </Text>
-                                    </View>
-                                </View>
-                            ) : (
-                                <View style={[styles.warningCard, { backgroundColor: pastel.mistBlue, borderColor: pastel.mint }]}>
-                                    <Ionicons name="information-circle" size={20} color={text.secondary} />
-                                    <Text variant="bodySmall" style={{ color: text.secondary, flex: 1 }}>
-                                        {activePlan.smart_warnings[0] || `Aim for ${activePlan.default_session_length} mins`}
+        <GlassSheet
+            visible={visible}
+            onClose={onDismiss}
+            title="Start Focus Session"
+            presentation="card"
+        >
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
+                {/* Plan Warning or Limit Reached */}
+                {activePlan && (
+                    <View style={{ marginBottom: 16 }}>
+                        {isLimitReached ? (
+                            <GlassCard intensity="light" style={[styles.warningCard, { backgroundColor: glassAccent.warm + '20' }]}>
+                                <Ionicons name="alert-circle" size={20} color={glassAccent.warm} />
+                                <View style={{ flex: 1 }}>
+                                    <Text variant="titleSmall" style={{ color: glassAccent.warm, fontWeight: 'bold' }}>Daily Limit Reached</Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>
+                                        Your "{activePlan.name}" plan limits you to {activePlan.max_sessions_per_day} sessions per day to prevent burnout.
                                     </Text>
                                 </View>
-                            )}
-                        </View>
-                    )}
-
-                    {/* Duration */}
-                    <View style={styles.section}>
-                        <Text variant="titleSmall" style={styles.label}>
-                            Session Duration
-                        </Text>
-                        <PaperTextInput
-                            mode="outlined"
-                            value={duration}
-                            onChangeText={setDuration}
-                            keyboardType="number-pad"
-                            placeholder="Minutes"
-                            right={<PaperTextInput.Affix text="min" />}
-                            style={styles.input}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                        />
-                        <Text variant="bodySmall" style={styles.hint}>
-                            Enter 1-180 minutes
-                        </Text>
+                            </GlassCard>
+                        ) : (
+                            <GlassCard intensity="light" style={styles.warningCard}>
+                                <Ionicons name="information-circle" size={20} color={glassAccent.mint} />
+                                <Text variant="bodySmall" style={{ color: glassText.secondary, flex: 1 }}>
+                                    {activePlan.smart_warnings[0] || `Aim for ${activePlan.default_session_length} mins`}
+                                </Text>
+                            </GlassCard>
+                        )}
                     </View>
+                )}
 
-                    {/* Subject */}
-                    <View style={styles.section}>
-                        <Text variant="titleSmall" style={styles.label}>
-                            Subject <Text style={styles.required}>*</Text>
-                        </Text>
-                        <View style={styles.optionsGrid}>
-                            {subjects.map((subject) => (
-                                <TouchableOpacity
-                                    key={subject.id}
-                                    onPress={() => setSelectedSubject(subject.id)}
+                {/* Duration */}
+                <View style={styles.section}>
+                    <Text variant="titleSmall" style={styles.label}>
+                        Session Duration
+                    </Text>
+                    <GlassInput
+                        value={duration}
+                        onChangeText={setDuration}
+                        keyboardType="number-pad"
+                        placeholder="Minutes"
+                        style={styles.input}
+                    />
+                    <Text variant="bodySmall" style={styles.hint}>
+                        Enter 1-180 minutes
+                    </Text>
+                </View>
+
+                {/* Subject */}
+                <View style={styles.section}>
+                    <Text variant="titleSmall" style={styles.label}>
+                        Subject <Text style={styles.required}>*</Text>
+                    </Text>
+                    <View style={styles.optionsGrid}>
+                        {subjects.map((subject) => (
+                            <TouchableOpacity
+                                key={subject.id}
+                                onPress={() => setSelectedSubject(subject.id)}
+                                style={[
+                                    styles.option,
+                                    selectedSubject === subject.id && styles.optionSelected,
+                                ]}
+                            >
+                                <View
+                                    style={[styles.colorDot, { backgroundColor: subject.color }]}
+                                />
+                                <Text
+                                    variant="bodyMedium"
                                     style={[
-                                        styles.option,
-                                        selectedSubject === subject.id && styles.optionSelected,
+                                        styles.optionText,
+                                        selectedSubject === subject.id && styles.optionTextSelected,
                                     ]}
                                 >
-                                    <View
-                                        style={[styles.colorDot, { backgroundColor: subject.color }]}
-                                    />
+                                    {subject.name}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </View>
+                </View>
+
+                {/* Topic (optional) */}
+                {topics.length > 0 && (
+                    <View style={styles.section}>
+                        <Text variant="titleSmall" style={styles.label}>
+                            Topic (Optional)
+                        </Text>
+                        <View style={styles.optionsGrid}>
+                            {topics.map((topic) => (
+                                <TouchableOpacity
+                                    key={topic.id}
+                                    onPress={() => setSelectedTopic(topic.id)}
+                                    style={[
+                                        styles.option,
+                                        selectedTopic === topic.id && styles.optionSelected,
+                                    ]}
+                                >
                                     <Text
                                         variant="bodyMedium"
                                         style={[
                                             styles.optionText,
-                                            selectedSubject === subject.id && styles.optionTextSelected,
+                                            selectedTopic === topic.id && styles.optionTextSelected,
                                         ]}
                                     >
-                                        {subject.name}
+                                        {topic.name}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
                     </View>
+                )}
 
-                    {/* Topic (optional) */}
-                    {topics.length > 0 && (
-                        <View style={styles.section}>
-                            <Text variant="titleSmall" style={styles.label}>
-                                Topic (Optional)
-                            </Text>
-                            <View style={styles.optionsGrid}>
-                                {topics.map((topic) => (
-                                    <TouchableOpacity
-                                        key={topic.id}
-                                        onPress={() => setSelectedTopic(topic.id)}
-                                        style={[
-                                            styles.option,
-                                            selectedTopic === topic.id && styles.optionSelected,
-                                        ]}
-                                    >
-                                        <Text
-                                            variant="bodyMedium"
-                                            style={[
-                                                styles.optionText,
-                                                selectedTopic === topic.id && styles.optionTextSelected,
-                                            ]}
-                                        >
-                                            {topic.name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        </View>
-                    )}
-
-                    {/* Sub-Topic (optional) */}
-                    {subTopics.length > 0 && (
-                        <View style={styles.section}>
-                            <Text variant="titleSmall" style={styles.label}>
-                                Sub-Topic (Optional)
-                            </Text>
-                            <View style={styles.optionsGrid}>
-                                {subTopics.map((subTopic) => (
-                                    <TouchableOpacity
-                                        key={subTopic.id}
-                                        onPress={() => setSelectedSubTopic(subTopic.id)}
-                                        style={[
-                                            styles.option,
-                                            selectedSubTopic === subTopic.id && styles.optionSelected,
-                                        ]}
-                                    >
-                                        <Text
-                                            variant="bodyMedium"
-                                            style={[
-                                                styles.optionText,
-                                                selectedSubTopic === subTopic.id && styles.optionTextSelected,
-                                            ]}
-                                        >
-                                            {subTopic.name}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        </View>
-                    )}
-
-                    {/* Note (optional) */}
+                {/* Sub-Topic (optional) */}
+                {subTopics.length > 0 && (
                     <View style={styles.section}>
                         <Text variant="titleSmall" style={styles.label}>
-                            Note (Optional)
+                            Sub-Topic (Optional)
                         </Text>
-                        <PaperTextInput
-                            mode="outlined"
-                            value={note}
-                            onChangeText={setNote}
-                            placeholder="What are you focusing on?"
-                            multiline
-                            numberOfLines={2}
-                            maxLength={200}
-                            style={styles.input}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                            placeholderTextColor={text.muted}
-                        />
+                        <View style={styles.optionsGrid}>
+                            {subTopics.map((subTopic) => (
+                                <TouchableOpacity
+                                    key={subTopic.id}
+                                    onPress={() => setSelectedSubTopic(subTopic.id)}
+                                    style={[
+                                        styles.option,
+                                        selectedSubTopic === subTopic.id && styles.optionSelected,
+                                    ]}
+                                >
+                                    <Text
+                                        variant="bodyMedium"
+                                        style={[
+                                            styles.optionText,
+                                            selectedSubTopic === subTopic.id && styles.optionTextSelected,
+                                        ]}
+                                    >
+                                        {subTopic.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     </View>
+                )}
 
-                    {/* Start Button */}
-                    <Button
-                        onPress={handleStart}
-                        disabled={!selectedSubject || !duration || Number(duration) <= 0 || (isLimitReached as boolean)}
-                        fullWidth
-                        style={[
-                            styles.startButton,
-                            ...((!selectedSubject || !duration || Number(duration) <= 0 || isLimitReached) ? [styles.startButtonDisabled] : [])
-                        ] as any}
-                    >
-                        <Text style={styles.startButtonText}>
-                            {isLimitReached ? 'Limit Reached' : 'Start Focus Session'}
-                        </Text>
-                    </Button>
-                </ScrollView>
-            </Modal>
-        </Portal>
+                {/* Note (optional) */}
+                <View style={styles.section}>
+                    <Text variant="titleSmall" style={styles.label}>
+                        Note (Optional)
+                    </Text>
+                    <GlassInput
+                        value={note}
+                        onChangeText={setNote}
+                        placeholder="What are you focusing on?"
+                        multiline
+                        numberOfLines={3}
+                        maxLength={200}
+                        style={styles.input}
+                    />
+                </View>
+
+                {/* Start Button */}
+                <GlassButton
+                    onPress={handleStart}
+                    disabled={!selectedSubject || !duration || Number(duration) <= 0 || isLimitReached}
+                    fullWidth
+                    style={styles.startButton}
+                >
+                    {isLimitReached ? 'Limit Reached' : 'Start Focus Session'}
+                </GlassButton>
+            </ScrollView>
+        </GlassSheet>
     );
 }
 
 const styles = StyleSheet.create({
-    modal: {
-        backgroundColor: background.card,
-        marginHorizontal: spacing.lg,
-        marginVertical: spacing.xl * 2,
-        borderRadius: borderRadius.xl,
-        padding: spacing.lg,
-        maxHeight: '80%',
+    content: {
+        flex: 1,
     },
     header: {
         flexDirection: 'row',
@@ -385,33 +355,32 @@ const styles = StyleSheet.create({
         marginBottom: spacing.lg,
     },
     title: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
     },
     section: {
         marginBottom: spacing.lg,
     },
     label: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
         marginBottom: spacing.sm,
     },
     required: {
-        color: semantic.error,
+        color: glassAccent.warm,
     },
     warningCard: {
         flexDirection: 'row',
         padding: spacing.sm,
         borderRadius: borderRadius.md,
-        borderWidth: 1,
         alignItems: 'center',
         gap: 8,
     },
     input: {
-        backgroundColor: background.primary,
+        backgroundColor: 'transparent',
     },
     hint: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: spacing.xs,
     },
     optionsGrid: {
@@ -422,7 +391,7 @@ const styles = StyleSheet.create({
     option: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: background.primary,
+        backgroundColor: glass.background.light,
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.md,
         borderRadius: borderRadius.md,
@@ -430,8 +399,8 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
     optionSelected: {
-        borderColor: pastel.mint,
-        backgroundColor: `${pastel.mint}15`,
+        borderColor: glassAccent.mint,
+        backgroundColor: glassAccent.mintGlow,
     },
     colorDot: {
         width: 10,
@@ -440,20 +409,13 @@ const styles = StyleSheet.create({
         marginRight: spacing.xs,
     },
     optionText: {
-        color: text.primary,
+        color: glassText.primary,
     },
     optionTextSelected: {
-        color: pastel.mint,
+        color: glassAccent.mint,
         fontWeight: '600',
     },
     startButton: {
         marginTop: spacing.md,
     },
-    startButtonDisabled: {
-        opacity: 0.5,
-    },
-    startButtonText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-    }
 });

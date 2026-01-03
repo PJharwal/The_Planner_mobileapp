@@ -65,6 +65,7 @@ export interface OnboardingQuestion {
     question: string;
     helper?: string;
     type: 'multiple_choice' | 'text_input';
+    layout?: 'card' | 'scale';
     options?: { value: string; label: string; description?: string }[];
     field: keyof UserProfileInsights;
     maxLength?: number;

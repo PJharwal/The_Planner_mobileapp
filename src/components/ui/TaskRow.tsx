@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, StyleProp } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card } from './Card';
+import { GlassCard } from '../glass';
 import { Checkbox } from './Checkbox';
 import { Chip } from './Chip';
-import { borderRadius, pastel, text, spacing, shadows } from '../../constants/theme';
+import { spacing } from '../../constants/theme';
+import { glassText, glassAccent } from '../../constants/glassTheme';
 
 interface TaskRowProps {
     title: string;
@@ -18,12 +19,6 @@ interface TaskRowProps {
     style?: StyleProp<ViewStyle>;
 }
 
-/**
- * Soft-UI TaskRow Component
- * - Floating task card with soft checkbox
- * - Priority chip
- * - Edit/delete actions
- */
 export function TaskRow({
     title,
     completed,
@@ -40,7 +35,7 @@ export function TaskRow({
     };
 
     const content = (
-        <Card style={[styles.container, completed && styles.completed, style]}>
+        <GlassCard style={[styles.container, completed && styles.completed, style]} intensity="light" bordered={!completed}>
             <Checkbox checked={completed} onToggle={onToggle} />
             <View style={styles.content}>
                 <Text
@@ -70,7 +65,7 @@ export function TaskRow({
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                 style={styles.iconButton}
                             >
-                                <Ionicons name="pencil-outline" size={18} color={text.muted} />
+                                <Ionicons name="pencil-outline" size={18} color={glassText.secondary} />
                             </TouchableOpacity>
                         )}
                         {onDelete && (
@@ -79,13 +74,13 @@ export function TaskRow({
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                 style={styles.iconButton}
                             >
-                                <Ionicons name="trash-outline" size={18} color="#C08080" />
+                                <Ionicons name="trash-outline" size={18} color={glassAccent.warm} />
                             </TouchableOpacity>
                         )}
                     </View>
                 )}
             </View>
-        </Card>
+        </GlassCard>
     );
 
     if (onPress) {
@@ -107,7 +102,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.sm,
     },
     completed: {
-        opacity: 0.7,
+        opacity: 0.6,
     },
     content: {
         flex: 1,
@@ -117,15 +112,15 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 15,
         fontWeight: '500',
-        color: text.primary,
+        color: glassText.primary,
     },
     titleCompleted: {
-        color: text.muted,
+        color: glassText.muted,
         textDecorationLine: 'line-through',
     },
     subtitle: {
         fontSize: 13,
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: 2,
     },
     actions: {

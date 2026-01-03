@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { borderRadius, pastel, semantic } from '../../constants/theme';
+import { borderRadius } from '../../constants/theme';
+import { glassAccent, glassText } from '../../constants/glassTheme';
 
 interface ProgressBarProps {
     progress: number; // 0 to 1
@@ -13,16 +14,16 @@ interface ProgressBarProps {
 }
 
 /**
- * Soft-UI ProgressBar Component
+ * Glass-UI ProgressBar Component
  * - Rounded progress bar
- * - Soft gradient appearance
  * - Smooth animation
+ * - Defaults to glass theme colors
  */
 export function ProgressBar({
     progress,
     height = 6,
-    color = pastel.mint,
-    backgroundColor = pastel.beige + '50',
+    color = glassAccent.mint,
+    backgroundColor = glassText.muted + '20', // Translucent white/gray
     style,
     animated = true,
 }: ProgressBarProps) {

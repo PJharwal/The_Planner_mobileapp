@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, TextInput, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { borderRadius, gradients, text, spacing } from '../../constants/theme';
+import { glassText } from '../../constants/glassTheme';
+import { GlassCard } from '../glass/GlassCard';
+import { GlassInput } from '../glass/GlassInput';
 
 interface SearchBarProps {
     value: string;
@@ -14,10 +15,10 @@ interface SearchBarProps {
 }
 
 /**
- * Calm UI SearchBar Component
- * - Warm gradient background
- * - 20px rounded corners
- * - Soft shadow
+ * Glass SearchBar Component
+ * - Glassmorphism blur
+ * - No sharp borders
+ * - Integrated GlassInput
  */
 export function SearchBar({
     value,
@@ -33,26 +34,26 @@ export function SearchBar({
     };
 
     return (
-        <LinearGradient
-            colors={gradients.warm}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+        <GlassCard
+            intensity="light"
+            bordered={false}
             style={[styles.container, style]}
         >
-            <Ionicons
-                name="search-outline"
-                size={18}
-                color="rgba(93, 107, 107, 0.65)"
-                style={styles.searchIcon}
-            />
-            <TextInput
+            <GlassInput
                 value={value}
                 onChangeText={onChangeText}
                 placeholder={placeholder}
-                placeholderTextColor="rgba(93, 107, 107, 0.65)"
-                style={styles.input}
+                leftIcon={
+                    <Ionicons
+                        name="search-outline"
+                        size={18}
+                        color={glassText.muted}
+                    />
+                }
+                bordered={false}
+                style={styles.inputContainer}
                 autoFocus={autoFocus}
-                returnKeyType="search"
+            // We use a custom clear button, so we handle layout manually if needed
             />
             {value.length > 0 && (
                 <TouchableOpacity
@@ -60,38 +61,29 @@ export function SearchBar({
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={styles.clearButton}
                 >
-                    <Ionicons name="close-circle" size={18} color="rgba(93, 107, 107, 0.65)" />
+                    <Ionicons name="close-circle" size={18} color={glassText.muted} />
                 </TouchableOpacity>
             )}
-        </LinearGradient>
+        </GlassCard>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderRadius: borderRadius.lg, // 20px
-        paddingHorizontal: 20,
-        minHeight: 56,
-        // Soft shadow
-        shadowColor: 'rgba(93, 107, 107, 1)',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 24,
-        elevation: 3,
+        borderRadius: 20, // Rounded for search bar
+        padding: 0,
+        overflow: 'hidden',
+        justifyContent: 'center',
     },
-    searchIcon: {
-        marginRight: spacing.sm,
-    },
-    input: {
+    inputContainer: {
         flex: 1,
-        fontSize: 16,
-        color: text.primary,
-        paddingVertical: spacing.md,
     },
     clearButton: {
-        marginLeft: spacing.sm,
+        position: 'absolute',
+        right: 16,
+        top: '50%',
+        marginTop: -9,
+        zIndex: 10,
     },
 });
 

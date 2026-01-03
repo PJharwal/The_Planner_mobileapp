@@ -16,12 +16,12 @@ import { LinearGradient } from "expo-linear-gradient";
 
 // Design tokens
 import { pastel, background, text, semantic, spacing, borderRadius, shadows, gradients } from "../../constants/theme";
+import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-import { Card, Chip, ProgressBar, InsightCard, Button } from "../../components/ui";
+import { Chip, ProgressBar, InsightCard } from "../../components/ui";
+import { GlassCard, MeshGradientBackground } from "../../components/glass";
 import { CapacityInsightsCard } from "../../components/analytics/CapacityInsightsCard";
 import { getCapacityInsights, CapacityInsights } from "../../utils/capacityInsights";
-
-
 
 interface TopicTime {
     topicId: string;
@@ -43,8 +43,6 @@ export default function AnalyticsScreen() {
     const [activeTab, setActiveTab] = useState<"progress" | "insights">("progress");
     const [refreshing, setRefreshing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-
-
 
     // Real-time stats
     const [totalCompleted, setTotalCompleted] = useState(0);
@@ -203,7 +201,7 @@ export default function AnalyticsScreen() {
                 if (!subjectId) return;
 
                 const subjectName = session.subjects?.name || 'Unknown';
-                const color = session.subjects?.color || pastel.mint;
+                const color = session.subjects?.color || glassAccent.mint;
                 const topicId = session.topic_id;
                 const topicName = session.topics?.name || 'General';
                 const subTopicId = session.sub_topic_id;
@@ -272,20 +270,21 @@ export default function AnalyticsScreen() {
     if (isLoading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator size="large" color={pastel.mint} />
-                <Text variant="bodyMedium" style={{ color: text.secondary, marginTop: 16 }}>Loading analytics...</Text>
+                <ActivityIndicator size="large" color={glassAccent.mint} />
+                <Text variant="bodyMedium" style={{ color: glassText.secondary, marginTop: 16 }}>Loading analytics...</Text>
             </View>
         );
     }
 
     return (
         <View style={styles.container}>
+            <MeshGradientBackground />
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerTop}>
-                    <Text variant="headlineLarge" style={styles.title}>Analytics</Text>
+                    <Text variant="headlineLarge" style={[styles.title, { color: glassText.primary }]}>Analytics</Text>
                     {activeTab === "insights" && (
-                        <Text variant="bodyMedium" style={{ color: text.secondary }}>Learning Intelligence</Text>
+                        <Text variant="bodyMedium" style={{ color: glassText.secondary }}>Learning Intelligence</Text>
                     )}
                 </View>
 
@@ -301,7 +300,7 @@ export default function AnalyticsScreen() {
                         style={[styles.tab, activeTab === "insights" && styles.activeTab]}
                         onPress={() => toggleTab("insights")}
                     >
-                        {insights.length > 0 && <View style={styles.badge} />}
+                        {insights.length > 0 && <View style={[styles.badge, { backgroundColor: glassAccent.warm }]} />}
                         <Text style={[styles.tabText, activeTab === "insights" && styles.activeTabText]}>Insights</Text>
                     </TouchableOpacity>
                 </View>
@@ -309,46 +308,48 @@ export default function AnalyticsScreen() {
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={glassAccent.mint} />}
             >
-                {activeTab === "progress" ? (
+                {activeTab === "progress" && (
                     <>
                         {/* Stats Overview */}
                         <View style={styles.statsRow}>
-                            <Card style={[styles.statCard, { borderLeftColor: semantic.success, borderLeftWidth: 3 }]}>
-                                <View style={styles.statContent}>
-                                    <Ionicons name="checkmark-circle" size={20} color={semantic.success} />
+                            <GlassCard style={styles.statCard} bordered={false} intensity="light">
+                                <View style={[styles.statContent, { borderLeftColor: glassAccent.mint, borderLeftWidth: 3, paddingLeft: 12 }]}>
+                                    <Ionicons name="checkmark-circle" size={20} color={glassAccent.mint} />
                                     <Text variant="headlineSmall" style={styles.statValue}>{totalCompleted}</Text>
-                                    <Text variant="bodySmall" style={{ color: text.secondary }}>Completed</Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>Completed</Text>
                                 </View>
-                            </Card>
-                            <Card style={[styles.statCard, { borderLeftColor: pastel.peach, borderLeftWidth: 3 }]}>
-                                <View style={styles.statContent}>
-                                    <Ionicons name="flame" size={20} color="#D89080" />
+                            </GlassCard>
+                            <GlassCard style={styles.statCard} bordered={false} intensity="light">
+                                <View style={[styles.statContent, { borderLeftColor: glassAccent.warm, borderLeftWidth: 3, paddingLeft: 12 }]}>
+                                    <Ionicons name="flame" size={20} color={glassAccent.warm} />
                                     <Text variant="headlineSmall" style={styles.statValue}>{streak}</Text>
-                                    <Text variant="bodySmall" style={{ color: text.secondary }}>Day Streak</Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>Day Streak</Text>
                                 </View>
-                            </Card>
-                            <Card style={[styles.statCard, { borderLeftColor: pastel.mistBlue, borderLeftWidth: 3 }]}>
-                                <View style={styles.statContent}>
-                                    <Ionicons name="time" size={20} color="#6AABAC" />
+                            </GlassCard>
+                            <GlassCard style={styles.statCard} bordered={false} intensity="light">
+                                <View style={[styles.statContent, { borderLeftColor: glassAccent.blue, borderLeftWidth: 3, paddingLeft: 12 }]}>
+                                    <Ionicons name="time" size={20} color={glassAccent.blue} />
                                     <Text variant="headlineSmall" style={styles.statValue}>{pendingCount}</Text>
-                                    <Text variant="bodySmall" style={{ color: text.secondary }}>Pending</Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>Pending</Text>
                                 </View>
-                            </Card>
+                            </GlassCard>
                         </View>
 
                         {/* Weekly Review Card */}
                         {weeklyReview && (
-                            <Card style={[styles.reviewCard, { borderColor: pastel.mint }]}>
+                            <GlassCard style={styles.reviewCard}>
                                 <View style={styles.reviewHeader}>
                                     <View style={styles.reviewTitleRow}>
-                                        <Ionicons name="calendar" size={20} color={pastel.mint} />
+                                        <Ionicons name="calendar" size={20} color={glassAccent.mint} />
                                         <Text variant="titleMedium" style={styles.chartTitle}>This Week</Text>
                                     </View>
                                     {weeklyReview.improvement !== 0 && (
-                                        <Chip size="sm" variant={weeklyReview.improvement > 0 ? "success" : "error"}>
-                                            {weeklyReview.improvement > 0 ? "+" : ""}{weeklyReview.improvement}% vs last week
+                                        <Chip size="sm" style={{ backgroundColor: weeklyReview.improvement > 0 ? glassAccent.mint + '20' : glassAccent.warm + '20' }}>
+                                            <Text style={{ color: weeklyReview.improvement > 0 ? glassAccent.mint : glassAccent.warm, fontSize: 12 }}>
+                                                {weeklyReview.improvement > 0 ? "+" : ""}{weeklyReview.improvement}% vs last week
+                                            </Text>
                                         </Chip>
                                     )}
                                 </View>
@@ -356,66 +357,66 @@ export default function AnalyticsScreen() {
                                 <View style={styles.reviewStats}>
                                     <View style={styles.reviewStatItem}>
                                         <Text variant="headlineMedium" style={styles.reviewStatValue}>{weeklyReview.completionRate}%</Text>
-                                        <Text variant="bodySmall" style={{ color: text.secondary }}>Completion</Text>
+                                        <Text variant="bodySmall" style={{ color: glassText.secondary }}>Completion</Text>
                                     </View>
                                     <View style={styles.reviewStatDivider} />
                                     <View style={styles.reviewStatItem}>
                                         <Text variant="headlineMedium" style={styles.reviewStatValue}>{weeklyReview.tasksCompleted}</Text>
-                                        <Text variant="bodySmall" style={{ color: text.secondary }}>Done</Text>
+                                        <Text variant="bodySmall" style={{ color: glassText.secondary }}>Done</Text>
                                     </View>
                                     <View style={styles.reviewStatDivider} />
                                     <View style={styles.reviewStatItem}>
-                                        <Text variant="headlineMedium" style={[styles.reviewStatValue, weeklyReview.tasksMissed > 0 && { color: semantic.error }]}>
+                                        <Text variant="headlineMedium" style={[styles.reviewStatValue, weeklyReview.tasksMissed > 0 && { color: glassAccent.warm }]}>
                                             {weeklyReview.tasksMissed}
                                         </Text>
-                                        <Text variant="bodySmall" style={{ color: text.secondary }}>Missed</Text>
+                                        <Text variant="bodySmall" style={{ color: glassText.secondary }}>Missed</Text>
                                     </View>
                                 </View>
 
                                 {weeklyReview.bestDay && (
                                     <View style={styles.insightRow}>
-                                        <Ionicons name="trophy" size={16} color={semantic.warning} />
+                                        <Ionicons name="trophy" size={16} color={glassAccent.mint} />
                                         <Text variant="bodySmall" style={styles.insightText}>Best day: {weeklyReview.bestDay}</Text>
                                     </View>
                                 )}
                                 {weeklyReview.weakSubject && (
                                     <View style={styles.insightRow}>
-                                        <Ionicons name="alert-circle" size={16} color={semantic.warning} />
+                                        <Ionicons name="alert-circle" size={16} color={glassAccent.warm} />
                                         <Text variant="bodySmall" style={styles.insightText}>Needs attention: {weeklyReview.weakSubject.name}</Text>
                                     </View>
                                 )}
-                            </Card>
+                            </GlassCard>
                         )}
 
                         {/* Study Time Summary */}
-                        <Card style={styles.chartCard}>
+                        <GlassCard style={styles.chartCard} intensity="medium">
                             <View style={styles.reviewTitleRow}>
-                                <Ionicons name="time-outline" size={20} color={pastel.mint} />
+                                <Ionicons name="time-outline" size={20} color={glassAccent.mint} />
                                 <Text variant="titleMedium" style={styles.chartTitle}>Study Time</Text>
                             </View>
                             <View style={styles.studyTimeStats}>
                                 <View style={styles.studyTimeStat}>
-                                    <Text variant="headlineMedium" style={[styles.reviewStatValue, { color: pastel.mint }]}>
+                                    <Text variant="headlineMedium" style={[styles.reviewStatValue, { color: glassAccent.mint }]}>
                                         {formatMinutes(todayStudyMinutes)}
                                     </Text>
-                                    <Text variant="bodySmall" style={{ color: text.secondary }}>Today</Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>Today</Text>
                                 </View>
                                 <View style={styles.reviewStatDivider} />
                                 <View style={styles.studyTimeStat}>
-                                    <Text variant="headlineMedium" style={[styles.reviewStatValue, { color: semantic.success }]}>
+                                    <Text variant="headlineMedium" style={[styles.reviewStatValue, { color: glassAccent.blue }]}>
                                         {formatMinutes(weekStudyMinutes)}
                                     </Text>
-                                    <Text variant="bodySmall" style={{ color: text.secondary }}>This Week</Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>This Week</Text>
                                 </View>
                                 <View style={styles.reviewStatDivider} />
                                 <View style={styles.studyTimeStat}>
-                                    <Text variant="headlineMedium" style={[styles.reviewStatValue, { color: pastel.peach }]}>
+                                    <Text variant="headlineMedium" style={[styles.reviewStatValue, { color: glassAccent.warm }]}>
                                         {formatMinutes(allTimeStudyMinutes)}
                                     </Text>
-                                    <Text variant="bodySmall" style={{ color: text.secondary }}>All Time</Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>All Time</Text>
                                 </View>
                             </View>
-                        </Card>
+                        </GlassCard>
 
                         {/* Capacity Insights */}
                         {capacityInsights && (
@@ -423,23 +424,23 @@ export default function AnalyticsScreen() {
                         )}
 
                         {/* Weekly Chart */}
-                        <Card style={styles.chartCard}>
+                        <GlassCard style={styles.chartCard}>
                             <Text variant="titleMedium" style={styles.chartTitle}>Daily Progress</Text>
                             <View style={styles.chartContainer}>
                                 {weeklyData.map((value, index) => (
                                     <View key={index} style={styles.barContainer}>
                                         <View style={styles.barBg}>
-                                            <View style={[styles.barFill, { height: `${Math.max((value / maxWeekly) * 100, 5)}%` }]} />
+                                            <View style={[styles.barFill, { height: `${Math.max((value / maxWeekly) * 100, 5)}%`, backgroundColor: glassAccent.mint }]} />
                                         </View>
                                         <Text variant="bodySmall" style={styles.barLabel}>{weekDays[index]}</Text>
                                         <Text variant="labelSmall" style={styles.barValue}>{value}</Text>
                                     </View>
                                 ))}
                             </View>
-                        </Card>
+                        </GlassCard>
 
                         {/* Heatmap */}
-                        <Card style={styles.chartCard}>
+                        <GlassCard style={styles.chartCard}>
                             <Text variant="titleMedium" style={styles.chartTitle}>Consistency (28 days)</Text>
                             <View style={styles.heatmapGrid}>
                                 {consistencyData.map((value, index) => {
@@ -451,24 +452,26 @@ export default function AnalyticsScreen() {
                                                 styles.heatmapCell,
                                                 {
                                                     backgroundColor:
-                                                        intensity > 0.7 ? semantic.success :
-                                                            intensity > 0.4 ? pastel.mint :
-                                                                intensity > 0 ? pastel.mint + '50' :
-                                                                    pastel.beige,
+                                                        intensity > 0.7 ? glassAccent.mint :
+                                                            intensity > 0.4 ? glassAccent.blue :
+                                                                intensity > 0 ? `${glassAccent.mint}50` :
+                                                                    glass.background.light,
                                                 },
                                             ]}
                                         />
                                     );
                                 })}
                             </View>
-                        </Card>
+                        </GlassCard>
                     </>
-                ) : (
+                )}
+
+                {activeTab === "insights" && (
                     <>
                         {/* Helper Message */}
                         {insights.length === 0 && revisions.length === 0 && (
                             <View style={styles.emptyState}>
-                                <Ionicons name="analytics" size={48} color={pastel.slate + "40"} />
+                                <Ionicons name="analytics" size={48} color={glassText.muted} />
                                 <Text variant="bodyLarge" style={styles.emptyTitle}>Gathering Intelligence...</Text>
                                 <Text variant="bodyMedium" style={styles.emptyText}>
                                     Complete more study sessions to see your personalized learning patterns.
@@ -486,7 +489,7 @@ export default function AnalyticsScreen() {
                                     Topics that need your attention now
                                 </Text>
                                 {revisions.map((rev) => (
-                                    <Card key={rev.subTopicId} style={styles.revisionCard}>
+                                    <GlassCard key={rev.subTopicId} style={styles.revisionCard} intensity="light">
                                         <View style={styles.revisionContent}>
                                             <View style={[styles.colorDot, { backgroundColor: rev.subjectColor }]} />
                                             <View style={styles.revisionText}>
@@ -501,7 +504,7 @@ export default function AnalyticsScreen() {
                                                 </Text>
                                             </View>
                                         </View>
-                                    </Card>
+                                    </GlassCard>
                                 ))}
                             </View>
                         )}
@@ -524,19 +527,17 @@ export default function AnalyticsScreen() {
                     </>
                 )}
             </ScrollView>
-
-
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: background.primary },
+    container: { flex: 1, backgroundColor: 'transparent' },
     centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 20 },
     headerTop: { marginBottom: 16 },
-    title: { color: text.primary, fontWeight: "bold" },
+    title: { fontWeight: "bold" },
 
     // Tabs
     tabContainer: {
@@ -554,54 +555,53 @@ const styles = StyleSheet.create({
         flexDirection: "row"
     },
     activeTab: {
-        backgroundColor: background.card,
-        shadowColor: "#000",
+        backgroundColor: darkBackground.elevated,
+        shadowColor: '#4DA3FF',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.12,
         shadowRadius: 2,
-        elevation: 2
     },
     tabText: {
         fontWeight: "600",
-        color: text.secondary
+        color: glassText.secondary
     },
     activeTabText: {
-        color: text.primary
+        color: glassText.primary
     },
     badge: {
         width: 6,
         height: 6,
         borderRadius: 3,
-        backgroundColor: semantic.error,
+        backgroundColor: glassAccent.warm,
         marginRight: 6
     },
 
     // Stats
     statsRow: { flexDirection: "row", paddingHorizontal: 24, gap: 10, marginBottom: 20 },
-    statCard: { flex: 1, padding: 12 },
-    statContent: { alignItems: "center", paddingVertical: 8 },
-    statValue: { color: text.primary, fontWeight: "bold", marginTop: 4 },
+    statCard: { flex: 1, padding: 0 },
+    statContent: { alignItems: "center", paddingVertical: 12 },
+    statValue: { color: glassText.primary, fontWeight: "bold", marginTop: 4 },
 
     // Reviews
-    reviewCard: { marginHorizontal: 24, marginBottom: 16, borderWidth: 1, padding: 16 },
+    reviewCard: { marginHorizontal: 24, marginBottom: 16, padding: 16 },
     reviewHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
     reviewTitleRow: { flexDirection: "row", alignItems: "center" },
     reviewStats: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
     reviewStatItem: { flex: 1, alignItems: "center" },
-    reviewStatValue: { color: text.primary, fontWeight: "bold" },
-    reviewStatDivider: { width: 1, height: 32, backgroundColor: pastel.beige },
+    reviewStatValue: { color: glassText.primary, fontWeight: "bold" },
+    reviewStatDivider: { width: 1, height: 32, backgroundColor: glass.border.light },
     insightRow: { flexDirection: "row", alignItems: "center", marginTop: 8 },
-    insightText: { color: text.secondary, marginLeft: 8 },
+    insightText: { color: glassText.secondary, marginLeft: 8 },
 
     // Charts
     chartCard: { marginHorizontal: 24, marginBottom: 16, padding: 16 },
-    chartTitle: { color: text.primary, fontWeight: "600", marginBottom: 16, marginLeft: 8 },
+    chartTitle: { color: glassText.primary, fontWeight: "600", marginBottom: 16, marginLeft: 8 },
     chartContainer: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", height: 120 },
     barContainer: { flex: 1, alignItems: "center" },
-    barBg: { width: 24, height: 80, backgroundColor: pastel.beige, borderRadius: 8, justifyContent: "flex-end", overflow: "hidden" },
-    barFill: { width: "100%", backgroundColor: pastel.mint, borderRadius: 8 },
-    barLabel: { color: text.secondary, marginTop: 6, fontSize: 10 },
-    barValue: { color: text.muted, fontSize: 9 },
+    barBg: { width: 24, height: 80, backgroundColor: glass.background.light, borderRadius: 8, justifyContent: "flex-end", overflow: "hidden" },
+    barFill: { width: "100%", backgroundColor: glassAccent.mint, borderRadius: 8 },
+    barLabel: { color: glassText.secondary, marginTop: 6, fontSize: 10 },
+    barValue: { color: glassText.muted, fontSize: 9 },
     heatmapGrid: { flexDirection: "row", flexWrap: "wrap", gap: 4 },
     heatmapCell: { width: 28, height: 28, borderRadius: 6 },
     heatmapLegend: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 16, gap: 6 },
@@ -616,27 +616,27 @@ const styles = StyleSheet.create({
     subjectDot: { width: 10, height: 10, borderRadius: 5, marginRight: 12 },
     subjectTimeInfo: { flex: 1 },
     subjectTimeHeaderRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    subjectTimeName: { color: text.primary },
-    subjectTimeValue: { color: text.secondary },
-    topicsList: { marginLeft: 22, marginTop: 8, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: pastel.beige },
+    subjectTimeName: { color: glassText.primary },
+    subjectTimeValue: { color: glassText.secondary },
+    topicsList: { marginLeft: 22, marginTop: 8, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: glass.border.light },
     topicRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 4 },
-    topicName: { color: text.secondary },
-    topicTime: { color: text.muted },
+    topicName: { color: glassText.secondary },
+    topicTime: { color: glassText.muted },
 
     // Helper & Insights specific
     section: { paddingHorizontal: 24, marginBottom: 20 },
-    sectionTitle: { color: text.primary, fontWeight: "600", marginBottom: 4 },
-    sectionSubtitle: { color: text.secondary, marginBottom: 12 },
+    sectionTitle: { color: glassText.primary, fontWeight: "600", marginBottom: 4 },
+    sectionSubtitle: { color: glassText.secondary, marginBottom: 12 },
     revisionCard: { padding: spacing.md, marginBottom: spacing.xs },
     revisionContent: { flexDirection: "row", alignItems: "flex-start" },
     colorDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6, marginRight: spacing.sm },
     revisionText: { flex: 1 },
-    revisionTitle: { color: text.primary, fontWeight: "500" },
-    revisionSubtitle: { color: text.secondary, marginTop: 2 },
-    revisionReason: { color: pastel.peach, marginTop: 4 },
+    revisionTitle: { color: glassText.primary, fontWeight: "500" },
+    revisionSubtitle: { color: glassText.secondary, marginTop: 2 },
+    revisionReason: { color: glassAccent.warm, marginTop: 4 },
     emptyState: { alignItems: "center", paddingVertical: 40, paddingHorizontal: 24 },
-    emptyTitle: { color: text.primary, marginTop: spacing.md, fontWeight: "600" },
-    emptyText: { color: text.secondary, textAlign: "center", marginTop: spacing.xs },
+    emptyTitle: { color: glassText.primary, marginTop: spacing.md, fontWeight: "600" },
+    emptyText: { color: glassText.secondary, textAlign: "center", marginTop: spacing.xs },
 
     // Locked State
     lockedCard: {
@@ -656,11 +656,11 @@ const styles = StyleSheet.create({
     lockedTitle: {
         fontWeight: 'bold',
         marginBottom: spacing.xs,
-        color: text.primary,
+        color: glassText.primary,
     },
     lockedDesc: {
         textAlign: 'center',
-        color: text.secondary,
+        color: glassText.secondary,
         marginBottom: spacing.md,
     },
 });

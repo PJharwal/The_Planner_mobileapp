@@ -90,12 +90,11 @@ const styles = StyleSheet.create({
     card: {
         borderRadius: borderRadius.lg, // 20px
         overflow: 'hidden',
-        // Soft shadow
-        shadowColor: 'rgba(93, 107, 107, 1)',
+        // Soft shadow (iOS only - no elevation to prevent black border on Android)
+        shadowColor: '#4DA3FF',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 24,
-        elevation: 3,
+        shadowOpacity: 0.12,
+        shadowRadius: 18,
     },
     gradient: {
         borderRadius: borderRadius.lg,

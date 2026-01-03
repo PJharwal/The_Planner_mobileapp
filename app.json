@@ -15,7 +15,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.studyapp.student"
+      "bundleIdentifier": "com.studyapp.student",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "Tasky uses your activity and sleep data to recommend better focus sessions and prevent burnout. Your data never leaves your device.",
+        "NSHealthUpdateUsageDescription": "Tasky uses your activity and sleep data to recommend better focus sessions and prevent burnout. Your data never leaves your device.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -34,6 +39,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6411b1bb-3f42-4b55-a278-0994daa7d6d2"
+      }
     }
   }
 }

@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNotificationStore, NotificationType } from '../../store/notificationStore';
-import { pastel, text, spacing, borderRadius, shadows } from '../../constants/theme';
+import { spacing, borderRadius, shadows } from '../../constants/theme';
+import { darkBackground, glass, glassAccent, glassText } from '../../constants/glassTheme';
 
 const ICON_MAP: Record<NotificationType, keyof typeof Ionicons.glyphMap> = {
     success: 'checkmark-circle',
@@ -12,10 +13,10 @@ const ICON_MAP: Record<NotificationType, keyof typeof Ionicons.glyphMap> = {
 };
 
 const COLOR_MAP: Record<NotificationType, string> = {
-    success: pastel.mint,
-    error: '#E8A0A0',
-    warning: '#F4C19C',
-    info: pastel.mistBlue
+    success: glassAccent.mint,
+    error: glassAccent.warm,
+    warning: glassAccent.warm, // Or pure orange/yellow if avail, but warm is consistent
+    info: glassAccent.blue
 };
 
 function ToastItem({ id, type, message }: { id: string; type: NotificationType; message: string }) {
@@ -80,7 +81,7 @@ function ToastItem({ id, type, message }: { id: string; type: NotificationType; 
                     onPress={handleDismiss}
                     hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
                 >
-                    <Ionicons name="close" size={20} color={text.secondary} />
+                    <Ionicons name="close" size={20} color={glassText.secondary} />
                 </TouchableOpacity>
             </View>
         </Animated.View>
@@ -122,19 +123,23 @@ const styles = StyleSheet.create({
     toast: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: darkBackground.elevated,
         padding: spacing.md,
         borderRadius: borderRadius.lg,
         borderLeftWidth: 4,
+        borderWidth: 1,
+        borderColor: glass.border.light,
         gap: spacing.sm,
-        ...shadows.medium,
-        // Ensure it's above other elements
-        elevation: 10
+        // Shadow (iOS only - no elevation to prevent black border on Android)
+        shadowColor: '#4DA3FF',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.18,
+        shadowRadius: 12,
     },
     message: {
         flex: 1,
         fontSize: 14,
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '500',
         lineHeight: 20
     }

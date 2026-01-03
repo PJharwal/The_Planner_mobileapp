@@ -7,10 +7,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { pastel, spacing, typography } from '../../constants/theme';
+import { spacing, typography } from '../../constants/theme';
+import { glassAccent, glassText, darkBackground } from '../../constants/glassTheme';
 import { useTimerStore, formatCountdown } from '../../store/timerStore';
 import { useCapacityStore } from '../../store/capacityStore';
-import { Button } from '../../components/ui';
+import { GlassButton, MeshGradientBackground } from '../../components/glass';
 
 type FocusPhase = 'focus' | 'rest' | 'complete';
 
@@ -36,7 +37,7 @@ export default function AdvancedFocusScreen() {
 
     const [phase, setPhase] = useState<FocusPhase>('focus');
     const [showControls, setShowControls] = useState(true);
-    const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const hideControlsTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Parse params
     const duration = params.duration ? parseInt(params.duration as string) : (capacity?.default_focus_minutes || 25) * 60;
@@ -143,16 +144,16 @@ export default function AdvancedFocusScreen() {
         : null;
 
     // Dynamic gradient based on phase
-    const getGradientColors = (): [string, string] => {
+    const getGradientColors = (): [string, string, string] => {
         switch (phase) {
             case 'focus':
-                return ['#1a1a2e', '#16213e'];
+                return [darkBackground.primary, '#1e293b', '#0f172a'];
             case 'rest':
-                return ['#0f4c5c', '#1f7a8c'];
+                return ['#0f4c5c', '#1e3a8a', darkBackground.primary];
             case 'complete':
-                return ['#145a32', '#1e8449'];
+                return [glassAccent.mint + '40', darkBackground.primary, '#0f172a'];
             default:
-                return ['#1a1a2e', '#16213e'];
+                return [darkBackground.primary, '#1e293b', '#0f172a'];
         }
     };
 
@@ -160,11 +161,8 @@ export default function AdvancedFocusScreen() {
         <Pressable style={styles.container} onPress={handleTapScreen}>
             <Stack.Screen options={{ headerShown: false }} />
 
-            {/* Background Gradient */}
-            <LinearGradient
-                colors={getGradientColors()}
-                style={StyleSheet.absoluteFillObject}
-            />
+            {/* Background - Mesh Gradient */}
+            <MeshGradientBackground />
 
             {/* Safe Area Top Controls */}
             {showControls && phase !== 'complete' && (
@@ -172,7 +170,7 @@ export default function AdvancedFocusScreen() {
                     <IconButton
                         icon="close"
                         size={28}
-                        iconColor="rgba(255,255,255,0.7)"
+                        iconColor={glassText.primary}
                         onPress={handleExit}
                     />
                     <View style={styles.phaseIndicator}>
@@ -182,7 +180,7 @@ export default function AdvancedFocusScreen() {
                     <IconButton
                         icon={isPaused ? 'play' : 'pause'}
                         size={28}
-                        iconColor="rgba(255,255,255,0.7)"
+                        iconColor={glassText.primary}
                         onPress={handlePauseResume}
                     />
                 </View>
@@ -211,7 +209,7 @@ export default function AdvancedFocusScreen() {
 
                 {phase === 'rest' && (
                     <View style={styles.restContent}>
-                        <Ionicons name="cafe-outline" size={64} color={pastel.mint} />
+                        <Ionicons name="cafe-outline" size={64} color={glassAccent.mint} />
                         <Text style={styles.restTitle}>
                             Take a Break
                         </Text>
@@ -221,29 +219,31 @@ export default function AdvancedFocusScreen() {
 
                         <View style={styles.restSuggestions}>
                             <View style={styles.suggestionItem}>
-                                <Ionicons name="water-outline" size={20} color="rgba(255,255,255,0.7)" />
+                                <Ionicons name="water-outline" size={20} color={glassText.secondary} />
                                 <Text style={styles.restSuggestion}>Hydrate</Text>
                             </View>
                             <View style={styles.suggestionItem}>
-                                <Ionicons name="walk-outline" size={20} color="rgba(255,255,255,0.7)" />
+                                <Ionicons name="walk-outline" size={20} color={glassText.secondary} />
                                 <Text style={styles.restSuggestion}>Quick stretch</Text>
                             </View>
                             <View style={styles.suggestionItem}>
-                                <Ionicons name="eye-outline" size={20} color="rgba(255,255,255,0.7)" />
+                                <Ionicons name="eye-outline" size={20} color={glassText.secondary} />
                                 <Text style={styles.restSuggestion}>Look away from screen</Text>
                             </View>
                         </View>
 
-                        <Button variant="ghost" onPress={handleSkipRest} style={styles.skipButton}>
-                            <Text style={{ color: 'rgba(255,255,255,0.7)' }}>Skip Rest</Text>
-                        </Button>
+                        <View style={{ marginTop: spacing.xl }}>
+                            <GlassButton variant="ghost" onPress={handleSkipRest}>
+                                Skip Rest
+                            </GlassButton>
+                        </View>
                     </View>
                 )}
 
                 {phase === 'complete' && (
                     <View style={styles.completeContent}>
                         <View style={styles.completeIcon}>
-                            <Ionicons name="checkmark" size={48} color="#fff" />
+                            <Ionicons name="checkmark" size={48} color={glassText.inverse} />
                         </View>
                         <Text style={styles.completeTitle}>
                             Session Complete!
@@ -254,7 +254,7 @@ export default function AdvancedFocusScreen() {
 
                         {capacityWarning && (
                             <View style={styles.capacityWarning}>
-                                <Ionicons name="information-circle-outline" size={20} color={pastel.peach} />
+                                <Ionicons name="information-circle-outline" size={20} color={glassAccent.warm} />
                                 <Text style={styles.warningText}>
                                     {capacityWarning}
                                 </Text>
@@ -262,12 +262,12 @@ export default function AdvancedFocusScreen() {
                         )}
 
                         <View style={styles.completeActions}>
-                            <Button onPress={handleAnotherSession} style={styles.actionButton}>
-                                <Text style={{ color: '#fff', fontWeight: '600' }}>Another Session</Text>
-                            </Button>
-                            <Button variant="ghost" onPress={handleExit} style={styles.actionButton}>
-                                <Text style={{ color: 'rgba(255,255,255,0.7)' }}>Done for Now</Text>
-                            </Button>
+                            <GlassButton onPress={handleAnotherSession} fullWidth>
+                                Another Session
+                            </GlassButton>
+                            <GlassButton variant="ghost" onPress={handleExit} fullWidth>
+                                Done for Now
+                            </GlassButton>
                         </View>
                     </View>
                 )}
@@ -306,10 +306,10 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: 'rgba(255,255,255,0.3)',
+        backgroundColor: glassText.muted,
     },
     phaseDotActive: {
-        backgroundColor: pastel.mint,
+        backgroundColor: glassAccent.mint,
     },
     content: {
         flex: 1,
@@ -322,14 +322,14 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     phaseLabel: {
-        color: pastel.mint,
+        color: glassAccent.mint,
         fontSize: 14,
         fontWeight: '600',
         letterSpacing: 4,
         marginBottom: spacing.lg,
     },
     timer: {
-        color: '#fff',
+        color: glassText.primary,
         fontSize: 72,
         fontWeight: '200',
         fontVariant: ['tabular-nums'],
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.md,
     },
     taskTitle: {
-        color: 'rgba(255,255,255,0.6)',
+        color: glassText.secondary,
         fontSize: 16,
         textAlign: 'center',
         marginBottom: spacing.xl,
@@ -345,21 +345,21 @@ const styles = StyleSheet.create({
     progressContainer: {
         width: '80%',
         height: 4,
-        backgroundColor: 'rgba(255,255,255,0.15)',
+        backgroundColor: glassText.muted,
         borderRadius: 2,
         marginTop: spacing.lg,
         overflow: 'hidden',
     },
     progressBar: {
         height: '100%',
-        backgroundColor: pastel.mint,
+        backgroundColor: glassAccent.mint,
         borderRadius: 2,
     },
     restContent: {
         alignItems: 'center',
     },
     restTitle: {
-        color: '#fff',
+        color: glassText.primary,
         fontSize: 28,
         fontWeight: '600',
         marginTop: spacing.lg,
@@ -375,11 +375,8 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
     },
     restSuggestion: {
-        color: 'rgba(255,255,255,0.7)',
+        color: glassText.secondary,
         fontSize: 16,
-    },
-    skipButton: {
-        marginTop: spacing.xl,
     },
     completeContent: {
         alignItems: 'center',
@@ -389,19 +386,19 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: 'rgba(255,255,255,0.2)',
+        backgroundColor: glassAccent.mint + '40',
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: spacing.lg,
     },
     completeTitle: {
-        color: '#fff',
+        color: glassText.primary,
         fontSize: 28,
         fontWeight: '700',
         marginBottom: spacing.sm,
     },
     completeMessage: {
-        color: 'rgba(255,255,255,0.7)',
+        color: glassText.secondary,
         fontSize: 16,
         textAlign: 'center',
         marginBottom: spacing.xl,
@@ -409,7 +406,7 @@ const styles = StyleSheet.create({
     capacityWarning: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(247,203,201,0.15)',
+        backgroundColor: glassAccent.warm + '20',
         paddingVertical: spacing.sm,
         paddingHorizontal: spacing.md,
         borderRadius: 12,
@@ -417,7 +414,7 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     warningText: {
-        color: pastel.peach,
+        color: glassAccent.warm,
         fontSize: 14,
         flex: 1,
     },
@@ -426,9 +423,6 @@ const styles = StyleSheet.create({
         gap: spacing.sm,
         marginTop: spacing.md,
     },
-    actionButton: {
-        width: '100%',
-    },
     tapHint: {
         position: 'absolute',
         left: 0,
@@ -436,7 +430,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     tapHintText: {
-        color: 'rgba(255,255,255,0.4)',
+        color: glassText.secondary,
         fontSize: 12,
     },
 });

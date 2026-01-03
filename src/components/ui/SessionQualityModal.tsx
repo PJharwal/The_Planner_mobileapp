@@ -4,7 +4,8 @@ import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text, Portal, Modal } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { SessionQuality } from '../../types';
-import { borderRadius, spacing, pastel, background } from '../../constants/theme';
+import { borderRadius, spacing } from '../../constants/theme';
+import { darkBackground, glass, glassAccent, glassText } from '../../constants/glassTheme';
 
 interface SessionQualityModalProps {
     visible: boolean;
@@ -14,9 +15,9 @@ interface SessionQualityModalProps {
 }
 
 const QUALITY_OPTIONS: { value: SessionQuality; label: string; icon: string; color: string }[] = [
-    { value: 'focused', label: 'Focused', icon: 'sparkles', color: '#8DD7D8' },
-    { value: 'okay', label: 'Okay', icon: 'remove', color: '#E8C9A0' },
-    { value: 'distracted', label: 'Distracted', icon: 'cloudy', color: '#E8A0A0' },
+    { value: 'focused', label: 'Focused', icon: 'sparkles', color: glassAccent.mint },
+    { value: 'okay', label: 'Okay', icon: 'remove', color: glassAccent.warm },
+    { value: 'distracted', label: 'Distracted', icon: 'cloudy', color: glassAccent.blue }, // Using blue for distracted/cloudy
 ];
 
 export function SessionQualityModal({ visible, onDismiss, onSubmit, sessionMinutes }: SessionQualityModalProps) {
@@ -28,7 +29,7 @@ export function SessionQualityModal({ visible, onDismiss, onSubmit, sessionMinut
                 contentContainerStyle={styles.modal}
             >
                 <View style={styles.header}>
-                    <Ionicons name="checkmark-circle" size={32} color={pastel.mint} />
+                    <Ionicons name="checkmark-circle" size={32} color={glassAccent.mint} />
                     <Text variant="titleLarge" style={styles.title}>
                         Nice work!
                     </Text>
@@ -71,26 +72,28 @@ export function SessionQualityModal({ visible, onDismiss, onSubmit, sessionMinut
 
 const styles = StyleSheet.create({
     modal: {
-        backgroundColor: background.card,
+        backgroundColor: darkBackground.elevated,
         margin: 24,
         padding: 24,
         borderRadius: borderRadius.lg,
+        borderWidth: 1,
+        borderColor: glass.border.light,
     },
     header: {
         alignItems: 'center',
         marginBottom: spacing.lg,
     },
     title: {
-        color: '#5D6B6B',
+        color: glassText.primary,
         fontWeight: '600',
         marginTop: spacing.sm,
     },
     subtitle: {
-        color: 'rgba(93, 107, 107, 0.65)',
+        color: glassText.secondary,
         marginTop: 4,
     },
     question: {
-        color: '#5D6B6B',
+        color: glassText.secondary,
         textAlign: 'center',
         marginBottom: spacing.md,
     },
@@ -110,15 +113,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: spacing.xs,
+        borderWidth: 1,
+        borderColor: glass.border.light,
     },
     optionLabel: {
-        color: '#5D6B6B',
+        color: glassText.primary,
     },
     skipButton: {
         alignSelf: 'center',
         padding: spacing.sm,
     },
     skipText: {
-        color: 'rgba(93, 107, 107, 0.5)',
+        color: glassText.muted,
     },
 });

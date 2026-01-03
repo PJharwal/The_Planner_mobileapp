@@ -4,15 +4,26 @@ import { Text, Portal, Modal, TextInput } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useSubjectStore } from "../../store/subjectStore";
-import { SubjectHealth, getAllSubjectHealthScores, getHealthColor, getHealthLabel } from "../../utils/healthScore";
+import { SubjectHealth, getAllSubjectHealthScores, getHealthLabel } from "../../utils/healthScore";
 
 // Design tokens
-import { pastel, background, text, semantic, spacing, borderRadius, shadows } from "../../constants/theme";
+import { text, semantic, borderRadius } from "../../constants/theme";
+import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-import { Card, Button, Chip } from "../../components/ui";
+import { Chip } from "../../components/ui";
+import { GlassCard, GlassButton, GlassInput, MeshGradientBackground } from "../../components/glass";
 
-// Pastel subject colors
-const SUBJECT_COLORS = [pastel.mint, pastel.peach, "#A0C4E8", "#E8C9A0", "#C9A0E8", "#A0E8C9", pastel.mistBlue, "#E8A0C9"];
+// Subject colors - consistent with Glass Theme
+const SUBJECT_COLORS = [
+    glassAccent.mint,
+    glassAccent.warm,
+    glassAccent.blue,
+    "#E8C9A0", // Beige-ish
+    "#C9A0E8", // Lavender
+    "#A0E8C9", // Aqua
+    "#FF9F9F", // Salmon
+    "#E8A0C9"  // Pink
+];
 const SUBJECT_ICONS = ["📚", "🧮", "🔬", "📖", "🎨", "🌍", "💻", "🎵", "🏃", "📐"];
 
 export default function SubjectsScreen() {
@@ -27,7 +38,6 @@ export default function SubjectsScreen() {
 
     // Health scores
     const [healthScores, setHealthScores] = useState<SubjectHealth[]>([]);
-    const [loadingHealth, setLoadingHealth] = useState(true);
 
     useEffect(() => {
         fetchSubjects();
@@ -35,10 +45,8 @@ export default function SubjectsScreen() {
     }, []);
 
     const fetchHealthScores = async () => {
-        setLoadingHealth(true);
         const scores = await getAllSubjectHealthScores();
         setHealthScores(scores);
-        setLoadingHealth(false);
     };
 
     const getHealthForSubject = (subjectId: string): SubjectHealth | undefined => {
@@ -75,68 +83,69 @@ export default function SubjectsScreen() {
     // Soft health colors
     const getSoftHealthColor = (level: string) => {
         switch (level) {
-            case 'healthy': return semantic.success;
-            case 'needs_attention': return semantic.warning;
-            case 'critical': return semantic.error;
-            default: return text.muted;
+            case 'healthy': return glassAccent.mint; // Success/Good
+            case 'needs_attention': return glassAccent.warm; // Warning
+            case 'critical': return "#FF6B6B"; // Critical Error
+            default: return glassText.muted;
         }
     };
 
     if (isLoading && subjects.length === 0) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator size="large" color={pastel.mint} />
-                <Text variant="bodyMedium" style={{ color: text.secondary, marginTop: 16 }}>Loading subjects...</Text>
+                <ActivityIndicator size="large" color={glassAccent.mint} />
+                <Text variant="bodyMedium" style={{ color: glassText.secondary, marginTop: 16 }}>Loading subjects...</Text>
             </View>
         );
     }
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <MeshGradientBackground />
             <View style={styles.container}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={glassAccent.mint} />}
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text variant="headlineLarge" style={styles.title}>Subjects</Text>
-                        <Text variant="bodyMedium" style={{ color: text.secondary }}>
+                        <Text variant="headlineLarge" style={[styles.title, { color: glassText.primary }]}>Subjects</Text>
+                        <Text variant="bodyMedium" style={{ color: glassText.secondary }}>
                             {subjects.length} {subjects.length === 1 ? "subject" : "subjects"}
                         </Text>
                     </View>
 
                     {/* Weakest Subject Alert */}
                     {weakestSubject && weakestSubject.level === 'needs_attention' && (
-                        <Card style={styles.alertCard}>
+                        <GlassCard style={styles.alertCard} intensity="light">
                             <View style={styles.alertContent}>
-                                <Ionicons name="alert-circle" size={20} color={semantic.warning} />
+                                <Ionicons name="alert-circle" size={20} color={glassAccent.warm} />
                                 <View style={styles.alertInfo}>
-                                    <Text variant="bodyMedium" style={{ color: text.primary }}>
+                                    <Text variant="bodyMedium" style={{ color: glassText.primary }}>
                                         {weakestSubject.subjectName} needs attention
                                     </Text>
-                                    <Text variant="bodySmall" style={{ color: text.secondary }}>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>
                                         Score: {weakestSubject.score}% • {weakestSubject.missedCount} missed tasks
                                     </Text>
                                 </View>
                             </View>
-                        </Card>
+                        </GlassCard>
                     )}
 
                     {/* Subjects Grid */}
                     {subjects.length === 0 ? (
-                        <Card style={styles.emptyCard}>
+                        <GlassCard style={styles.emptyCard}>
                             <View style={styles.emptyContent}>
-                                <Ionicons name="book-outline" size={48} color={text.muted} />
-                                <Text variant="bodyMedium" style={{ color: text.secondary, textAlign: "center", marginTop: 12 }}>
+                                <Ionicons name="book-outline" size={48} color={glassText.muted} />
+                                <Text variant="bodyMedium" style={{ color: glassText.secondary, textAlign: "center", marginTop: 12 }}>
                                     No subjects yet.{"\n"}Start by adding your first subject.
                                 </Text>
-                                <Button onPress={() => setModalVisible(true)} style={{ marginTop: 20 }}>
+                                <GlassButton onPress={() => setModalVisible(true)} style={{ marginTop: 20 }}>
                                     Add Subject
-                                </Button>
+                                </GlassButton>
                             </View>
-                        </Card>
+                        </GlassCard>
                     ) : (
                         <View style={styles.grid}>
                             {subjects.map((subject) => {
@@ -148,7 +157,7 @@ export default function SubjectsScreen() {
                                         style={styles.cardWrapper}
                                         activeOpacity={0.7}
                                     >
-                                        <Card style={[styles.subjectCard, { borderLeftColor: subject.color, borderLeftWidth: 4 }]}>
+                                        <GlassCard style={[styles.subjectCard, { borderLeftColor: subject.color, borderLeftWidth: 4 }]} intensity="medium">
                                             <View style={styles.cardHeader}>
                                                 <View style={[styles.iconContainer, { backgroundColor: subject.color + "25" }]}>
                                                     <Text style={styles.subjectIcon}>{subject.icon}</Text>
@@ -170,25 +179,25 @@ export default function SubjectsScreen() {
                                                 </View>
                                             ) : (
                                                 <View style={styles.subjectMeta}>
-                                                    <Ionicons name="layers-outline" size={14} color={text.muted} />
-                                                    <Text variant="bodySmall" style={{ color: text.secondary, marginLeft: 4 }}>
+                                                    <Ionicons name="layers-outline" size={14} color={glassText.muted} />
+                                                    <Text variant="bodySmall" style={{ color: glassText.secondary, marginLeft: 4 }}>
                                                         Tap to view
                                                     </Text>
                                                 </View>
                                             )}
-                                        </Card>
+                                        </GlassCard>
                                     </TouchableOpacity>
                                 );
                             })}
 
                             {/* Add Card */}
                             <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.cardWrapper} activeOpacity={0.7}>
-                                <Card style={styles.addCard}>
+                                <GlassCard style={styles.addCard} intensity="light">
                                     <View style={styles.addCardContent}>
-                                        <Ionicons name="add-circle-outline" size={32} color={pastel.mint} />
-                                        <Text variant="bodyMedium" style={{ color: pastel.mint, marginTop: 8 }}>Add Subject</Text>
+                                        <Ionicons name="add-circle-outline" size={32} color={glassAccent.mint} />
+                                        <Text variant="bodyMedium" style={{ color: glassAccent.mint, marginTop: 8 }}>Add Subject</Text>
                                     </View>
-                                </Card>
+                                </GlassCard>
                             </TouchableOpacity>
                         </View>
                     )}
@@ -199,16 +208,12 @@ export default function SubjectsScreen() {
                     <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modal}>
                         <Text variant="titleLarge" style={styles.modalTitle}>New Subject</Text>
 
-                        <TextInput
+                        <GlassInput
                             label="Subject name"
                             value={newSubjectName}
                             onChangeText={setNewSubjectName}
-                            mode="outlined"
-                            style={styles.modalInput}
                             placeholder="e.g. Mathematics, Physics"
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
+                            style={styles.modalInput}
                         />
 
                         <Text variant="labelMedium" style={styles.label}>Color</Text>
@@ -231,14 +236,14 @@ export default function SubjectsScreen() {
                             ))}
                         </View>
 
-                        <Button
+                        <GlassButton
                             onPress={handleCreateSubject}
                             loading={isCreating}
                             disabled={isCreating || !newSubjectName.trim()}
                             fullWidth
                         >
                             Create Subject
-                        </Button>
+                        </GlassButton>
                     </Modal>
                 </Portal>
             </View>
@@ -247,12 +252,12 @@ export default function SubjectsScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: background.primary },
+    container: { flex: 1, backgroundColor: 'transparent' },
     centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 20 },
-    title: { color: text.primary, fontWeight: "bold" },
-    alertCard: { marginHorizontal: 24, marginBottom: 20, backgroundColor: semantic.warningLight },
+    title: { fontWeight: "bold" },
+    alertCard: { marginHorizontal: 24, marginBottom: 20 },
     alertContent: { flexDirection: "row", alignItems: "center" },
     alertInfo: { marginLeft: 12, flex: 1 },
     emptyCard: { marginHorizontal: 24 },
@@ -263,21 +268,21 @@ const styles = StyleSheet.create({
     cardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
     iconContainer: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
     subjectIcon: { fontSize: 22 },
-    subjectName: { color: text.primary, fontWeight: "600", marginBottom: 8 },
+    subjectName: { color: glassText.primary, fontWeight: "600", marginBottom: 8 },
     subjectMeta: { flexDirection: "row", alignItems: "center" },
     healthMeta: { flexDirection: "row", alignItems: "center" },
     healthDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-    addCard: { minHeight: 150, borderStyle: "dashed", borderWidth: 2, borderColor: pastel.beige },
+    addCard: { minHeight: 150, borderStyle: "dashed", borderWidth: 2, borderColor: glass.border.light },
     addCardContent: { alignItems: "center", justifyContent: "center", flex: 1, paddingVertical: 40 },
-    modal: { backgroundColor: background.card, margin: 20, padding: 24, borderRadius: borderRadius.lg },
-    modalTitle: { color: text.primary, fontWeight: "bold", marginBottom: 20 },
-    modalInput: { marginBottom: 16, backgroundColor: background.primary },
-    label: { color: text.secondary, marginBottom: 12, marginTop: 8 },
+    modal: { backgroundColor: darkBackground.elevated, margin: 20, padding: 24, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: glass.border.light },
+    modalTitle: { color: glassText.primary, fontWeight: "bold", marginBottom: 20 },
+    modalInput: { marginBottom: 16, backgroundColor: darkBackground.primary },
+    label: { color: glassText.secondary, marginBottom: 12, marginTop: 8 },
     colorRow: { flexDirection: "row", gap: 12, marginBottom: 16, flexWrap: "wrap" },
     colorOption: { width: 36, height: 36, borderRadius: 18 },
-    colorSelected: { borderWidth: 3, borderColor: pastel.slate },
+    colorSelected: { borderWidth: 3, borderColor: glassAccent.mint },
     iconRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24 },
-    iconOption: { width: 44, height: 44, borderRadius: 8, backgroundColor: background.secondary, alignItems: "center", justifyContent: "center" },
-    iconSelected: { borderWidth: 2, borderColor: pastel.mint },
+    iconOption: { width: 44, height: 44, borderRadius: 8, backgroundColor: darkBackground.primary, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: glass.border.light },
+    iconSelected: { borderWidth: 2, borderColor: glassAccent.mint },
     iconOptionText: { fontSize: 20 },
 });

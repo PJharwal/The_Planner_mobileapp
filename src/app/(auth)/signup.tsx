@@ -7,8 +7,10 @@ import { useAuthStore } from "../../store/authStore";
 
 // Design tokens
 import { pastel, background, text, spacing, borderRadius } from "../../constants/theme";
+import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-import { Card, Button } from "../../components/ui";
+// Button removed
+import { GlassCard, GlassInput, GlassButton } from "../../components/glass";
 
 export default function SignupScreen() {
     const [fullName, setFullName] = useState("");
@@ -58,7 +60,7 @@ export default function SignupScreen() {
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.iconContainer}>
-                            <Ionicons name="person-add" size={48} color={pastel.mint} />
+                            <Ionicons name="person-add" size={48} color={glassAccent.mint} />
                         </View>
                         <Text variant="headlineLarge" style={styles.title}>Create Account</Text>
                         <Text variant="bodyMedium" style={styles.subtitle}>
@@ -67,61 +69,45 @@ export default function SignupScreen() {
                     </View>
 
                     {/* Form Card */}
-                    <Card style={styles.formCard}>
-                        <TextInput
+                    <GlassCard style={styles.formCard} intensity="medium">
+                        <GlassInput
                             label="Full Name"
                             value={fullName}
                             onChangeText={setFullName}
-                            mode="outlined"
                             autoCapitalize="words"
                             autoComplete="name"
+                            icon="person-outline"
                             style={styles.input}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                            left={<TextInput.Icon icon={() => <Ionicons name="person-outline" size={20} color={text.muted} />} />}
                         />
 
-                        <TextInput
+                        <GlassInput
                             label="Email"
                             value={email}
                             onChangeText={setEmail}
-                            mode="outlined"
                             keyboardType="email-address"
                             autoCapitalize="none"
                             autoComplete="email"
+                            icon="mail-outline"
                             style={styles.input}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                            left={<TextInput.Icon icon={() => <Ionicons name="mail-outline" size={20} color={text.muted} />} />}
                         />
 
-                        <TextInput
+                        <GlassInput
                             label="Password"
                             value={password}
                             onChangeText={setPassword}
-                            mode="outlined"
                             secureTextEntry={!showPassword}
                             autoCapitalize="none"
+                            icon="lock-closed-outline"
+                            rightIcon={showPassword ? "eye-off" : "eye"}
+                            onRightIconPress={() => setShowPassword(!showPassword)}
                             style={styles.input}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
-                            left={<TextInput.Icon icon={() => <Ionicons name="lock-closed-outline" size={20} color={text.muted} />} />}
-                            right={
-                                <TextInput.Icon
-                                    icon={showPassword ? "eye-off" : "eye"}
-                                    onPress={() => setShowPassword(!showPassword)}
-                                />
-                            }
                         />
 
                         <Text variant="bodySmall" style={styles.hint}>
                             Password must be at least 6 characters
                         </Text>
 
-                        <Button
+                        <GlassButton
                             variant="primary"
                             onPress={handleSignup}
                             loading={isLoading}
@@ -129,8 +115,8 @@ export default function SignupScreen() {
                             style={styles.button}
                         >
                             {isLoading ? "Creating Account..." : "Create Account"}
-                        </Button>
-                    </Card>
+                        </GlassButton>
+                    </GlassCard>
 
                     <View style={styles.footer}>
                         <Text variant="bodyMedium" style={styles.footerText}>
@@ -147,7 +133,7 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: background.primary },
+    container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { flexGrow: 1 },
     content: { flex: 1, justifyContent: "center", paddingHorizontal: spacing.lg, paddingVertical: 40 },
     header: { alignItems: "center", marginBottom: spacing.xl },
@@ -155,18 +141,18 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: borderRadius.lg,
-        backgroundColor: `${pastel.mint}25`,
+        backgroundColor: `${glassAccent.mint}25`,
         alignItems: "center",
         justifyContent: "center",
         marginBottom: spacing.md
     },
-    title: { color: text.primary, fontWeight: "600" },
-    subtitle: { color: text.secondary, textAlign: "center", marginTop: spacing.xs },
+    title: { color: glassText.primary, fontWeight: "600" },
+    subtitle: { color: glassText.secondary, textAlign: "center", marginTop: spacing.xs },
     formCard: { marginBottom: spacing.lg },
-    input: { backgroundColor: background.primary, marginBottom: spacing.sm },
-    hint: { color: text.muted, marginTop: -spacing.xs, marginBottom: spacing.sm },
+    input: { backgroundColor: darkBackground.elevated, marginBottom: spacing.sm },
+    hint: { color: glassText.muted, marginTop: -spacing.xs, marginBottom: spacing.sm },
     button: { marginTop: spacing.xs },
     footer: { flexDirection: "row", justifyContent: "center", marginTop: spacing.md },
-    footerText: { color: text.secondary },
-    link: { color: pastel.mint, fontWeight: "600" },
+    footerText: { color: glassText.secondary },
+    link: { color: glassAccent.mint, fontWeight: "600" },
 });

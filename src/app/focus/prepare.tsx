@@ -4,8 +4,10 @@ import { Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-import { Card, Button, Chip } from '../../components/ui';
-import { background, text, pastel, spacing, borderRadius } from '../../constants/theme';
+import { Chip } from '../../components/ui';
+import { GlassCard, GlassButton } from '../../components/glass';
+import { background, text, spacing, borderRadius } from '../../constants/theme';
+import { darkBackground, glassText, glassAccent, glass } from '../../constants/glassTheme';
 import { useCapacityStore } from '../../store/capacityStore';
 import { useTaskStore } from '../../store/taskStore';
 import { getTimerPresets } from '../../store/timerStore';
@@ -43,7 +45,7 @@ export default function PreFocusScreen() {
             <ScrollView contentContainerStyle={styles.content}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Ionicons name="rocket-outline" size={48} color={pastel.mint} />
+                    <Ionicons name="rocket-outline" size={48} color={glassAccent.mint} />
                     <Text variant="headlineLarge" style={styles.title}>
                         Advanced Focus
                     </Text>
@@ -53,9 +55,9 @@ export default function PreFocusScreen() {
                 </View>
 
                 {/* Duration Selection */}
-                <Card style={styles.section}>
+                <GlassCard style={styles.section} intensity="light">
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="time-outline" size={20} color={pastel.mint} />
+                        <Ionicons name="time-outline" size={20} color={glassAccent.mint} />
                         <Text variant="titleMedium" style={styles.sectionTitle}>
                             Session Duration
                         </Text>
@@ -77,12 +79,12 @@ export default function PreFocusScreen() {
                             </Chip>
                         ))}
                     </View>
-                </Card>
+                </GlassCard>
 
                 {/* Task Selection */}
-                <Card style={styles.section}>
+                <GlassCard style={styles.section} intensity="light">
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="checkbox-outline" size={20} color={pastel.mint} />
+                        <Ionicons name="checkbox-outline" size={20} color={glassAccent.mint} />
                         <Text variant="titleMedium" style={styles.sectionTitle}>
                             Focus On (Optional)
                         </Text>
@@ -109,10 +111,10 @@ export default function PreFocusScreen() {
                             </Chip>
                         ))}
                     </View>
-                </Card>
+                </GlassCard>
 
                 {/* Break Toggle */}
-                <Card style={styles.section}>
+                <GlassCard style={styles.section} intensity="light">
                     <View style={styles.toggleRow}>
                         <View style={styles.toggleInfo}>
                             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -125,20 +127,20 @@ export default function PreFocusScreen() {
                         <Switch
                             value={includeBreak}
                             onValueChange={setIncludeBreak}
-                            trackColor={{ false: pastel.beige, true: pastel.mint }}
-                            thumbColor="#fff"
+                            trackColor={{ false: glass.border.light, true: glassAccent.mint }}
+                            thumbColor={glassText.primary}
                         />
                     </View>
-                </Card>
+                </GlassCard>
 
                 {/* Session Preview */}
-                <Card style={styles.preview}>
+                <GlassCard style={styles.preview} intensity="light">
                     <Text variant="titleSmall" style={styles.previewTitle}>
                         Session Plan
                     </Text>
                     <View style={styles.previewFlow}>
                         <View style={styles.previewPhase}>
-                            <Ionicons name="bulb" size={24} color={pastel.mint} />
+                            <Ionicons name="bulb" size={24} color={glassAccent.mint} />
                             <Text variant="bodyMedium" style={styles.previewLabel}>
                                 Focus
                             </Text>
@@ -148,9 +150,9 @@ export default function PreFocusScreen() {
                         </View>
                         {includeBreak && (
                             <>
-                                <Ionicons name="arrow-forward" size={16} color={text.secondary} />
+                                <Ionicons name="arrow-forward" size={16} color={glassText.secondary} />
                                 <View style={styles.previewPhase}>
-                                    <Ionicons name="cafe" size={24} color={pastel.mistBlue} />
+                                    <Ionicons name="cafe" size={24} color={glassAccent.blue} />
                                     <Text variant="bodyMedium" style={styles.previewLabel}>
                                         Rest
                                     </Text>
@@ -161,15 +163,12 @@ export default function PreFocusScreen() {
                             </>
                         )}
                     </View>
-                </Card>
+                </GlassCard>
 
                 {/* Begin Button */}
-                <Button onPress={handleBegin} style={styles.beginButton}>
-                    <Ionicons name="play-circle" size={20} color="#fff" />
-                    <Text variant="titleMedium" style={{ color: '#fff', marginLeft: 8 }}>
-                        Begin Session
-                    </Text>
-                </Button>
+                <GlassButton onPress={handleBegin} variant="primary" style={styles.beginButton} icon={() => <Ionicons name="play-circle" size={20} color={darkBackground.primary} />} glow>
+                    Begin Session
+                </GlassButton>
             </ScrollView>
         </View>
     );
@@ -178,7 +177,7 @@ export default function PreFocusScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: background.primary,
+        backgroundColor: darkBackground.primary,
     },
     content: {
         padding: spacing.lg,
@@ -190,12 +189,12 @@ const styles = StyleSheet.create({
         marginTop: spacing.lg,
     },
     title: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '700',
         marginTop: spacing.sm,
     },
     subtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
         textAlign: 'center',
         marginTop: spacing.xs,
     },
@@ -210,11 +209,11 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     sectionTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
     },
     hint: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginBottom: spacing.sm,
     },
     presets: {
@@ -238,10 +237,10 @@ const styles = StyleSheet.create({
     preview: {
         padding: spacing.md,
         marginBottom: spacing.lg,
-        backgroundColor: `${pastel.mint}10`,
+        // backgroundColor handled by GlassCard
     },
     previewTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
         marginBottom: spacing.md,
     },
@@ -256,15 +255,13 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     previewLabel: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '500',
     },
     previewDuration: {
-        color: text.secondary,
+        color: glassText.secondary,
     },
     beginButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
+        marginTop: spacing.sm,
     },
 });

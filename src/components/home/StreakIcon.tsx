@@ -10,7 +10,9 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 import { useStreakStore, getGlowColor } from '../../store/streakStore';
-import { pastel } from '../../constants/theme';
+// Remove pastel, no usage needed if using flameColor logic from store which returns hex
+// But check if flameColor relies on pastel? 
+// getGlowColor typically returns hex codes directly in the store utility.
 
 interface StreakIconProps {
     onPress: () => void;

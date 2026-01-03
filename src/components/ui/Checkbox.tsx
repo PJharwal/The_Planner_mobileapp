@@ -7,7 +7,7 @@ import Animated, {
     withSpring,
     withTiming,
 } from 'react-native-reanimated';
-import { pastel, gradients, text } from '../../constants/theme';
+import { glassAccent, glassText, glass } from '../../constants/glassTheme';
 
 interface CheckboxProps {
     checked: boolean;
@@ -18,9 +18,9 @@ interface CheckboxProps {
 }
 
 /**
- * Calm UI Circular Checkbox Component
+ * Glass UI Circular Checkbox Component
  * - Fully circular design (rounded-full)
- * - Gradient fill when checked (mint)
+ * - Mint fill when checked
  * - Inner dot indicator
  */
 export function Checkbox({ checked, onToggle, size = 'md', disabled = false, testID }: CheckboxProps) {
@@ -76,23 +76,16 @@ export function Checkbox({ checked, onToggle, size = 'md', disabled = false, tes
                         width: boxSize,
                         height: boxSize,
                         opacity: disabled ? 0.5 : 1,
-                        backgroundColor: checked ? undefined : 'transparent',
-                        borderColor: checked ? gradients.mint[1] : 'rgba(93, 107, 107, 0.3)',
+                        backgroundColor: checked ? glassAccent.mint : 'transparent',
+                        borderColor: checked ? glassAccent.mint : glassText.muted,
                     },
                     animatedContainerStyle,
                 ]}
             >
                 {checked && (
-                    <LinearGradient
-                        colors={gradients.mint}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={[styles.gradientFill, { width: boxSize - 4, height: boxSize - 4 }]}
-                    >
-                        <Animated.View style={animatedInnerStyle}>
-                            <View style={[styles.innerDot, { width: boxSize * 0.5, height: boxSize * 0.5 }]} />
-                        </Animated.View>
-                    </LinearGradient>
+                    <Animated.View style={[styles.centerContainer, animatedInnerStyle]}>
+                        <View style={[styles.innerDot, { width: boxSize * 0.4, height: boxSize * 0.4 }]} />
+                    </Animated.View>
                 )}
             </Animated.View>
         </TouchableOpacity>
@@ -107,14 +100,16 @@ const styles = StyleSheet.create({
         borderRadius: 9999, // Fully circular
         overflow: 'hidden',
     },
-    gradientFill: {
-        borderRadius: 9999,
+    centerContainer: {
         alignItems: 'center',
         justifyContent: 'center',
+        width: '100%',
+        height: '100%'
     },
     innerDot: {
-        backgroundColor: '#5D6B6B',
+        backgroundColor: '#000', // Dark dot against mint background
         borderRadius: 9999,
+        opacity: 0.6
     },
 });
 

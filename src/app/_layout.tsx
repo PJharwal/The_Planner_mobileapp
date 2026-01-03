@@ -5,11 +5,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import { useAuthStore } from "../store/authStore";
 import { useProfileStore } from "../store/profileStore";
-import { useThemeStore } from "../store/themeStore";
 import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
 
-// Import pastel theme - SINGLE SOURCE OF TRUTH
-import { paperTheme, background, pastel, darkMode } from "../constants/theme";
+// Import glass theme tokens
+import { paperTheme } from "../constants/theme";
+import { darkBackground, glassAccent, glassText } from "../constants/glassTheme";
 import { offlineQueue } from "../utils/offlineQueue";
 import { ToastContainer } from "../components/ui";
 import { useAppFonts } from "../constants/fonts";
@@ -17,19 +17,14 @@ import { useAppFonts } from "../constants/fonts";
 export default function RootLayout() {
     const { isLoading: authLoading, isAuthenticated, initialize } = useAuthStore();
     const { hasCompletedOnboarding, checkOnboardingStatus } = useProfileStore();
-    const { mode, initialize: initTheme } = useThemeStore();
     const segments = useSegments();
     const router = useRouter();
 
     // Load custom fonts (Figtree)
     const { fontsLoaded, fontError } = useAppFonts();
 
-    const isDark = mode === 'dark';
-    const themeBackground = isDark ? darkMode.background.primary : background.primary;
-
     useEffect(() => {
         initialize();
-        initTheme(); // Initialize theme from storage
         // Try to process offline queue on startup
         setTimeout(() => {
             offlineQueue.process();
@@ -42,10 +37,10 @@ export default function RootLayout() {
         const inAuthGroup = segments[0] === "(auth)";
         const inOnboarding = segments[0] === "onboarding";
 
+        // Simple auth redirection logic
         if (!isAuthenticated && !inAuthGroup) {
             router.replace("/(auth)/login");
         } else if (isAuthenticated && inAuthGroup) {
-            // Check onboarding status after login
             checkOnboardingStatus().then(completed => {
                 if (!completed) {
                     router.replace("/onboarding");
@@ -54,7 +49,6 @@ export default function RootLayout() {
                 }
             });
         } else if (isAuthenticated && !inOnboarding && !hasCompletedOnboarding) {
-            // Redirect to onboarding if not completed
             router.replace("/onboarding");
         }
     }, [isAuthenticated, segments, authLoading, hasCompletedOnboarding, fontsLoaded]);
@@ -62,21 +56,22 @@ export default function RootLayout() {
     // Show loading while fonts or auth are loading
     if (authLoading || !fontsLoaded) {
         return (
-            <View style={[styles.loadingContainer, { backgroundColor: themeBackground }]}>
-                <ActivityIndicator size="large" color={isDark ? darkMode.pastel.mint : pastel.mint} />
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={glassAccent.mint} />
                 {fontError && (
-                    <Text style={[styles.errorText, { color: isDark ? darkMode.text.secondary : pastel.slate }]}>
-                        Font loading error
-                    </Text>
+                    <Text style={styles.errorText}>Font loading error</Text>
                 )}
             </View>
         );
     }
 
     return (
+        // Use cast to silence strict type error if needed, or rely on compatible theme structure
+        // If paperTheme in theme.ts is not fully compatible with MD3Theme, we might see a squiggly here
+        // But functionally it works.
         <PaperProvider theme={paperTheme as any}>
-            <GestureHandlerRootView style={[styles.container, { backgroundColor: themeBackground }]}>
-                <StatusBar style={isDark ? "light" : "dark"} />
+            <GestureHandlerRootView style={styles.container}>
+                <StatusBar style="light" />
                 <Slot />
                 <ToastContainer />
             </GestureHandlerRootView>
@@ -87,14 +82,17 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: darkBackground.primary,
     },
     loadingContainer: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: darkBackground.primary,
     },
     errorText: {
         marginTop: 12,
+        color: glassText.secondary,
         fontSize: 14,
     },
 });

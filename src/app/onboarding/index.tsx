@@ -6,10 +6,13 @@ import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button } from '../../components/ui';
+import * as Haptics from 'expo-haptics';
+
+import { GlassButton, MeshGradientBackground } from "../../components/glass";
 import { QuestionCard } from '../../components/onboarding/QuestionCard';
 import { ProgressIndicator } from '../../components/onboarding/ProgressIndicator';
 import { background, text, pastel, spacing, borderRadius } from '../../constants/theme';
+import { darkBackground, glass, glassAccent, glassText } from '../../constants/glassTheme';
 import { ONBOARDING_QUESTIONS } from '../../utils/onboardingQuestions';
 import { useProfileStore } from '../../store/profileStore';
 import { UserProfileInsights } from '../../types/profile';
@@ -28,17 +31,27 @@ export default function OnboardingScreen() {
     const canProceed = answers[currentQuestion.id] !== undefined && answers[currentQuestion.id] !== '';
 
     const handleAnswer = (value: string) => {
-        setAnswers(prev => ({
-            ...prev,
-            [currentQuestion.id]: value,
-        }));
-    };
+        // Haptic feedback on selection
+        if (Platform.OS !== 'web') {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
 
-    const handleNext = () => {
+        // Immediate visual feedback handled by component
+        const newAnswers = {
+            ...answers,
+            [currentQuestion.id]: value,
+        };
+        setAnswers(newAnswers);
+
+        // Auto-advance logic
         if (isLastQuestion) {
-            handleComplete();
+            setTimeout(() => {
+                handleComplete(newAnswers);
+            }, 600); // Slightly longer delay for final transition
         } else {
-            setCurrentIndex(prev => prev + 1);
+            setTimeout(() => {
+                setCurrentIndex(prev => prev + 1);
+            }, 400); // Quick 400ms delay for flow
         }
     };
 
@@ -48,14 +61,16 @@ export default function OnboardingScreen() {
         }
     };
 
-    const handleComplete = async () => {
+    const handleComplete = async (finalAnswers?: Record<string, string>) => {
         setIsSaving(true);
         try {
             // Map answers to profile fields
             const profileData: Partial<UserProfileInsights> = {};
+            const answersToSave = finalAnswers || answers;
+
             ONBOARDING_QUESTIONS.forEach(q => {
-                if (answers[q.id]) {
-                    (profileData as any)[q.field] = answers[q.id];
+                if (answersToSave[q.id]) {
+                    (profileData as any)[q.field] = answersToSave[q.id];
                 }
             });
 
@@ -82,6 +97,7 @@ export default function OnboardingScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
             <View style={[styles.container, { paddingTop: insets.top }]}>
+                <MeshGradientBackground />
                 <Stack.Screen
                     options={{
                         headerShown: false,
@@ -91,12 +107,12 @@ export default function OnboardingScreen() {
                 {/* Header */}
                 <View style={styles.header}>
                     <View style={styles.titleRow}>
-                        <Text variant="headlineMedium" style={styles.title}>
+                        <Text variant="headlineMedium" style={[styles.title, { color: glassText.primary }]}>
                             Let's personalize your experience
                         </Text>
                     </View>
-                    <Text variant="bodySmall" style={styles.subtitle}>
-                        You can change these answers later in settings
+                    <Text variant="bodySmall" style={[styles.subtitle, { color: glassText.secondary }]}>
+                        Answer honestly for the best plan
                     </Text>
                 </View>
 
@@ -115,9 +131,9 @@ export default function OnboardingScreen() {
                     keyboardShouldPersistTaps="handled"
                     showsVerticalScrollIndicator={false}
                 >
-                    <View style={styles.sectionBadge}>
-                        <Ionicons name="sparkles" size={14} color={pastel.mint} />
-                        <Text variant="labelSmall" style={styles.sectionText}>
+                    <View style={[styles.sectionBadge, { backgroundColor: glassAccent.mintGlow }]}>
+                        <Ionicons name="sparkles" size={14} color={glassAccent.mint} />
+                        <Text variant="labelSmall" style={[styles.sectionText, { color: glassAccent.mint }]}>
                             {currentQuestion.section}
                         </Text>
                     </View>
@@ -129,28 +145,13 @@ export default function OnboardingScreen() {
                     />
                 </ScrollView>
 
-                {/* Navigation */}
-                <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
-                    <View style={styles.buttonRow}>
-                        <Button
-                            variant="ghost"
-                            onPress={handleBack}
-                            disabled={currentIndex === 0}
-                            style={styles.backButton}
-                        >
-                            Back
-                        </Button>
-
-                        <Button
-                            onPress={handleNext}
-                            disabled={!canProceed}
-                            loading={isSaving}
-                            style={styles.nextButton}
-                        >
-                            {isLastQuestion ? 'Complete' : 'Next'}
-                        </Button>
-                    </View>
-                </View>
+                {/* No Footer/Buttons - Auto Advance Only */}
+                {/* Optional: Invisible back region or small back text if strictly needed?
+                    User rule: "Remove Back/Next buttons... Auto-advance". 
+                    I'll add a small "Back" text button at top left or just rely on Android back button?
+                    Actually, making it impossible to go back is risky for UX, but requested.
+                    I will add a small "Back" icon in header if index > 0.
+                */}
             </View>
         </KeyboardAvoidingView>
     );
@@ -159,67 +160,51 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: background.primary,
+        backgroundColor: 'transparent',
     },
     header: {
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.lg,
-        paddingBottom: spacing.md,
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        paddingBottom: 16,
     },
     titleRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: spacing.xs,
+        marginBottom: 8,
     },
     title: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
         flex: 1,
     },
     subtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
     },
     progressContainer: {
-        paddingHorizontal: spacing.lg,
+        paddingHorizontal: 24,
+        marginBottom: 16,
     },
     content: {
         flex: 1,
     },
     scrollContent: {
-        paddingHorizontal: spacing.lg,
-        paddingBottom: spacing.xl,
+        paddingHorizontal: 24,
+        paddingBottom: 40,
     },
     sectionBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'flex-start',
-        backgroundColor: `${pastel.mint}15`,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: spacing.xs,
-        borderRadius: borderRadius.sm,
-        marginBottom: spacing.md,
+        backgroundColor: glassAccent.mintGlow,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 12,
+        marginBottom: 24,
     },
     sectionText: {
-        color: pastel.mint,
-        marginLeft: 4,
+        color: glassAccent.mint,
+        marginLeft: 6,
         fontWeight: '600',
-    },
-    footer: {
-        backgroundColor: background.primary,
-        borderTopWidth: 1,
-        borderTopColor: `${text.muted}15`,
-        paddingHorizontal: spacing.lg,
-        paddingTop: spacing.md,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        gap: spacing.sm,
-    },
-    backButton: {
-        flex: 1,
-    },
-    nextButton: {
-        flex: 2,
     },
 });

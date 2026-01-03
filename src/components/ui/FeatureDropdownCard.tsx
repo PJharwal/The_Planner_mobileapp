@@ -1,9 +1,8 @@
 // FeatureDropdownCard - Collapsible feature section for home screen
 import React, { useState } from "react";
-import { View, TouchableOpacity, StyleSheet, LayoutAnimation, UIManager, Platform } from "react-native";
+import { View, TouchableOpacity, StyleSheet, LayoutAnimation } from "react-native";
 import { Text } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -11,10 +10,9 @@ import Animated, {
     interpolate,
 } from "react-native-reanimated";
 
-import { Card } from "./Card";
-import { pastel, background, text, spacing, borderRadius, gradients } from "../../constants/theme";
-
-
+import { GlassCard } from "../glass";
+import { spacing } from "../../constants/theme";
+import { glassText, glassAccent, glass } from "../../constants/glassTheme";
 
 interface FeatureItem {
     icon: string;
@@ -27,7 +25,7 @@ interface FeatureDropdownCardProps {
     title: string;
     subtitle?: string;
     icon: string;
-    gradient?: readonly string[];
+    // gradient removed in favor of glass theme consistency
     features: FeatureItem[];
     defaultExpanded?: boolean;
 }
@@ -36,7 +34,6 @@ export function FeatureDropdownCard({
     title,
     subtitle,
     icon,
-    gradient = gradients.mint,
     features,
     defaultExpanded = false,
 }: FeatureDropdownCardProps) {
@@ -54,21 +51,16 @@ export function FeatureDropdownCard({
     }));
 
     return (
-        <Card style={styles.container}>
+        <GlassCard style={styles.container} padding={0} intensity="light">
             {/* Header */}
             <TouchableOpacity
                 onPress={toggleExpand}
                 activeOpacity={0.7}
                 style={styles.header}
             >
-                <LinearGradient
-                    colors={gradient as any}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.iconContainer}
-                >
-                    <Ionicons name={icon as any} size={24} color={text.primary} />
-                </LinearGradient>
+                <View style={styles.iconContainer}>
+                    <Ionicons name={icon as any} size={24} color={glassText.primary} />
+                </View>
 
                 <View style={styles.headerText}>
                     <Text variant="titleMedium" style={styles.title}>{title}</Text>
@@ -78,7 +70,7 @@ export function FeatureDropdownCard({
                 </View>
 
                 <Animated.View style={chevronStyle}>
-                    <Ionicons name="chevron-down" size={20} color={text.muted} />
+                    <Ionicons name="chevron-down" size={20} color={glassText.muted} />
                 </Animated.View>
             </TouchableOpacity>
 
@@ -94,7 +86,7 @@ export function FeatureDropdownCard({
                             activeOpacity={feature.action ? 0.7 : 1}
                         >
                             <View style={styles.featureIcon}>
-                                <Ionicons name={feature.icon as any} size={18} color={pastel.mint} />
+                                <Ionicons name={feature.icon as any} size={18} color={glassAccent.mint} />
                             </View>
                             <View style={styles.featureText}>
                                 <Text variant="bodyMedium" style={styles.featureTitle}>
@@ -105,13 +97,13 @@ export function FeatureDropdownCard({
                                 </Text>
                             </View>
                             {feature.action && (
-                                <Ionicons name="chevron-forward" size={16} color={text.muted} />
+                                <Ionicons name="chevron-forward" size={16} color={glassText.muted} />
                             )}
                         </TouchableOpacity>
                     ))}
                 </View>
             )}
-        </Card>
+        </GlassCard>
     );
 }
 
@@ -129,6 +121,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 12,
+        backgroundColor: glassAccent.mint + "20",
         alignItems: "center",
         justifyContent: "center",
         marginRight: spacing.sm,
@@ -137,11 +130,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "600",
     },
     subtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: 2,
     },
     content: {
@@ -153,13 +146,13 @@ const styles = StyleSheet.create({
         alignItems: "center",
         paddingVertical: spacing.sm,
         borderTopWidth: 1,
-        borderTopColor: "rgba(93, 107, 107, 0.08)",
+        borderTopColor: glass.border.light,
     },
     featureIcon: {
         width: 32,
         height: 32,
         borderRadius: 8,
-        backgroundColor: `${pastel.mint}15`,
+        backgroundColor: glassAccent.mint + "15",
         alignItems: "center",
         justifyContent: "center",
         marginRight: spacing.sm,
@@ -168,11 +161,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     featureTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "500",
     },
     featureDesc: {
-        color: text.secondary,
+        color: glassText.secondary,
         marginTop: 1,
     },
 });

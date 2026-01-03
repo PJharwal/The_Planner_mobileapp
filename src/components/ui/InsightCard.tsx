@@ -1,11 +1,12 @@
-// InsightCard - Soft insight display card
+// InsightCard - Glass insight display card
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StudyInsight } from '../../types';
-import { borderRadius, spacing, gradients } from '../../constants/theme';
+import { borderRadius, spacing } from '../../constants/theme';
+import { glass, glassAccent, glassText } from '../../constants/glassTheme';
+import { GlassCard } from '../glass';
 
 interface InsightCardProps {
     insight: StudyInsight;
@@ -20,28 +21,23 @@ const INSIGHT_ICONS: Record<StudyInsight['type'], string> = {
     weak_area: 'alert-circle-outline',
 };
 
-const INSIGHT_GRADIENTS: Record<StudyInsight['type'], readonly string[]> = {
-    best_time: gradients.warm,
-    consistency: gradients.mint,
-    intensity: gradients.peach,
-    revision_needed: gradients.sage,
-    weak_area: gradients.peach,
+const INSIGHT_COLORS: Record<StudyInsight['type'], string> = {
+    best_time: glassAccent.warm,
+    consistency: glassAccent.mint,
+    intensity: glassAccent.warm, // use warm instead of peach
+    revision_needed: glassAccent.mint, // use mint instead of sage
+    weak_area: glassAccent.warm,
 };
 
 export function InsightCard({ insight, onDismiss }: InsightCardProps) {
     const icon = INSIGHT_ICONS[insight.type];
-    const gradient = INSIGHT_GRADIENTS[insight.type];
+    const accentColor = INSIGHT_COLORS[insight.type];
 
     return (
-        <LinearGradient
-            colors={gradient as any}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.container}
-        >
-            <View style={styles.content}>
-                <View style={styles.iconContainer}>
-                    <Ionicons name={icon as any} size={24} color="#5D6B6B" />
+        <GlassCard style={styles.container} intensity="light">
+            <View style={[styles.content, { borderLeftColor: accentColor, borderLeftWidth: 3 }]}>
+                <View style={[styles.iconContainer, { backgroundColor: accentColor + '20' }]}>
+                    <Ionicons name={icon as any} size={24} color={accentColor} />
                 </View>
                 <View style={styles.textContainer}>
                     <Text variant="titleSmall" style={styles.title}>
@@ -57,23 +53,18 @@ export function InsightCard({ insight, onDismiss }: InsightCardProps) {
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         style={styles.dismissButton}
                     >
-                        <Ionicons name="close" size={18} color="rgba(93, 107, 107, 0.5)" />
+                        <Ionicons name="close" size={18} color={glassText.secondary} />
                     </TouchableOpacity>
                 )}
             </View>
-        </LinearGradient>
+        </GlassCard>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        borderRadius: borderRadius.lg,
         marginBottom: spacing.sm,
-        shadowColor: '#5D6B6B',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
-        shadowRadius: 24,
-        elevation: 4,
+        padding: 0, // content handles padding
     },
     content: {
         flexDirection: 'row',
@@ -84,7 +75,6 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.5)',
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: spacing.sm,
@@ -93,12 +83,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        color: '#5D6B6B',
+        color: glassText.primary,
         fontWeight: '600',
         marginBottom: 2,
     },
     description: {
-        color: 'rgba(93, 107, 107, 0.75)',
+        color: glassText.secondary,
         lineHeight: 18,
     },
     dismissButton: {

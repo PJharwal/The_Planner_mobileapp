@@ -11,9 +11,11 @@ import { addTaskToToday, addSubTopicToToday, isTaskInToday } from "../../utils/a
 import { format } from "date-fns";
 
 // Design tokens
-import { pastel, background, text, spacing, borderRadius, shadows, priority as priorityColors } from "../../constants/theme";
+import { spacing, borderRadius, shadows } from "../../constants/theme";
+import { glassAccent, glassText, darkBackground, glass } from "../../constants/glassTheme";
 // UI Components
-import { Card, Button, Chip, Checkbox } from "../../components/ui";
+import { Chip, Checkbox } from "../../components/ui";
+import { GlassCard, GlassButton } from "../../components/glass";
 
 export default function SubTopicDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -23,7 +25,7 @@ export default function SubTopicDetailScreen() {
     const [subTopic, setSubTopic] = useState<SubTopic | null>(null);
     const [topicName, setTopicName] = useState("");
     const [subjectName, setSubjectName] = useState("");
-    const [subjectColor, setSubjectColor] = useState(pastel.mint);
+    const [subjectColor, setSubjectColor] = useState(glassAccent.mint);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -55,7 +57,7 @@ export default function SubTopicDetailScreen() {
                 setSubTopic(stData);
                 setTopicName((stData as any).topics?.name || "");
                 setSubjectName((stData as any).topics?.subjects?.name || "");
-                setSubjectColor((stData as any).topics?.subjects?.color || pastel.mint);
+                setSubjectColor((stData as any).topics?.subjects?.color || glassAccent.mint);
             }
 
             const { data: tasksData } = await supabase
@@ -109,11 +111,11 @@ export default function SubTopicDetailScreen() {
         try {
             const { error } = await supabase.from("tasks").insert({
                 sub_topic_id: id,
-                topic_id: subTopic.topic_id, // FIXED: Include topic_id
+                topic_id: subTopic.topic_id,
                 user_id: user.id,
                 title: newTaskTitle.trim(),
                 priority: newTaskPriority,
-                due_date: format(new Date(), "yyyy-MM-dd"), // FIXED: Default to today
+                due_date: format(new Date(), "yyyy-MM-dd"),
             });
 
             if (error) {
@@ -160,18 +162,18 @@ export default function SubTopicDetailScreen() {
                 <Stack.Screen
                     options={{
                         title: subTopic?.name || "Sub-Topic",
-                        headerStyle: { backgroundColor: background.primary },
-                        headerTintColor: text.primary,
+                        headerStyle: { backgroundColor: darkBackground.primary },
+                        headerTintColor: glassText.primary,
                         headerShadowVisible: false,
                         headerLeft: () => (
                             <IconButton
-                                icon={() => <Ionicons name="arrow-back" size={24} color={text.primary} />}
+                                icon={() => <Ionicons name="arrow-back" size={24} color={glassText.primary} />}
                                 onPress={() => router.back()}
                             />
                         ),
                         headerRight: () => (
                             <IconButton
-                                icon={() => <Ionicons name="home-outline" size={22} color={text.secondary} />}
+                                icon={() => <Ionicons name="home-outline" size={22} color={glassText.secondary} />}
                                 onPress={() => router.replace("/(tabs)")}
                             />
                         ),
@@ -180,10 +182,10 @@ export default function SubTopicDetailScreen() {
 
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={glassAccent.mint} />}
                 >
                     {/* Header Card */}
-                    <Card style={[styles.headerCard, { borderLeftColor: subjectColor, borderLeftWidth: 4 }]}>
+                    <GlassCard style={[styles.headerCard, { borderLeftColor: subjectColor, borderLeftWidth: 4 }]}>
                         <View style={styles.headerContent}>
                             <Text variant="bodySmall" style={styles.breadcrumb}>
                                 {subjectName} • {topicName}
@@ -192,41 +194,41 @@ export default function SubTopicDetailScreen() {
                                 {subTopic?.name}
                             </Text>
                             <View style={styles.statsRow}>
-                                <Chip variant="default" size="sm">{`${completedCount}/${totalCount} completed`}</Chip>
+                                <Chip variant="default" size="sm" style={{ backgroundColor: glassText.muted + '20' }}>{`${completedCount}/${totalCount} completed`}</Chip>
                                 {pendingCount > 0 && (
-                                    <Button variant="primary" size="sm" onPress={handleAddAllToToday}>
+                                    <GlassButton variant="primary" size="sm" onPress={handleAddAllToToday}>
                                         Add all to Today
-                                    </Button>
+                                    </GlassButton>
                                 )}
                             </View>
                         </View>
-                    </Card>
+                    </GlassCard>
 
                     {/* Tasks Section */}
                     <View style={styles.section}>
                         <View style={styles.sectionHeader}>
                             <Text variant="titleMedium" style={styles.sectionTitle}>Tasks</Text>
-                            <Button variant="ghost" size="sm" onPress={() => setShowAddModal(true)}>
+                            <GlassButton variant="ghost" size="sm" onPress={() => setShowAddModal(true)}>
                                 Add
-                            </Button>
+                            </GlassButton>
                         </View>
 
                         {tasks.length === 0 ? (
-                            <Card style={styles.emptyCard}>
+                            <GlassCard style={styles.emptyCard} intensity="light">
                                 <View style={styles.emptyContent}>
                                     <View style={styles.emptyIconContainer}>
-                                        <Ionicons name="checkbox-outline" size={32} color={text.muted} />
+                                        <Ionicons name="checkbox-outline" size={32} color={glassText.muted} />
                                     </View>
                                     <Text variant="bodyMedium" style={styles.emptyText}>No tasks yet</Text>
                                     <Text variant="bodySmall" style={styles.emptyHint}>Add your first task to get started</Text>
-                                    <Button variant="primary" onPress={() => setShowAddModal(true)} style={styles.emptyButton}>
+                                    <GlassButton variant="primary" onPress={() => setShowAddModal(true)} style={styles.emptyButton}>
                                         Add Task
-                                    </Button>
+                                    </GlassButton>
                                 </View>
-                            </Card>
+                            </GlassCard>
                         ) : (
                             tasks.map(task => (
-                                <Card key={task.id} style={[styles.taskCard, task.is_completed && styles.taskCompleted]}>
+                                <GlassCard key={task.id} style={[styles.taskCard, task.is_completed && styles.taskCompleted]} intensity="light">
                                     <View style={styles.taskContent}>
                                         <Checkbox
                                             checked={task.is_completed}
@@ -251,14 +253,14 @@ export default function SubTopicDetailScreen() {
                                                 onPress={() => handleAddTaskToToday(task.id)}
                                                 style={styles.addButton}
                                             >
-                                                <Ionicons name="add-circle-outline" size={22} color={pastel.mint} />
+                                                <Ionicons name="add-circle-outline" size={22} color={glassAccent.mint} />
                                             </TouchableOpacity>
                                         )}
                                         {todayStatus[task.id] && (
-                                            <Ionicons name="checkmark-circle" size={20} color={pastel.mint} style={styles.todayIcon} />
+                                            <Ionicons name="checkmark-circle" size={20} color={glassAccent.mint} style={styles.todayIcon} />
                                         )}
                                     </View>
-                                </Card>
+                                </GlassCard>
                             ))
                         )}
                     </View>
@@ -274,9 +276,10 @@ export default function SubTopicDetailScreen() {
                             onChangeText={setNewTaskTitle}
                             mode="outlined"
                             style={styles.modalInput}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
+                            outlineColor={glass.border.light}
+                            activeOutlineColor={glassAccent.mint}
+                            textColor={glassText.primary}
+                            theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
                         <Text variant="bodyMedium" style={styles.priorityLabel}>Priority</Text>
                         <View style={styles.priorityRow}>
@@ -292,12 +295,12 @@ export default function SubTopicDetailScreen() {
                             ))}
                         </View>
                         <View style={styles.modalButtons}>
-                            <Button variant="ghost" onPress={() => setShowAddModal(false)}>
+                            <GlassButton variant="ghost" onPress={() => setShowAddModal(false)} style={{ flex: 1 }}>
                                 Cancel
-                            </Button>
-                            <Button variant="primary" onPress={handleAddTask} loading={isAdding}>
+                            </GlassButton>
+                            <GlassButton variant="primary" onPress={handleAddTask} loading={isAdding} style={{ flex: 1 }}>
                                 Add
-                            </Button>
+                            </GlassButton>
                         </View>
                     </Modal>
                 </Portal>
@@ -316,41 +319,41 @@ export default function SubTopicDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: background.primary },
+    container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { paddingBottom: 100 },
     // Header
     headerCard: { marginHorizontal: spacing.md, marginTop: spacing.md, borderRadius: borderRadius.lg },
     headerContent: { padding: spacing.md },
-    breadcrumb: { color: text.secondary, marginBottom: 4 },
-    title: { color: text.primary, fontWeight: "600" },
+    breadcrumb: { color: glassText.secondary, marginBottom: 4 },
+    title: { color: glassText.primary, fontWeight: "600" },
     statsRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.sm, gap: spacing.sm },
     // Section
     section: { paddingHorizontal: spacing.md, marginTop: spacing.lg },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
-    sectionTitle: { color: text.primary, fontWeight: "600" },
+    sectionTitle: { color: glassText.primary, fontWeight: "600" },
     // Empty State
     emptyCard: {},
     emptyContent: { alignItems: "center", paddingVertical: spacing.xl },
-    emptyIconContainer: { width: 64, height: 64, borderRadius: 32, backgroundColor: `${pastel.beige}50`, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
-    emptyText: { color: text.primary, fontWeight: "500" },
-    emptyHint: { color: text.muted, marginTop: 4 },
+    emptyIconContainer: { width: 64, height: 64, borderRadius: 32, backgroundColor: glassText.muted + '20', alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+    emptyText: { color: glassText.primary, fontWeight: "500" },
+    emptyHint: { color: glassText.secondary, marginTop: 4 },
     emptyButton: { marginTop: spacing.md },
     // Task Cards
-    taskCard: { marginBottom: spacing.sm },
+    taskCard: { marginBottom: spacing.sm, padding: 0 },
     taskCompleted: { opacity: 0.6 },
     taskContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
     taskInfo: { flex: 1, marginLeft: spacing.xs },
-    taskTitle: { color: text.primary },
-    taskTitleCompleted: { color: text.muted, textDecorationLine: "line-through" },
+    taskTitle: { color: glassText.primary },
+    taskTitleCompleted: { color: glassText.muted, textDecorationLine: "line-through" },
     addButton: { padding: spacing.xs, marginLeft: spacing.xs },
     todayIcon: { marginLeft: spacing.xs },
     // Modal
-    modal: { backgroundColor: background.card, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, ...shadows.elevated },
-    modalTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
-    modalInput: { marginBottom: spacing.sm, backgroundColor: background.primary },
-    priorityLabel: { color: text.secondary, marginBottom: spacing.xs },
+    modal: { backgroundColor: darkBackground.elevated, margin: spacing.lg, padding: spacing.lg, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: glass.border.light },
+    modalTitle: { color: glassText.primary, fontWeight: "600", marginBottom: spacing.md },
+    modalInput: { marginBottom: spacing.sm, backgroundColor: darkBackground.primary },
+    priorityLabel: { color: glassText.secondary, marginBottom: spacing.xs },
     priorityRow: { flexDirection: "row", gap: spacing.xs, marginBottom: spacing.md },
-    modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.sm },
+    modalButtons: { flexDirection: "row", gap: spacing.sm },
     // Snackbar
-    snackbar: { backgroundColor: pastel.slate },
+    snackbar: { backgroundColor: glassAccent.blue },
 });

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
-import { Text, IconButton, Portal, Modal, TextInput } from "react-native-paper";
+import { Text, IconButton, TextInput } from "react-native-paper";
 import { Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { format, differenceInSeconds } from "date-fns";
@@ -8,17 +8,10 @@ import { useExamStore } from "../../store/examStore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 // Design tokens
-import { pastel, background, text, spacing, borderRadius, shadows, focus } from "../../constants/theme";
+import { spacing, borderRadius } from "../../constants/theme";
+import { darkBackground, glassText, glassAccent, glass } from "../../constants/glassTheme";
 // UI Components
-import { Card, Button } from "../../components/ui";
-
-// Exam mode uses slightly darker, more serious pastels
-const exam = {
-    background: '#E8EEEE',
-    card: '#F0F4F4',
-    accent: '#C9DDDC',
-    ring: '#B8CECE',
-};
+import { GlassCard, GlassButton } from "../../components/glass";
 
 function CountdownTimer({ targetDate }: { targetDate: string }) {
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
@@ -44,7 +37,7 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
 
     return (
         <View style={styles.timerContainer}>
-            <View style={styles.timerRing}>
+            <View style={[styles.timerRing, { borderColor: glassAccent.mint }]}>
                 <Text style={styles.timerDays}>{timeLeft.days}</Text>
                 <Text style={styles.timerLabel}>days</Text>
             </View>
@@ -118,11 +111,11 @@ export default function ExamSetupScreen() {
                 <Stack.Screen
                     options={{
                         title: "Exam Mode",
-                        headerStyle: { backgroundColor: exam.background },
-                        headerTintColor: text.primary,
+                        headerStyle: { backgroundColor: darkBackground.primary },
+                        headerTintColor: glassText.primary,
                         headerShadowVisible: false,
                         headerLeft: () => (
-                            <IconButton icon={() => <Ionicons name="arrow-back" size={24} color={text.primary} />} onPress={() => router.back()} />
+                            <IconButton icon={() => <Ionicons name="arrow-back" size={24} color={glassText.primary} />} onPress={() => router.back()} />
                         ),
                     }}
                 />
@@ -133,7 +126,7 @@ export default function ExamSetupScreen() {
                             {/* Active Exam View */}
                             <View style={styles.activeHeader}>
                                 <View style={styles.examBadge}>
-                                    <Ionicons name="timer" size={16} color={text.primary} />
+                                    <Ionicons name="timer" size={16} color={glassText.primary} />
                                     <Text style={styles.examBadgeText}>EXAM MODE ACTIVE</Text>
                                 </View>
                                 <Text variant="headlineSmall" style={styles.examName}>{activeExam.name}</Text>
@@ -144,30 +137,30 @@ export default function ExamSetupScreen() {
 
                             <CountdownTimer targetDate={activeExam.exam_date} />
 
-                            <Card style={styles.focusCard}>
+                            <GlassCard style={styles.focusCard} intensity="light">
                                 <View style={styles.focusContent}>
-                                    <View style={styles.focusIconContainer}>
-                                        <Ionicons name="flash" size={24} color={text.primary} />
+                                    <View style={[styles.focusIconContainer, { backgroundColor: glassAccent.mint + '20' }]}>
+                                        <Ionicons name="flash" size={24} color={glassAccent.mint} />
                                     </View>
                                     <View style={styles.focusText}>
-                                        <Text variant="titleMedium" style={{ color: text.primary }}>Focus Mode</Text>
-                                        <Text variant="bodySmall" style={{ color: text.secondary }}>
+                                        <Text variant="titleMedium" style={{ color: glassText.primary }}>Focus Mode</Text>
+                                        <Text variant="bodySmall" style={{ color: glassText.secondary }}>
                                             Stay focused! Complete your tasks daily.
                                         </Text>
                                     </View>
                                 </View>
-                            </Card>
+                            </GlassCard>
 
-                            <Button variant="danger" onPress={handleEndExam} fullWidth>
+                            <GlassButton variant="danger" onPress={handleEndExam} style={{ marginTop: spacing.lg }}>
                                 End Exam Mode
-                            </Button>
+                            </GlassButton>
                         </>
                     ) : (
                         <>
                             {/* Setup View */}
                             <View style={styles.setupHeader}>
                                 <View style={styles.setupIconContainer}>
-                                    <Ionicons name="timer-outline" size={48} color={text.primary} />
+                                    <Ionicons name="timer-outline" size={48} color={glassText.primary} />
                                 </View>
                                 <Text variant="headlineMedium" style={styles.setupTitle}>Set Up Exam Mode</Text>
                                 <Text variant="bodyMedium" style={styles.setupSubtitle}>
@@ -182,9 +175,10 @@ export default function ExamSetupScreen() {
                                 mode="outlined"
                                 style={styles.input}
                                 placeholder="e.g. Final Math Exam"
-                                outlineColor={pastel.beige}
-                                activeOutlineColor={exam.accent}
-                                textColor={text.primary}
+                                outlineColor={glass.border.light}
+                                activeOutlineColor={glassAccent.mint}
+                                textColor={glassText.primary}
+                                theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
                             />
 
                             <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.7}>
@@ -194,9 +188,10 @@ export default function ExamSetupScreen() {
                                     mode="outlined"
                                     editable={false}
                                     style={styles.input}
-                                    outlineColor={pastel.beige}
-                                    textColor={text.primary}
-                                    right={<TextInput.Icon icon={() => <Ionicons name="calendar-outline" size={20} color={text.secondary} />} />}
+                                    outlineColor={glass.border.light}
+                                    textColor={glassText.primary}
+                                    theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
+                                    right={<TextInput.Icon icon={() => <Ionicons name="calendar-outline" size={20} color={glassText.secondary} />} />}
                                 />
                             </TouchableOpacity>
 
@@ -213,25 +208,25 @@ export default function ExamSetupScreen() {
                                 />
                             )}
 
-                            <Button variant="primary" onPress={handleCreateExam} loading={isCreating} fullWidth>
+                            <GlassButton variant="primary" onPress={handleCreateExam} loading={isCreating} style={{ marginTop: spacing.md }}>
                                 Start Exam Mode
-                            </Button>
+                            </GlassButton>
 
                             {exams.length > 0 && (
                                 <View style={styles.pastSection}>
                                     <Text variant="titleMedium" style={styles.pastTitle}>Past Exams</Text>
                                     {exams.slice(0, 3).map((examItem) => (
-                                        <Card key={examItem.id} style={styles.pastCard}>
+                                        <GlassCard key={examItem.id} style={styles.pastCard} intensity="light">
                                             <View style={styles.pastContent}>
-                                                <View style={styles.pastIcon}>
-                                                    <Ionicons name="school-outline" size={20} color={text.secondary} />
+                                                <View style={[styles.pastIcon, { backgroundColor: glassText.muted + '20' }]}>
+                                                    <Ionicons name="school-outline" size={20} color={glassText.secondary} />
                                                 </View>
                                                 <View style={styles.pastInfo}>
-                                                    <Text variant="bodyLarge" style={{ color: text.primary }}>{examItem.name}</Text>
-                                                    <Text variant="bodySmall" style={{ color: text.secondary }}>{examItem.exam_date}</Text>
+                                                    <Text variant="bodyLarge" style={{ color: glassText.primary }}>{examItem.name}</Text>
+                                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>{examItem.exam_date}</Text>
                                                 </View>
                                             </View>
-                                        </Card>
+                                        </GlassCard>
                                     ))}
                                 </View>
                             )}
@@ -244,14 +239,14 @@ export default function ExamSetupScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: exam.background },
+    container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { paddingBottom: 100, paddingHorizontal: spacing.lg },
     // Active Exam Styles
     activeHeader: { alignItems: "center", paddingTop: spacing.xl, paddingBottom: spacing.md },
-    examBadge: { flexDirection: "row", alignItems: "center", backgroundColor: `${exam.accent}50`, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: borderRadius.pill, marginBottom: spacing.md },
-    examBadgeText: { color: text.primary, fontSize: 12, fontWeight: "600", marginLeft: 6 },
-    examName: { color: text.primary, fontWeight: "600", textAlign: "center" },
-    examDate: { color: text.secondary, marginTop: 4 },
+    examBadge: { flexDirection: "row", alignItems: "center", backgroundColor: glassAccent.mint + '20', paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: borderRadius.pill, marginBottom: spacing.md },
+    examBadgeText: { color: glassText.primary, fontSize: 12, fontWeight: "600", marginLeft: 6 },
+    examName: { color: glassText.primary, fontWeight: "600", textAlign: "center" },
+    examDate: { color: glassText.secondary, marginTop: 4 },
     // Timer Styles
     timerContainer: { alignItems: "center", marginVertical: spacing.lg },
     timerRing: {
@@ -259,41 +254,34 @@ const styles = StyleSheet.create({
         height: 160,
         borderRadius: 80,
         borderWidth: 4,
-        borderColor: exam.ring,
         alignItems: "center",
         justifyContent: "center",
         marginBottom: spacing.lg,
-        backgroundColor: exam.card,
-        // Shadow
-        shadowColor: '#5D6B6B',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 4,
+        backgroundColor: darkBackground.elevated,
     },
-    timerDays: { fontSize: 48, fontWeight: "600", color: text.primary },
-    timerLabel: { fontSize: 16, color: text.secondary },
+    timerDays: { fontSize: 48, fontWeight: "600", color: glassText.primary },
+    timerLabel: { fontSize: 16, color: glassText.secondary },
     timerDetails: { flexDirection: "row", alignItems: "center" },
     timerUnit: { alignItems: "center", minWidth: 50 },
-    timerValue: { fontSize: 28, fontWeight: "600", color: text.primary, fontVariant: ["tabular-nums"] },
-    timerSeconds: { color: pastel.peach },
-    timerUnitLabel: { fontSize: 12, color: text.secondary, marginTop: 2 },
-    timerSeparator: { fontSize: 28, fontWeight: "600", color: text.muted, marginHorizontal: 4 },
+    timerValue: { fontSize: 28, fontWeight: "600", color: glassText.primary, fontVariant: ["tabular-nums"] },
+    timerSeconds: { color: glassAccent.warm },
+    timerUnitLabel: { fontSize: 12, color: glassText.secondary, marginTop: 2 },
+    timerSeparator: { fontSize: 28, fontWeight: "600", color: glassText.muted, marginHorizontal: 4 },
     // Cards
-    focusCard: { marginBottom: spacing.md },
+    focusCard: { marginBottom: spacing.md, padding: 0 },
     focusContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
-    focusIconContainer: { width: 44, height: 44, borderRadius: 22, backgroundColor: `${exam.accent}40`, alignItems: "center", justifyContent: "center" },
+    focusIconContainer: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
     focusText: { marginLeft: spacing.md, flex: 1 },
     // Setup Styles
     setupHeader: { alignItems: "center", paddingTop: spacing.xl, paddingBottom: spacing.xl },
-    setupIconContainer: { width: 80, height: 80, borderRadius: 40, backgroundColor: `${exam.accent}40`, alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
-    setupTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.xs },
-    setupSubtitle: { color: text.secondary, textAlign: "center" },
-    input: { marginBottom: spacing.md, backgroundColor: exam.card },
+    setupIconContainer: { width: 80, height: 80, borderRadius: 40, backgroundColor: glassAccent.mint + '10', alignItems: "center", justifyContent: "center", marginBottom: spacing.md },
+    setupTitle: { color: glassText.primary, fontWeight: "600", marginBottom: spacing.xs },
+    setupSubtitle: { color: glassText.secondary, textAlign: "center" },
+    input: { marginBottom: spacing.md, backgroundColor: darkBackground.elevated },
     pastSection: { marginTop: spacing.xl },
-    pastTitle: { color: text.primary, fontWeight: "600", marginBottom: spacing.md },
-    pastCard: { marginBottom: spacing.sm },
+    pastTitle: { color: glassText.primary, fontWeight: "600", marginBottom: spacing.md },
+    pastCard: { marginBottom: spacing.sm, padding: 0 },
     pastContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
-    pastIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: `${exam.accent}30`, alignItems: "center", justifyContent: "center" },
+    pastIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     pastInfo: { marginLeft: spacing.sm, flex: 1 },
 });

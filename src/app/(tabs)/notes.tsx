@@ -8,9 +8,11 @@ import { useAuthStore } from "../../store/authStore";
 import { useTaskStore } from "../../store/taskStore";
 
 // Design tokens
-import { pastel, background, text, semantic, spacing, borderRadius, shadows } from "../../constants/theme";
+import { text, semantic, borderRadius } from "../../constants/theme";
+import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-import { Card, Button, Chip } from "../../components/ui";
+import { Chip } from "../../components/ui";
+import { GlassCard, GlassButton, GlassInput, MeshGradientBackground } from "../../components/glass";
 
 interface Note {
     id: string;
@@ -143,7 +145,6 @@ export default function NotesScreen() {
                     setSnackbarMessage("Note updated!");
                     setSnackbarVisible(true);
                 } else if (error) {
-                    console.error("Update note error:", error);
                     Alert.alert("Error", "Could not update note. Please try again.");
                 }
             } else {
@@ -166,7 +167,6 @@ export default function NotesScreen() {
                     setSnackbarMessage("Note saved!");
                     setSnackbarVisible(true);
                 } else if (error) {
-                    console.error("Save note error:", error);
                     Alert.alert("Error", "Could not save note. Please try again.");
                 }
             }
@@ -204,11 +204,9 @@ export default function NotesScreen() {
                                 setSnackbarMessage("Note deleted!");
                                 setSnackbarVisible(true);
                             } else {
-                                console.error("Delete note error:", error);
                                 Alert.alert("Error", "Could not delete note.");
                             }
                         } catch (error) {
-                            console.error("Delete note error:", error);
                             Alert.alert("Error", "Could not delete note.");
                         }
                     }
@@ -236,19 +234,6 @@ export default function NotesScreen() {
 
             if (!subTopics || subTopics.length === 0) {
                 Alert.alert("Setup Required", "Please create a Subject > Topic > Sub-Topic first before adding tasks.");
-                setIsSaving(false);
-                return;
-            }
-
-            // Get the topic to find subject_id
-            const { data: topic } = await supabase
-                .from("topics")
-                .select("id, subject_id")
-                .eq("id", subTopics[0].topic_id)
-                .single();
-
-            if (!topic) {
-                Alert.alert("Error", "Could not find topic information.");
                 setIsSaving(false);
                 return;
             }
@@ -283,16 +268,11 @@ export default function NotesScreen() {
         return notes.some(note => note.date === dateStr);
     };
 
-    const hasTasksOnDate = (date: Date) => {
-        const dateStr = format(date, "yyyy-MM-dd");
-        return dailyTasks.some(t => t.due_date === dateStr);
-    };
-
     if (isLoading) {
         return (
             <View style={[styles.container, styles.centered]}>
-                <ActivityIndicator size="large" color={pastel.mint} />
-                <Text variant="bodyMedium" style={{ color: text.secondary, marginTop: 16 }}>Loading...</Text>
+                <ActivityIndicator size="large" color={glassAccent.mint} />
+                <Text variant="bodyMedium" style={{ color: glassText.secondary, marginTop: 16 }}>Loading...</Text>
             </View>
         );
     }
@@ -301,35 +281,36 @@ export default function NotesScreen() {
 
     return (
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <MeshGradientBackground />
             <View style={styles.container}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     keyboardShouldPersistTaps="handled"
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={pastel.mint} />}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={glassAccent.mint} />}
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <Text variant="headlineLarge" style={styles.title}>Calendar</Text>
-                        <Text variant="bodyMedium" style={{ color: text.secondary }}>Plan your study sessions</Text>
+                        <Text variant="headlineLarge" style={[styles.title, { color: glassText.primary }]}>Calendar</Text>
+                        <Text variant="bodyMedium" style={{ color: glassText.secondary }}>Plan your study sessions</Text>
                     </View>
 
                     {/* Month Navigation */}
                     <View style={styles.monthNav}>
                         <TouchableOpacity onPress={() => setSelectedDate(subDays(selectedDate, 30))} style={styles.navButton}>
-                            <Ionicons name="chevron-back" size={24} color={pastel.mint} />
+                            <Ionicons name="chevron-back" size={24} color={glassAccent.mint} />
                         </TouchableOpacity>
                         <Text variant="titleMedium" style={styles.monthText}>{format(selectedDate, "MMMM yyyy")}</Text>
                         <TouchableOpacity onPress={() => setSelectedDate(addDays(selectedDate, 30))} style={styles.navButton}>
-                            <Ionicons name="chevron-forward" size={24} color={pastel.mint} />
+                            <Ionicons name="chevron-forward" size={24} color={glassAccent.mint} />
                         </TouchableOpacity>
                     </View>
 
                     {/* Calendar */}
-                    <Card style={styles.calendarCard}>
+                    <GlassCard style={styles.calendarCard} intensity="light">
                         <View style={styles.weekDaysRow}>
                             {weekDays.map((day, i) => (
                                 <View key={i} style={styles.weekDay}>
-                                    <Text variant="bodySmall" style={{ color: text.secondary }}>{day}</Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>{day}</Text>
                                 </View>
                             ))}
                         </View>
@@ -350,37 +331,37 @@ export default function NotesScreen() {
                                 );
                             })}
                         </View>
-                    </Card>
+                    </GlassCard>
 
                     {/* Day Detail Section */}
                     <View style={styles.daySection}>
                         <View style={styles.daySectionHeader}>
                             <View>
-                                <Text variant="titleMedium" style={{ color: text.primary }}>{format(selectedDate, "MMMM d, yyyy")}</Text>
-                                <Text variant="bodySmall" style={{ color: text.secondary }}>
+                                <Text variant="titleMedium" style={{ color: glassText.primary }}>{format(selectedDate, "MMMM d, yyyy")}</Text>
+                                <Text variant="bodySmall" style={{ color: glassText.secondary }}>
                                     {dailyTasks.length} tasks • {dailyNotes.length} notes
                                 </Text>
                             </View>
                             <View style={styles.addButtons}>
-                                <Button size="sm" variant="ghost" onPress={() => setTaskModalVisible(true)}>
+                                <GlassButton size="sm" variant="ghost" onPress={() => setTaskModalVisible(true)}>
                                     + Task
-                                </Button>
-                                <Button size="sm" onPress={openNewNoteModal}>
+                                </GlassButton>
+                                <GlassButton size="sm" onPress={openNewNoteModal}>
                                     + Note
-                                </Button>
+                                </GlassButton>
                             </View>
                         </View>
 
                         {/* Future Date Banner */}
                         {isFutureDate && (
-                            <Card gradient="mint" style={styles.futureBanner}>
+                            <GlassCard style={styles.futureBanner} intensity="light">
                                 <View style={styles.futureBannerContent}>
-                                    <Ionicons name="calendar-outline" size={20} color={text.primary} />
-                                    <Text variant="bodySmall" style={{ color: text.primary, marginLeft: 8 }}>
+                                    <Ionicons name="calendar-outline" size={20} color={glassText.primary} />
+                                    <Text variant="bodySmall" style={{ color: glassText.primary, marginLeft: 8 }}>
                                         Planning ahead! Tasks added here will appear on this date.
                                     </Text>
                                 </View>
-                            </Card>
+                            </GlassCard>
                         )}
 
                         {/* Tasks for this date */}
@@ -388,12 +369,12 @@ export default function NotesScreen() {
                             <View style={styles.tasksContainer}>
                                 <Text variant="labelLarge" style={styles.sectionLabel}>Tasks</Text>
                                 {dailyTasks.map((task) => (
-                                    <Card key={task.id} style={[styles.taskCard, task.is_completed && styles.taskCompleted]}>
+                                    <GlassCard key={task.id} style={[styles.taskCard, task.is_completed && styles.taskCompleted]} intensity="light">
                                         <View style={styles.taskRow}>
                                             <Ionicons
                                                 name={task.is_completed ? "checkmark-circle" : "ellipse-outline"}
                                                 size={20}
-                                                color={task.is_completed ? semantic.success : text.muted}
+                                                color={task.is_completed ? semantic.success : glassText.muted}
                                             />
                                             <Text
                                                 variant="bodyMedium"
@@ -405,7 +386,7 @@ export default function NotesScreen() {
                                                 {task.priority}
                                             </Chip>
                                         </View>
-                                    </Card>
+                                    </GlassCard>
                                 ))}
                             </View>
                         )}
@@ -415,38 +396,38 @@ export default function NotesScreen() {
                             <View style={styles.notesContainer}>
                                 <Text variant="labelLarge" style={styles.sectionLabel}>Notes</Text>
                                 {dailyNotes.map((note) => (
-                                    <Card key={note.id} style={styles.noteCard} gradient="mint">
+                                    <GlassCard key={note.id} style={styles.noteCard} intensity="light">
                                         <View style={styles.noteHeader}>
-                                            <Text variant="titleMedium" style={{ color: text.primary, flex: 1 }}>{note.title}</Text>
+                                            <Text variant="titleMedium" style={{ color: glassText.primary, flex: 1 }}>{note.title}</Text>
                                             <View style={styles.noteActions}>
                                                 <TouchableOpacity onPress={() => handleEditNote(note)} style={styles.noteActionBtn}>
-                                                    <Ionicons name="pencil-outline" size={18} color={text.secondary} />
+                                                    <Ionicons name="pencil-outline" size={18} color={glassText.secondary} />
                                                 </TouchableOpacity>
                                                 <TouchableOpacity onPress={() => handleDeleteNote(note)} style={styles.noteActionBtn}>
-                                                    <Ionicons name="trash-outline" size={18} color={semantic.error} />
+                                                    <Ionicons name="trash-outline" size={18} color={glassAccent.warm} />
                                                 </TouchableOpacity>
                                             </View>
                                         </View>
                                         {note.content && note.content !== note.title && (
-                                            <Text variant="bodyMedium" style={{ color: text.secondary, marginTop: 8 }} numberOfLines={3}>
+                                            <Text variant="bodyMedium" style={{ color: glassText.secondary, marginTop: 8 }} numberOfLines={3}>
                                                 {note.content}
                                             </Text>
                                         )}
-                                    </Card>
+                                    </GlassCard>
                                 ))}
                             </View>
                         )}
 
                         {/* Empty State */}
                         {dailyTasks.length === 0 && dailyNotes.length === 0 && (
-                            <Card style={styles.emptyCard}>
+                            <GlassCard style={styles.emptyCard} bordered={false}>
                                 <View style={styles.emptyContent}>
-                                    <Ionicons name="document-text-outline" size={48} color={text.muted} />
-                                    <Text variant="bodyMedium" style={{ color: text.secondary, textAlign: "center", marginTop: 12 }}>
+                                    <Ionicons name="document-text-outline" size={48} color={glassText.muted} />
+                                    <Text variant="bodyMedium" style={{ color: glassText.secondary, textAlign: "center", marginTop: 12 }}>
                                         Nothing planned for this day.{"\n"}Add a task or note to get started.
                                     </Text>
                                 </View>
-                            </Card>
+                            </GlassCard>
                         )}
                     </View>
                 </ScrollView>
@@ -458,44 +439,37 @@ export default function NotesScreen() {
                             behavior={Platform.OS === "ios" ? "position" : "height"}
                             keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
                         >
-                            <View style={{ backgroundColor: background.card, borderRadius: borderRadius.lg, padding: 24 }}>
+                            <View style={{ backgroundColor: darkBackground.elevated, borderRadius: borderRadius.lg, padding: 24, borderWidth: 1, borderColor: glass.border.light }}>
                                 <ScrollView
                                     showsVerticalScrollIndicator={false}
                                     keyboardShouldPersistTaps="handled"
                                 >
                                     <View style={styles.modalHeader}>
                                         <Text variant="titleLarge" style={styles.modalTitle}>{editingNote ? "Edit Note" : "New Note"}</Text>
-                                        <Text variant="bodySmall" style={{ color: text.secondary }}>{format(selectedDate, "MMMM d, yyyy")}</Text>
+                                        <Text variant="bodySmall" style={{ color: glassText.secondary }}>{format(selectedDate, "MMMM d, yyyy")}</Text>
                                     </View>
-                                    <TextInput
+                                    <GlassInput
                                         label="Title"
                                         value={noteTitle}
                                         onChangeText={setNoteTitle}
-                                        mode="outlined"
                                         style={styles.modalInput}
-                                        outlineColor={pastel.beige}
-                                        activeOutlineColor={pastel.mint}
-                                        textColor={text.primary}
                                     />
-                                    <TextInput
+                                    <GlassInput
                                         label="Content (optional)"
                                         value={noteContent}
                                         onChangeText={setNoteContent}
-                                        mode="outlined"
                                         multiline
+                                        numberOfLines={8}
                                         style={[styles.modalInput, { maxHeight: 200 }]}
-                                        outlineColor={pastel.beige}
-                                        activeOutlineColor={pastel.mint}
-                                        textColor={text.primary}
                                     />
-                                    <Button
+                                    <GlassButton
                                         onPress={handleSaveNote}
                                         loading={isSaving}
                                         disabled={isSaving || !noteTitle.trim()}
                                         fullWidth
                                     >
                                         {editingNote ? "Update Note" : "Save Note"}
-                                    </Button>
+                                    </GlassButton>
                                 </ScrollView>
                             </View>
                         </KeyboardAvoidingView>
@@ -516,24 +490,20 @@ export default function NotesScreen() {
                                 This task will appear in Today on {format(selectedDate, "MMMM d")}.
                             </Text>
                         )}
-                        <TextInput
+                        <GlassInput
                             label="Task title"
                             value={newTaskTitle}
                             onChangeText={setNewTaskTitle}
-                            mode="outlined"
                             style={styles.modalInput}
-                            outlineColor={pastel.beige}
-                            activeOutlineColor={pastel.mint}
-                            textColor={text.primary}
                         />
-                        <Button
+                        <GlassButton
                             onPress={handleCreateTask}
                             loading={isSaving}
                             disabled={isSaving || !newTaskTitle.trim()}
                             fullWidth
                         >
                             {isFutureDate ? "Schedule Task" : "Add Task"}
-                        </Button>
+                        </GlassButton>
                     </Modal>
                 </Portal>
 
@@ -551,38 +521,38 @@ export default function NotesScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: background.primary },
+    container: { flex: 1, backgroundColor: 'transparent' },
     centered: { justifyContent: "center", alignItems: "center" },
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 16 },
-    title: { color: text.primary, fontWeight: "bold" },
+    title: { fontWeight: "bold" },
     monthNav: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginBottom: 16 },
     navButton: { padding: 12 },
-    monthText: { color: text.primary, fontWeight: "600", marginHorizontal: 20 },
+    monthText: { color: glassText.primary, fontWeight: "600", marginHorizontal: 20 },
     calendarCard: { marginHorizontal: 24, marginBottom: 24, padding: 16 },
     weekDaysRow: { flexDirection: "row", marginBottom: 8 },
     weekDay: { flex: 1, alignItems: "center" },
     daysGrid: { flexDirection: "row", flexWrap: "wrap" },
     dayWrapper: { width: "14.28%" },
     dayCell: { aspectRatio: 1, alignItems: "center", justifyContent: "center", borderRadius: 999, position: "relative" },
-    daySelected: { backgroundColor: pastel.mint },
-    dayToday: { borderWidth: 1.5, borderColor: pastel.mint },
-    dayText: { color: text.primary },
-    dayTextSelected: { color: pastel.white, fontWeight: "bold" },
-    dayTextToday: { color: pastel.mint },
-    noteDot: { position: "absolute", bottom: 4, width: 4, height: 4, borderRadius: 2, backgroundColor: semantic.success },
+    daySelected: { backgroundColor: glassAccent.mint },
+    dayToday: { borderWidth: 1.5, borderColor: glassAccent.mint },
+    dayText: { color: glassText.primary },
+    dayTextSelected: { color: "#000", fontWeight: "bold" },
+    dayTextToday: { color: glassAccent.mint },
+    noteDot: { position: "absolute", bottom: 4, width: 4, height: 4, borderRadius: 2, backgroundColor: glassAccent.mint },
     daySection: { paddingHorizontal: 24 },
     daySectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
     addButtons: { flexDirection: "row", gap: 8 },
     futureBanner: { marginBottom: 16, padding: 12 },
     futureBannerContent: { flexDirection: "row", alignItems: "center" },
     tasksContainer: { marginBottom: 16 },
-    sectionLabel: { color: text.secondary, marginBottom: 8 },
+    sectionLabel: { color: glassText.secondary, marginBottom: 8 },
     taskCard: { marginBottom: 8, padding: 12 },
     taskCompleted: { opacity: 0.6 },
     taskRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-    taskTitle: { flex: 1, color: text.primary },
-    taskTitleDone: { textDecorationLine: "line-through", color: text.muted },
+    taskTitle: { flex: 1, color: glassText.primary },
+    taskTitleDone: { textDecorationLine: "line-through", color: glassText.muted },
     notesContainer: { marginBottom: 16 },
     noteCard: { marginBottom: 12, padding: 16 },
     noteHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
@@ -590,10 +560,10 @@ const styles = StyleSheet.create({
     noteActionBtn: { padding: 4 },
     emptyCard: { padding: 24 },
     emptyContent: { alignItems: "center", paddingVertical: 20 },
-    modal: { backgroundColor: background.card, margin: 20, padding: 24, borderRadius: borderRadius.lg },
+    modal: { backgroundColor: darkBackground.elevated, margin: 20, padding: 24, borderRadius: borderRadius.lg, borderWidth: 1, borderColor: glass.border.light },
     modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-    modalTitle: { color: text.primary, fontWeight: "bold" },
-    modalInput: { marginBottom: 16, backgroundColor: background.primary },
-    futureHint: { color: pastel.mint, marginBottom: 16, fontStyle: "italic" },
-    snackbar: { backgroundColor: pastel.slate },
+    modalTitle: { color: glassText.primary, fontWeight: "bold" },
+    modalInput: { marginBottom: 16, backgroundColor: darkBackground.primary },
+    futureHint: { color: glassAccent.mint, marginBottom: 16, fontStyle: "italic" },
+    snackbar: { backgroundColor: darkBackground.elevated, borderWidth: 1, borderColor: glass.border.light },
 });

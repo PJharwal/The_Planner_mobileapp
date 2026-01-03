@@ -3,19 +3,17 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import { Text, Portal, Modal } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
-    withSpring,
     withTiming,
     FadeIn,
-    FadeOut,
 } from "react-native-reanimated";
 
-import { Button } from "./Button";
-import { pastel, background, text, spacing, borderRadius, gradients } from "../../constants/theme";
+import { GlassButton } from "../glass";
+import { spacing, borderRadius } from "../../constants/theme";
+import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 
 const { width } = Dimensions.get("window");
 const TUTORIAL_KEY = "@the_planner_tutorial_shown";
@@ -24,7 +22,7 @@ interface TutorialStep {
     icon: string;
     title: string;
     description: string;
-    gradient: readonly string[];
+    color: string;
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -32,31 +30,31 @@ const TUTORIAL_STEPS: TutorialStep[] = [
         icon: "school-outline",
         title: "Welcome to The Planner!",
         description: "Your personal study intelligence system. Let's get you started with a quick tour.",
-        gradient: gradients.mint,
+        color: glassAccent.mint,
     },
     {
         icon: "book-outline",
         title: "Organize Your Subjects",
         description: "Create subjects, topics, and sub-topics to organize your study material in a structured way.",
-        gradient: gradients.warm,
+        color: glassAccent.warm,
     },
     {
         icon: "checkbox-outline",
         title: "Track Your Tasks",
         description: "Add tasks to each topic. Mark them complete and watch your progress grow!",
-        gradient: gradients.peach,
+        color: glassAccent.blue,
     },
     {
         icon: "time-outline",
         title: "Focus Timer",
         description: "Use the focus timer to track study sessions. Get insights on your best study times.",
-        gradient: gradients.sage,
+        color: "#C9A0E8", // Lavender
     },
     {
         icon: "bulb-outline",
         title: "Smart Suggestions",
         description: "Get AI-powered suggestions for what to study next based on your progress and exams.",
-        gradient: gradients.mint,
+        color: glassAccent.mint,
     },
 ];
 
@@ -142,14 +140,9 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
 
                     {/* Step Content */}
                     <View style={styles.stepContent}>
-                        <LinearGradient
-                            colors={step.gradient as any}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.iconContainer}
-                        >
-                            <Ionicons name={step.icon as any} size={48} color={text.primary} />
-                        </LinearGradient>
+                        <View style={[styles.iconContainer, { backgroundColor: step.color + "20" }]}>
+                            <Ionicons name={step.icon as any} size={48} color={step.color} />
+                        </View>
 
                         <Text variant="headlineSmall" style={styles.title}>
                             {step.title}
@@ -166,20 +159,19 @@ export function OnboardingTutorial({ onComplete }: OnboardingTutorialProps) {
                                 key={index}
                                 style={[
                                     styles.dot,
-                                    currentStep === index && styles.dotActive,
+                                    currentStep === index && [styles.dotActive, { backgroundColor: glassAccent.mint }],
                                 ]}
                             />
                         ))}
                     </View>
 
                     {/* Actions */}
-                    <Button
-                        variant="primary"
+                    <GlassButton
                         onPress={handleNext}
                         fullWidth
                     >
                         {isLastStep ? "Get Started" : "Next"}
-                    </Button>
+                    </GlassButton>
                 </Animated.View>
             </Modal>
         </Portal>
@@ -193,10 +185,12 @@ export async function resetTutorial() {
 
 const styles = StyleSheet.create({
     modal: {
-        backgroundColor: background.card,
+        backgroundColor: darkBackground.elevated,
         margin: 24,
         borderRadius: borderRadius.xl,
         padding: spacing.lg,
+        borderWidth: 1,
+        borderColor: glass.border.light,
     },
     content: {
         alignItems: "center",
@@ -210,18 +204,18 @@ const styles = StyleSheet.create({
     progressBg: {
         flex: 1,
         height: 4,
-        backgroundColor: "rgba(93, 107, 107, 0.1)",
+        backgroundColor: glass.border.light,
         borderRadius: 2,
         marginRight: spacing.md,
         overflow: "hidden",
     },
     progressFill: {
         height: "100%",
-        backgroundColor: pastel.mint,
+        backgroundColor: glassAccent.mint,
         borderRadius: 2,
     },
     skipText: {
-        color: text.muted,
+        color: glassText.secondary,
     },
     stepContent: {
         alignItems: "center",
@@ -234,20 +228,17 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginBottom: spacing.lg,
-        shadowColor: pastel.mint,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.25,
-        shadowRadius: 16,
-        elevation: 8,
+        borderWidth: 1,
+        borderColor: glass.border.light,
     },
     title: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "600",
         textAlign: "center",
         marginBottom: spacing.sm,
     },
     description: {
-        color: text.secondary,
+        color: glassText.secondary,
         textAlign: "center",
         lineHeight: 22,
         paddingHorizontal: spacing.md,
@@ -262,10 +253,9 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: "rgba(93, 107, 107, 0.2)",
+        backgroundColor: glass.border.light,
     },
     dotActive: {
-        backgroundColor: pastel.mint,
         width: 24,
     },
 });

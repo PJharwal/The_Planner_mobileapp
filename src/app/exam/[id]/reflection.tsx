@@ -8,8 +8,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { supabase } from "../../../lib/supabase";
 import { useAuthStore } from "../../../store/authStore";
-import { Card, Button } from "../../../components/ui";
-import { pastel, spacing, borderRadius, background, text } from "../../../constants/theme";
+import { GlassCard, GlassButton } from "../../../components/glass";
+import { spacing, borderRadius } from "../../../constants/theme";
+import { darkBackground, glassText, glassAccent, glass } from "../../../constants/glassTheme";
 
 export default function ExamReflectionScreen() {
     const insets = useSafeAreaInsets();
@@ -100,8 +101,8 @@ export default function ExamReflectionScreen() {
                     options={{
                         headerShown: true,
                         headerTitle: "Exam Reflection",
-                        headerStyle: { backgroundColor: background.primary },
-                        headerTintColor: text.primary,
+                        headerStyle: { backgroundColor: darkBackground.primary },
+                        headerTintColor: glassText.primary,
                         headerShadowVisible: false,
                     }}
                 />
@@ -114,8 +115,8 @@ export default function ExamReflectionScreen() {
                 >
                     {/* Header */}
                     <View style={styles.header}>
-                        <View style={styles.headerIcon}>
-                            <Ionicons name="bulb" size={32} color={pastel.peach} />
+                        <View style={[styles.headerIcon, { backgroundColor: glassAccent.warm + '20' }]}>
+                            <Ionicons name="bulb" size={32} color={glassAccent.warm} />
                         </View>
                         <Text variant="titleLarge" style={styles.headerTitle}>
                             {examName || "Exam"} Reflection
@@ -128,7 +129,7 @@ export default function ExamReflectionScreen() {
                     {/* What Worked */}
                     <View style={styles.section}>
                         <View style={styles.questionHeader}>
-                            <Ionicons name="checkmark-circle" size={20} color={pastel.mint} />
+                            <Ionicons name="checkmark-circle" size={20} color={glassAccent.mint} />
                             <Text variant="titleSmall" style={styles.questionTitle}>
                                 What worked well?
                             </Text>
@@ -141,15 +142,18 @@ export default function ExamReflectionScreen() {
                             multiline
                             numberOfLines={4}
                             style={styles.textInput}
-                            outlineColor="rgba(93, 107, 107, 0.2)"
-                            activeOutlineColor={pastel.mint}
+                            outlineColor={glass.border.light}
+                            activeOutlineColor={glassAccent.mint}
+                            textColor={glassText.primary}
+                            placeholderTextColor={glassText.muted}
+                            theme={{ colors: { background: darkBackground.elevated, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
                     </View>
 
                     {/* What Didn't Work */}
                     <View style={styles.section}>
                         <View style={styles.questionHeader}>
-                            <Ionicons name="close-circle" size={20} color={pastel.peach} />
+                            <Ionicons name="close-circle" size={20} color={glassAccent.warm} />
                             <Text variant="titleSmall" style={styles.questionTitle}>
                                 What didn't work?
                             </Text>
@@ -162,15 +166,18 @@ export default function ExamReflectionScreen() {
                             multiline
                             numberOfLines={4}
                             style={styles.textInput}
-                            outlineColor="rgba(93, 107, 107, 0.2)"
-                            activeOutlineColor={pastel.peach}
+                            outlineColor={glass.border.light}
+                            activeOutlineColor={glassAccent.warm}
+                            textColor={glassText.primary}
+                            placeholderTextColor={glassText.muted}
+                            theme={{ colors: { background: darkBackground.elevated, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
                     </View>
 
                     {/* Changes for Next Time */}
                     <View style={styles.section}>
                         <View style={styles.questionHeader}>
-                            <Ionicons name="arrow-forward-circle" size={20} color={pastel.mint} />
+                            <Ionicons name="arrow-forward-circle" size={20} color={glassAccent.mint} />
                             <Text variant="titleSmall" style={styles.questionTitle}>
                                 What would you change next time?
                             </Text>
@@ -183,31 +190,34 @@ export default function ExamReflectionScreen() {
                             multiline
                             numberOfLines={4}
                             style={styles.textInput}
-                            outlineColor="rgba(93, 107, 107, 0.2)"
-                            activeOutlineColor={pastel.mint}
+                            outlineColor={glass.border.light}
+                            activeOutlineColor={glassAccent.mint}
+                            textColor={glassText.primary}
+                            placeholderTextColor={glassText.muted}
+                            theme={{ colors: { background: darkBackground.elevated, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
                     </View>
 
                     {/* Save Button */}
-                    <Button
+                    <GlassButton
                         variant="primary"
                         onPress={handleSave}
                         loading={isSaving}
                         disabled={isSaving}
-                        fullWidth
                         style={styles.saveButton}
+                        glow
                     >
                         Save Reflection
-                    </Button>
+                    </GlassButton>
 
                     {/* Skip */}
-                    <Button
-                        variant="secondary"
+                    <GlassButton
+                        variant="ghost"
                         onPress={() => router.back()}
                         style={styles.skipButton}
                     >
                         Skip for now
-                    </Button>
+                    </GlassButton>
                 </ScrollView>
             </View>
         </KeyboardAvoidingView>
@@ -217,7 +227,7 @@ export default function ExamReflectionScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: background.primary,
+        backgroundColor: darkBackground.primary,
     },
     inner: {
         flex: 1,
@@ -237,18 +247,17 @@ const styles = StyleSheet.create({
         width: 64,
         height: 64,
         borderRadius: 32,
-        backgroundColor: `${pastel.peach}20`,
         alignItems: "center",
         justifyContent: "center",
         marginBottom: spacing.sm,
     },
     headerTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "600",
         textAlign: "center",
     },
     headerSubtitle: {
-        color: text.secondary,
+        color: glassText.secondary,
         textAlign: "center",
         marginTop: spacing.xs,
         lineHeight: 20,
@@ -263,11 +272,11 @@ const styles = StyleSheet.create({
         gap: spacing.xs,
     },
     questionTitle: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: "500",
     },
     textInput: {
-        backgroundColor: background.card,
+        backgroundColor: darkBackground.elevated,
         minHeight: 100,
     },
     saveButton: {

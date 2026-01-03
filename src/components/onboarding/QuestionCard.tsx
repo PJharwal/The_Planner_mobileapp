@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, TextInput as PaperTextInput } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text } from 'react-native-paper';
 import { OnboardingQuestion } from '../../types/profile';
 import { QuestionOption } from './QuestionOption';
-import { background, text, pastel, spacing, borderRadius } from '../../constants/theme';
+import { GlassInput } from '../glass/GlassInput';
+import { GlassCard } from '../glass/GlassCard';
+import { glassText, glassAccent, glass } from '../../constants/glassTheme';
 
 interface QuestionCardProps {
     question: OnboardingQuestion;
@@ -12,6 +14,8 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question, value, onAnswer }: QuestionCardProps) {
+    const isScale = question.layout === 'scale';
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -26,34 +30,60 @@ export function QuestionCard({ question, value, onAnswer }: QuestionCardProps) {
             </View>
 
             {question.type === 'multiple_choice' && question.options && (
-                <View style={styles.options}>
-                    {question.options.map((option) => (
-                        <QuestionOption
-                            key={option.value}
-                            label={option.label}
-                            description={option.description}
-                            value={option.value}
-                            selected={value === option.value}
-                            onSelect={() => onAnswer(option.value)}
-                        />
-                    ))}
-                </View>
+                isScale ? (
+                    <View style={styles.scaleContainer}>
+                        {question.options.map((option) => {
+                            const isSelected = value === option.value;
+                            return (
+                                <GlassCard
+                                    key={option.value}
+                                    intensity="light"
+                                    bordered={!isSelected}
+                                    style={[
+                                        styles.scaleOption,
+                                        isSelected && styles.scaleOptionSelected
+                                    ]}
+                                >
+                                    <TouchableOpacity
+                                        onPress={() => onAnswer(option.value)}
+                                        activeOpacity={0.7}
+                                        style={styles.scaleTouchable}
+                                    >
+                                        <Text style={[
+                                            styles.scaleLabel,
+                                            isSelected && styles.scaleLabelSelected
+                                        ]}>
+                                            {option.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </GlassCard>
+                            );
+                        })}
+                    </View>
+                ) : (
+                    <View style={styles.options}>
+                        {question.options.map((option) => (
+                            <QuestionOption
+                                key={option.value}
+                                label={option.label}
+                                description={option.description}
+                                value={option.value}
+                                selected={value === option.value}
+                                onSelect={() => onAnswer(option.value)}
+                            />
+                        ))}
+                    </View>
+                )
             )}
 
             {question.type === 'text_input' && (
-                <PaperTextInput
-                    mode="outlined"
+                <GlassInput
                     value={value || ''}
                     onChangeText={onAnswer}
                     placeholder="Type your answer..."
                     multiline
                     numberOfLines={3}
-                    maxLength={question.maxLength}
                     style={styles.textInput}
-                    outlineColor={pastel.beige}
-                    activeOutlineColor={pastel.mint}
-                    textColor={text.primary}
-                    placeholderTextColor={text.muted}
                 />
             )}
         </View>
@@ -65,22 +95,56 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     header: {
-        marginBottom: spacing.lg,
+        marginBottom: 32,
     },
     question: {
-        color: text.primary,
+        color: glassText.primary,
         fontWeight: '600',
-        marginBottom: spacing.xs,
+        marginBottom: 8,
     },
     helper: {
-        color: text.secondary,
+        color: glassText.secondary,
         lineHeight: 20,
     },
     options: {
         flex: 1,
+        gap: 4,
+    },
+    scaleContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+        justifyContent: 'center', // Center the pills
+    },
+    scaleOption: {
+        flex: 1,
+        minWidth: '40%', // At least 2 per row if they wrap, or change logic to be 100% width pills? 
+        // User said "Horizontal pills (1-5)". Usually implies a single row.
+        // But some labels like "Less than 1 hour" are long.
+        // I'll assume they might wrap. But let's try to fit them if short.
+        padding: 0,
+    },
+    scaleOptionSelected: {
+        borderColor: glassAccent.blue, // Scale uses Blue usually or Mint? User said "Type B - Scale Selector".
+        backgroundColor: glassAccent.blue + '20', // transparent blue
+    },
+    scaleTouchable: {
+        paddingVertical: 12,
+        paddingHorizontal: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    scaleLabel: {
+        color: glassText.primary,
+        fontWeight: '500',
+        fontSize: 14,
+        textAlign: 'center',
+    },
+    scaleLabelSelected: {
+        color: glassAccent.blue,
+        fontWeight: '700',
     },
     textInput: {
-        backgroundColor: background.primary,
-        fontSize: 16,
+        marginTop: 8,
     },
 });

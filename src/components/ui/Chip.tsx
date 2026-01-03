@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
 import { borderRadius, pastel, text, spacing, semantic, priority } from '../../constants/theme';
+import { glassAccent, glassText } from '../../constants/glassTheme';
 
 interface ChipProps {
     children: React.ReactNode;
@@ -9,11 +10,11 @@ interface ChipProps {
     onPress?: () => void;
     selected?: boolean;
     style?: ViewStyle;
+    textStyle?: TextStyle;
 }
 
 /**
  * Soft-UI Chip Component
- * - Pastel-tinted pill chips
  * - For tags, filters, status badges
  * - Soft colors, no harsh contrast
  */
@@ -24,17 +25,19 @@ export function Chip({
     onPress,
     selected = false,
     style,
+    textStyle,
 }: ChipProps) {
     const getColors = () => {
         switch (variant) {
             case 'primary':
-                return { bg: `${pastel.mint}30`, text: '#5AABAC' };
+                // Use glass theme logic
+                return { bg: glassAccent.mint + '30', text: glassAccent.mint };
             case 'success':
-                return { bg: `${semantic.success}25`, text: '#5AABAC' };
+                return { bg: glassAccent.mint + '25', text: glassAccent.mint };
             case 'warning':
-                return { bg: `${semantic.warning}25`, text: '#B89A70' };
+                return { bg: glassAccent.warm + '25', text: glassAccent.warm };
             case 'error':
-                return { bg: `${semantic.error}25`, text: '#C08080' };
+                return { bg: glassAccent.warm + '25', text: glassAccent.warm }; // Use warm for error too
             case 'priority-high':
                 return { bg: priority.highBg, text: '#C08080' };
             case 'priority-medium':
@@ -42,7 +45,8 @@ export function Chip({
             case 'priority-low':
                 return { bg: priority.lowBg, text: '#5AABAC' };
             default:
-                return { bg: pastel.beige + '50', text: text.secondary };
+                // Default chip
+                return { bg: glassText.secondary + '20', text: glassText.secondary };
         }
     };
 
@@ -69,7 +73,7 @@ export function Chip({
             style={[
                 styles.chip,
                 {
-                    backgroundColor: selected ? pastel.mint : colors.bg,
+                    backgroundColor: selected ? glassAccent.mint : colors.bg,
                     paddingHorizontal: sizeStyles.paddingHorizontal,
                     paddingVertical: sizeStyles.paddingVertical,
                 },
@@ -80,9 +84,10 @@ export function Chip({
                 style={[
                     styles.text,
                     {
-                        color: selected ? pastel.white : colors.text,
+                        color: selected ? '#FFF' : colors.text,
                         fontSize: sizeStyles.fontSize,
                     },
+                    textStyle,
                 ]}
             >
                 {children}
