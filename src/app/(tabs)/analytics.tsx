@@ -46,7 +46,7 @@ export default function AnalyticsScreen() {
 
     // Real-time stats
     const [totalCompleted, setTotalCompleted] = useState(0);
-    const [streak, setStreak] = useState(0);
+
     const [pendingCount, setPendingCount] = useState(0);
     const [weeklyData, setWeeklyData] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
     const [consistencyData, setConsistencyData] = useState<number[]>([]);
@@ -103,20 +103,7 @@ export default function AnalyticsScreen() {
             }
             setWeeklyData(weekData);
 
-            // Streak
-            let currentStreak = 0;
-            for (let i = 0; i < 30; i++) {
-                const dateStr = format(subDays(new Date(), i), "yyyy-MM-dd");
-                const { count } = await supabase
-                    .from("tasks")
-                    .select("*", { count: "exact", head: true })
-                    .eq("is_completed", true)
-                    .gte("completed_at", `${dateStr}T00:00:00`)
-                    .lt("completed_at", `${dateStr}T23:59:59`);
-                if (count && count > 0) currentStreak++;
-                else if (i > 0) break;
-            }
-            setStreak(currentStreak);
+
 
             // Consistency heatmap
             const consistency: number[] = [];
@@ -322,13 +309,7 @@ export default function AnalyticsScreen() {
                                     <Text variant="bodySmall" style={{ color: glassText.secondary }}>Completed</Text>
                                 </View>
                             </GlassCard>
-                            <GlassCard style={styles.statCard} bordered={false} intensity="light">
-                                <View style={[styles.statContent, { borderLeftColor: glassAccent.warm, borderLeftWidth: 3, paddingLeft: 12 }]}>
-                                    <Ionicons name="flame" size={20} color={glassAccent.warm} />
-                                    <Text variant="headlineSmall" style={styles.statValue}>{streak}</Text>
-                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>Day Streak</Text>
-                                </View>
-                            </GlassCard>
+
                             <GlassCard style={styles.statCard} bordered={false} intensity="light">
                                 <View style={[styles.statContent, { borderLeftColor: glassAccent.blue, borderLeftWidth: 3, paddingLeft: 12 }]}>
                                     <Ionicons name="time" size={20} color={glassAccent.blue} />

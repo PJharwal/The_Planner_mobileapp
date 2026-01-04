@@ -9,8 +9,7 @@ import { useAuthStore } from "../../store/authStore";
 import { pastel, background, text, spacing, borderRadius } from "../../constants/theme";
 import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-// Button removed
-import { GlassCard, GlassInput, GlassButton } from "../../components/glass";
+import { GlassCard, GlassInput, GlassButton, MeshGradientBackground } from "../../components/glass";
 
 export default function SignupScreen() {
     const [fullName, setFullName] = useState("");
@@ -51,6 +50,7 @@ export default function SignupScreen() {
             style={styles.container}
             keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
+            <MeshGradientBackground />
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
@@ -133,25 +133,31 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: darkBackground.primary },
+    container: { flex: 1, backgroundColor: 'transparent' },
     scrollContent: { flexGrow: 1 },
     content: { flex: 1, justifyContent: "center", paddingHorizontal: spacing.lg, paddingVertical: 40 },
     header: { alignItems: "center", marginBottom: spacing.xl },
     iconContainer: {
         width: 80,
         height: 80,
-        borderRadius: borderRadius.lg,
-        backgroundColor: `${glassAccent.mint}25`,
+        borderRadius: 24,
+        backgroundColor: `${glassAccent.mint}20`,
+        borderWidth: 1,
+        borderColor: `${glassAccent.mint}30`,
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: spacing.md
+        marginBottom: spacing.md,
+        shadowColor: glassAccent.mint,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 16,
     },
-    title: { color: glassText.primary, fontWeight: "600" },
+    title: { color: glassText.primary, fontWeight: "700" },
     subtitle: { color: glassText.secondary, textAlign: "center", marginTop: spacing.xs },
-    formCard: { marginBottom: spacing.lg },
-    input: { backgroundColor: darkBackground.elevated, marginBottom: spacing.sm },
+    formCard: { marginBottom: spacing.lg, padding: spacing.lg },
+    input: { marginBottom: spacing.sm },
     hint: { color: glassText.muted, marginTop: -spacing.xs, marginBottom: spacing.sm },
-    button: { marginTop: spacing.xs },
+    button: { marginTop: spacing.sm },
     footer: { flexDirection: "row", justifyContent: "center", marginTop: spacing.md },
     footerText: { color: glassText.secondary },
     link: { color: glassAccent.mint, fontWeight: "600" },

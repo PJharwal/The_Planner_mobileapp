@@ -147,11 +147,15 @@ export const useStreakStore = create<StreakState>((set, get) => ({
         const { streak } = get();
         const streakDays = streak?.current_streak_days || 0;
 
-        if (streakDays === 0) return 0;
-        if (streakDays <= 2) return 0.2;
-        if (streakDays <= 6) return 0.4;
-        if (streakDays <= 13) return 0.6;
-        return 0.8;
+        // Glow levels per spec:
+        // 0-2 days: None
+        // 3-6 days: Soft glow
+        // 7-13 days: Medium glow
+        // 14+ days: Strong but calm (max 0.25)
+        if (streakDays <= 2) return 0;
+        if (streakDays <= 6) return 0.15;
+        if (streakDays <= 13) return 0.2;
+        return 0.25;
     },
 }));
 
@@ -168,9 +172,7 @@ export function getStreakMessage(streakDays: number): string {
 
 // Helper to get glow color based on intensity
 export function getGlowColor(intensity: number): string {
-    if (intensity === 0) return '#9CA3AF'; // Grey
-    if (intensity <= 0.2) return '#FCD34D'; // Warm yellow
-    if (intensity <= 0.4) return '#FBBF24'; // Amber
-    if (intensity <= 0.6) return '#F59E0B'; // Bright amber
-    return '#FF9F45'; // Bright orange
+    // Grey for inactive, warm orange for all active streaks
+    if (intensity === 0) return '#9CA3AF';
+    return '#FFB88C'; // Warm orange (soft, not red)
 }

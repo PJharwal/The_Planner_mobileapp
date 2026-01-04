@@ -17,7 +17,7 @@ export function StreakModal({ visible, onClose }: StreakModalProps) {
     const streakDays = streak?.current_streak_days || 0;
     const longestStreak = streak?.longest_streak || 0;
     const intensity = getGlowIntensity();
-    const flameColor = getGlowColor(intensity); // This returns a hex color, need to ensure it's compatible
+    const flameColor = getGlowColor(intensity);
     const message = getStreakMessage(streakDays);
 
     return (
@@ -29,7 +29,7 @@ export function StreakModal({ visible, onClose }: StreakModalProps) {
         >
             <Pressable style={styles.overlay} onPress={onClose}>
                 <Pressable style={styles.content} onPress={e => e.stopPropagation()}>
-                    <GlassCard style={styles.card} intensity="medium">
+                    <View style={styles.card}>
                         {/* Close Button */}
                         <Pressable style={styles.closeButton} onPress={onClose}>
                             <Ionicons name="close" size={24} color={glassText.secondary} />
@@ -73,8 +73,7 @@ export function StreakModal({ visible, onClose }: StreakModalProps) {
                         <View style={styles.infoBox}>
                             <Ionicons name="information-circle-outline" size={18} color={glassText.secondary} />
                             <Text variant="bodySmall" style={styles.infoText}>
-                                Complete a focus session or task to keep your streak going.
-                                Missing a day resets your streak.
+                                A streak counts when you complete at least one focus session or one task in a day.
                             </Text>
                         </View>
 
@@ -82,7 +81,7 @@ export function StreakModal({ visible, onClose }: StreakModalProps) {
                         <GlassButton variant="ghost" onPress={onClose} fullWidth>
                             Done
                         </GlassButton>
-                    </GlassCard>
+                    </View>
                 </Pressable>
             </Pressable>
         </Modal>
@@ -99,10 +98,15 @@ const styles = StyleSheet.create({
     content: {
         width: '85%',
         maxWidth: 340,
+        minHeight: 300,
     },
     card: {
         padding: spacing.xl,
         alignItems: 'center',
+        backgroundColor: 'rgba(18, 24, 32, 0.98)',
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.08)',
     },
     closeButton: {
         position: 'absolute',

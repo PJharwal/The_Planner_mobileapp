@@ -10,50 +10,50 @@ import { useAuthStore } from "../../store/authStore";
 import { pastel, background, text, spacing, borderRadius, gradients } from "../../constants/theme";
 import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-// Button removed
-import { GlassCard, GlassInput, GlassButton } from "../../components/glass";
+import { GlassCard, GlassInput, GlassButton, MeshGradientBackground } from "../../components/glass";
 
 const { width } = Dimensions.get("window");
 
-// App Features for showcase
+// App Features for showcase - matches actual app capabilities
 const APP_FEATURES = [
     {
-        icon: "school-outline",
-        title: "Smart Study Planning",
-        description: "Organize subjects, topics, and tasks with intelligent prioritization",
+        icon: "person-outline",
+        title: "Personalized Experience",
+        description: "Onboarding that adapts to your study style, focus capacity, and goals",
         gradient: gradients.mint,
     },
     {
-        icon: "time-outline",
-        title: "Focus Timer",
-        description: "Track study sessions with Pomodoro-style timer and breaks",
+        icon: "flame-outline",
+        title: "Advanced Focus Mode",
+        description: "Deep work sessions with guided breaks and distraction blocking",
         gradient: gradients.warm,
     },
     {
-        icon: "analytics-outline",
-        title: "Learning Insights",
-        description: "Discover your best study times and track progress",
+        icon: "battery-charging-outline",
+        title: "Smart Capacity",
+        description: "Know your daily limits and avoid burnout with intelligent scheduling",
         gradient: gradients.peach,
     },
     {
-        icon: "bulb-outline",
-        title: "Smart Revision",
-        description: "AI-powered suggestions for what to review next",
+        icon: "trending-up-outline",
+        title: "Streak & Progress",
+        description: "Build consistency with visual streaks and detailed analytics",
         gradient: gradients.sage,
     },
 ];
 
-// Feature Card Component
+// Feature Card Component - Glass morphism style
 function FeatureCard({ feature, index }: { feature: typeof APP_FEATURES[0]; index: number }) {
+    // Get accent color from gradient (first color)
+    const accentColor = feature.gradient[0];
+
     return (
-        <LinearGradient
-            colors={feature.gradient as any}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
+        <GlassCard
             style={[styles.featureCard, { marginLeft: index === 0 ? spacing.lg : 0 }]}
+            intensity="medium"
         >
-            <View style={styles.featureIcon}>
-                <Ionicons name={feature.icon as any} size={28} color={glassText.primary} />
+            <View style={[styles.featureIcon, { backgroundColor: `${accentColor}25` }]}>
+                <Ionicons name={feature.icon as any} size={28} color={accentColor} />
             </View>
             <Text variant="titleMedium" style={styles.featureTitle}>
                 {feature.title}
@@ -61,7 +61,7 @@ function FeatureCard({ feature, index }: { feature: typeof APP_FEATURES[0]; inde
             <Text variant="bodySmall" style={styles.featureDesc}>
                 {feature.description}
             </Text>
-        </LinearGradient>
+        </GlassCard>
     );
 }
 
@@ -110,6 +110,7 @@ export default function LoginScreen() {
             style={styles.container}
             keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
+            <MeshGradientBackground />
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
@@ -119,14 +120,9 @@ export default function LoginScreen() {
                     {/* Header */}
                     <View style={styles.header}>
                         <View style={styles.logoContainer}>
-                            <LinearGradient
-                                colors={gradients.mint as any}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={styles.logoGradient}
-                            >
-                                <Ionicons name="school" size={40} color={glassText.primary} />
-                            </LinearGradient>
+                            <View style={styles.logoGlass}>
+                                <Ionicons name="school" size={40} color={glassAccent.mint} />
+                            </View>
                         </View>
                         <Text variant="headlineLarge" style={styles.appName}>The Planner</Text>
                         <Text variant="bodyMedium" style={styles.tagline}>
@@ -228,19 +224,22 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: darkBackground.primary },
+    container: { flex: 1, backgroundColor: 'transparent' },
     scrollContent: { flexGrow: 1 },
     content: { flex: 1, paddingVertical: 40 },
 
     // Header
     header: { alignItems: "center", marginBottom: spacing.lg, paddingHorizontal: spacing.lg },
     logoContainer: { marginBottom: spacing.md },
-    logoGradient: {
+    logoGlass: {
         width: 80,
         height: 80,
         borderRadius: 24,
         alignItems: "center",
         justifyContent: "center",
+        backgroundColor: `${glassAccent.mint}20`,
+        borderWidth: 1,
+        borderColor: `${glassAccent.mint}30`,
         shadowColor: glassAccent.mint,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
@@ -262,13 +261,12 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 14,
-        backgroundColor: "rgba(255, 255, 255, 0.2)",
         alignItems: "center",
         justifyContent: "center",
         marginBottom: spacing.sm,
     },
     featureTitle: { color: glassText.primary, fontWeight: "600", marginBottom: 4 },
-    featureDesc: { color: "rgba(255, 255, 255, 0.75)", lineHeight: 18 },
+    featureDesc: { color: glassText.secondary, lineHeight: 18 },
     pagination: {
         flexDirection: "row",
         justifyContent: "center",

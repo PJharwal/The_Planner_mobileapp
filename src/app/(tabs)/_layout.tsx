@@ -125,27 +125,24 @@ export default function TabLayout() {
                 listeners={{ focus: () => handleTabPress(1) }}
             />
 
-            {/* Center Add Task Button - Custom rendered */}
+            {/* Center Add Task Button - Matches other tab icons */}
             <Tabs.Screen
                 name="add-task"
                 options={{
-                    tabBarButton: () => (
-                        <TouchableOpacity
-                            onPress={() => {
-                                if (Platform.OS !== 'web') {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                                }
-                                router.push('/focus/prepare');
-                            }}
-                            activeOpacity={0.8}
-                            style={styles.addButton}
-                        >
-                            <View style={styles.addButtonInner}>
-                                <Plus size={28} color="#FFFFFF" weight="bold" />
-                            </View>
-                        </TouchableOpacity>
+                    tabBarIcon: ({ focused, color }) => (
+                        <Plus size={ICON_SIZE} color={focused ? glassAccent.mint : color} weight={focused ? "fill" : "bold"} />
                     ),
                     tabBarAccessibilityLabel: "Add Task",
+                }}
+                listeners={{
+                    tabPress: (e) => {
+                        e.preventDefault();
+                        if (Platform.OS !== 'web') {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        }
+                        router.push('/focus/advanced');
+                    },
+                    focus: () => handleTabPress(2),
                 }}
             />
 
@@ -191,23 +188,5 @@ const styles = StyleSheet.create({
         backgroundColor: glassAccent.blue + '25',
         borderWidth: 1,
         borderColor: glassAccent.blue + '40',
-    },
-    addButton: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: -12,
-    },
-    addButtonInner: {
-        width: 52,
-        height: 52,
-        borderRadius: 26,
-        backgroundColor: glassAccent.mint,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: glassAccent.mint,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 12,
     },
 });

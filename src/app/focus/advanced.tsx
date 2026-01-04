@@ -11,7 +11,7 @@ import { spacing, typography } from '../../constants/theme';
 import { glassAccent, glassText, darkBackground } from '../../constants/glassTheme';
 import { useTimerStore, formatCountdown } from '../../store/timerStore';
 import { useCapacityStore } from '../../store/capacityStore';
-import { GlassButton, MeshGradientBackground } from '../../components/glass';
+import { GlassButton, GlassCard, MeshGradientBackground } from '../../components/glass';
 
 type FocusPhase = 'focus' | 'rest' | 'complete';
 
@@ -189,7 +189,7 @@ export default function AdvancedFocusScreen() {
             {/* Main Content */}
             <View style={styles.content}>
                 {phase === 'focus' && (
-                    <View style={styles.focusContent}>
+                    <GlassCard style={styles.timerCard} intensity="light">
                         <Text style={styles.phaseLabel}>
                             {isPaused ? 'PAUSED' : 'FOCUS'}
                         </Text>
@@ -204,11 +204,11 @@ export default function AdvancedFocusScreen() {
                         <View style={styles.progressContainer}>
                             <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
                         </View>
-                    </View>
+                    </GlassCard>
                 )}
 
                 {phase === 'rest' && (
-                    <View style={styles.restContent}>
+                    <GlassCard style={styles.timerCard} intensity="light">
                         <Ionicons name="cafe-outline" size={64} color={glassAccent.mint} />
                         <Text style={styles.restTitle}>
                             Take a Break
@@ -237,11 +237,11 @@ export default function AdvancedFocusScreen() {
                                 Skip Rest
                             </GlassButton>
                         </View>
-                    </View>
+                    </GlassCard>
                 )}
 
                 {phase === 'complete' && (
-                    <View style={styles.completeContent}>
+                    <GlassCard style={styles.timerCard} intensity="light">
                         <View style={styles.completeIcon}>
                             <Ionicons name="checkmark" size={48} color={glassText.inverse} />
                         </View>
@@ -269,7 +269,7 @@ export default function AdvancedFocusScreen() {
                                 Done for Now
                             </GlassButton>
                         </View>
-                    </View>
+                    </GlassCard>
                 )}
             </View>
 
@@ -335,6 +335,11 @@ const styles = StyleSheet.create({
     focusContent: {
         alignItems: 'center',
         width: '100%',
+    },
+    timerCard: {
+        alignItems: 'center',
+        width: '90%',
+        padding: spacing.xl,
     },
     phaseLabel: {
         color: glassAccent.mint,
