@@ -1,9 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { FocusSession } from '../types';
-import { handleError } from '../lib/errorHandler';
 
 const OFFLINE_QUEUE_KEY = 'offline_session_queue';
+
+// Helper to log errors silently (avoids circular dependency with errorHandler)
+const logSilent = (error: unknown, context: string) => {
+    if (__DEV__) {
+        console.warn(`[OfflineQueue:${context}]`, error);
+    }
+};
 
 interface QueuedSession {
     id: string; // Temporary ID
@@ -35,7 +41,7 @@ export const offlineQueue = {
                 console.log('Session added to offline queue');
             }
         } catch (error) {
-            await handleError.silent(error, { context: 'offlineQueue.add' });
+            logSilent(error, 'add');
         }
     },
 
@@ -71,10 +77,7 @@ export const offlineQueue = {
                         if (item.retryCount < 5) {
                             remainingQueue.push(item);
                         } else {
-                            await handleError.silent(error, {
-                                context: 'offlineQueue.process.maxRetries',
-                                itemId: item.id
-                            });
+                            logSilent(error, `maxRetries:${item.id}`);
                         }
                     } else {
                         if (__DEV__) {
@@ -82,7 +85,7 @@ export const offlineQueue = {
                         }
                     }
                 } catch (e) {
-                    await handleError.silent(e, { context: 'offlineQueue.process.networkError' });
+                    logSilent(e, 'networkError');
                     remainingQueue.push(item);
                 }
             }
@@ -91,7 +94,7 @@ export const offlineQueue = {
             await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(remainingQueue));
 
         } catch (error) {
-            await handleError.silent(error, { context: 'offlineQueue.process' });
+            logSilent(error, 'process');
         }
     },
 

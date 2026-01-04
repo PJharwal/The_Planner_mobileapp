@@ -43,7 +43,8 @@ export function TaskRow({
                         styles.title,
                         completed && styles.titleCompleted,
                     ]}
-                    numberOfLines={2}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                 >
                     {title}
                 </Text>

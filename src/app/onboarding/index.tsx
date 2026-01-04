@@ -28,6 +28,12 @@ export default function OnboardingScreen() {
 
     const currentQuestion = ONBOARDING_QUESTIONS[currentIndex];
     const isLastQuestion = currentIndex === ONBOARDING_QUESTIONS.length - 1;
+
+    // Safety check - if no questions or index out of bounds
+    if (!currentQuestion) {
+        return null;
+    }
+
     const canProceed = answers[currentQuestion.id] !== undefined && answers[currentQuestion.id] !== '';
 
     const handleAnswer = (value: string) => {

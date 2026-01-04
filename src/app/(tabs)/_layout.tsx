@@ -1,7 +1,7 @@
-import { Tabs } from "expo-router";
-import { View, StyleSheet, Platform, useWindowDimensions } from "react-native";
+import { Tabs, useRouter } from "expo-router";
+import { View, StyleSheet, Platform, useWindowDimensions, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { House, BookOpen, CalendarBlank, ChartBar, User } from "phosphor-react-native";
+import { House, ChartBar, Plus, Timer, CalendarBlank } from "phosphor-react-native";
 import { BlurView } from "expo-blur";
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -24,6 +24,7 @@ const TAB_COUNT = 5;
 export default function TabLayout() {
     const insets = useSafeAreaInsets();
     const { width: windowWidth } = useWindowDimensions();
+    const router = useRouter();
 
     // Extract shadow properties without Android elevation to prevent black borders
     const { elevation, ...floatingShadow } = glassElevation.floating;
@@ -114,14 +115,46 @@ export default function TabLayout() {
             />
 
             <Tabs.Screen
+                name="analytics"
+                options={{
+                    tabBarIcon: ({ focused, color }) => (
+                        <ChartBar size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
+                    ),
+                    tabBarAccessibilityLabel: "Analytics tab",
+                }}
+                listeners={{ focus: () => handleTabPress(1) }}
+            />
+
+            {/* Center Add Task Button - Matches other tab icons */}
+            <Tabs.Screen
+                name="add-task"
+                options={{
+                    tabBarIcon: ({ focused, color }) => (
+                        <Plus size={ICON_SIZE} color={focused ? glassAccent.mint : color} weight={focused ? "fill" : "bold"} />
+                    ),
+                    tabBarAccessibilityLabel: "Add Task",
+                }}
+                listeners={{
+                    tabPress: (e) => {
+                        e.preventDefault();
+                        if (Platform.OS !== 'web') {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        }
+                        router.push('/focus/advanced');
+                    },
+                    focus: () => handleTabPress(2),
+                }}
+            />
+
+            <Tabs.Screen
                 name="subjects"
                 options={{
                     tabBarIcon: ({ focused, color }) => (
-                        <BookOpen size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
+                        <Timer size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
                     ),
-                    tabBarAccessibilityLabel: "Subjects tab",
+                    tabBarAccessibilityLabel: "Focus tab",
                 }}
-                listeners={{ focus: () => handleTabPress(1) }}
+                listeners={{ focus: () => handleTabPress(3) }}
             />
 
             <Tabs.Screen
@@ -132,29 +165,15 @@ export default function TabLayout() {
                     ),
                     tabBarAccessibilityLabel: "Calendar tab",
                 }}
-                listeners={{ focus: () => handleTabPress(2) }}
+                listeners={{ focus: () => handleTabPress(4) }}
             />
 
-            <Tabs.Screen
-                name="analytics"
-                options={{
-                    tabBarIcon: ({ focused, color }) => (
-                        <ChartBar size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
-                    ),
-                    tabBarAccessibilityLabel: "Analytics tab",
-                }}
-                listeners={{ focus: () => handleTabPress(3) }}
-            />
-
+            {/* Profile hidden from tab bar - accessed via header */}
             <Tabs.Screen
                 name="profile"
                 options={{
-                    tabBarIcon: ({ focused, color }) => (
-                        <User size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
-                    ),
-                    tabBarAccessibilityLabel: "Profile tab",
+                    href: null, // Hide from tab bar
                 }}
-                listeners={{ focus: () => handleTabPress(4) }}
             />
         </Tabs>
     );
@@ -163,11 +182,11 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
     pill: {
         position: 'absolute',
-        height: TAB_BAR_HEIGHT - 16,    // Fit nicely with 8px margin top/bottom
-        top: 8,                         // 8px from top for centered look
-        borderRadius: (TAB_BAR_HEIGHT - 16) / 2,  // Perfect pill shape
-        backgroundColor: glassAccent.blue + '25',  // Soft blue with 15% opacity
+        height: TAB_BAR_HEIGHT - 16,
+        top: 8,
+        borderRadius: (TAB_BAR_HEIGHT - 16) / 2,
+        backgroundColor: glassAccent.blue + '25',
         borderWidth: 1,
-        borderColor: glassAccent.blue + '40',  // Subtle blue border
+        borderColor: glassAccent.blue + '40',
     },
 });

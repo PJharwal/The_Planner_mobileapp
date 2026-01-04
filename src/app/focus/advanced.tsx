@@ -11,7 +11,7 @@ import { spacing, typography } from '../../constants/theme';
 import { glassAccent, glassText, darkBackground } from '../../constants/glassTheme';
 import { useTimerStore, formatCountdown } from '../../store/timerStore';
 import { useCapacityStore } from '../../store/capacityStore';
-import { GlassButton, MeshGradientBackground } from '../../components/glass';
+import { GlassButton, GlassCard, MeshGradientBackground } from '../../components/glass';
 
 type FocusPhase = 'focus' | 'rest' | 'complete';
 
@@ -164,32 +164,32 @@ export default function AdvancedFocusScreen() {
             {/* Background - Mesh Gradient */}
             <MeshGradientBackground />
 
-            {/* Safe Area Top Controls */}
-            {showControls && phase !== 'complete' && (
-                <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
-                    <IconButton
-                        icon="close"
-                        size={28}
-                        iconColor={glassText.primary}
-                        onPress={handleExit}
-                    />
-                    <View style={styles.phaseIndicator}>
-                        <View style={[styles.phaseDot, phase === 'focus' && styles.phaseDotActive]} />
-                        <View style={[styles.phaseDot, phase === 'rest' && styles.phaseDotActive]} />
-                    </View>
-                    <IconButton
-                        icon={isPaused ? 'play' : 'pause'}
-                        size={28}
-                        iconColor={glassText.primary}
-                        onPress={handlePauseResume}
-                    />
-                </View>
-            )}
+            {/* Safe Area Top Controls - Always visible with back button */}
+            <View style={[styles.topBar, { paddingTop: insets.top + 8 }]}>
+                <Pressable onPress={handleExit} style={styles.backButton}>
+                    <Ionicons name="chevron-back" size={28} color={glassText.primary} />
+                    <Text style={styles.backText}>Back</Text>
+                </Pressable>
+                {phase !== 'complete' && (
+                    <>
+                        <View style={styles.phaseIndicator}>
+                            <View style={[styles.phaseDot, phase === 'focus' && styles.phaseDotActive]} />
+                            <View style={[styles.phaseDot, phase === 'rest' && styles.phaseDotActive]} />
+                        </View>
+                        {showControls && (
+                            <Pressable onPress={handlePauseResume} style={styles.controlButton}>
+                                <Ionicons name={isPaused ? 'play' : 'pause'} size={24} color={glassText.primary} />
+                            </Pressable>
+                        )}
+                    </>
+                )}
+                {phase === 'complete' && <View style={{ width: 80 }} />}
+            </View>
 
             {/* Main Content */}
             <View style={styles.content}>
                 {phase === 'focus' && (
-                    <View style={styles.focusContent}>
+                    <GlassCard style={styles.timerCard} intensity="light">
                         <Text style={styles.phaseLabel}>
                             {isPaused ? 'PAUSED' : 'FOCUS'}
                         </Text>
@@ -204,11 +204,11 @@ export default function AdvancedFocusScreen() {
                         <View style={styles.progressContainer}>
                             <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
                         </View>
-                    </View>
+                    </GlassCard>
                 )}
 
                 {phase === 'rest' && (
-                    <View style={styles.restContent}>
+                    <GlassCard style={styles.timerCard} intensity="light">
                         <Ionicons name="cafe-outline" size={64} color={glassAccent.mint} />
                         <Text style={styles.restTitle}>
                             Take a Break
@@ -237,11 +237,11 @@ export default function AdvancedFocusScreen() {
                                 Skip Rest
                             </GlassButton>
                         </View>
-                    </View>
+                    </GlassCard>
                 )}
 
                 {phase === 'complete' && (
-                    <View style={styles.completeContent}>
+                    <GlassCard style={styles.timerCard} intensity="light">
                         <View style={styles.completeIcon}>
                             <Ionicons name="checkmark" size={48} color={glassText.inverse} />
                         </View>
@@ -269,7 +269,7 @@ export default function AdvancedFocusScreen() {
                                 Done for Now
                             </GlassButton>
                         </View>
-                    </View>
+                    </GlassCard>
                 )}
             </View>
 
@@ -295,8 +295,23 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: spacing.sm,
+        paddingHorizontal: spacing.md,
         zIndex: 10,
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: spacing.xs,
+    },
+    backText: {
+        color: glassText.primary,
+        fontSize: 16,
+        marginLeft: 2,
+    },
+    controlButton: {
+        padding: spacing.sm,
+        width: 80,
+        alignItems: 'flex-end',
     },
     phaseIndicator: {
         flexDirection: 'row',
@@ -320,6 +335,11 @@ const styles = StyleSheet.create({
     focusContent: {
         alignItems: 'center',
         width: '100%',
+    },
+    timerCard: {
+        alignItems: 'center',
+        width: '90%',
+        padding: spacing.xl,
     },
     phaseLabel: {
         color: glassAccent.mint,

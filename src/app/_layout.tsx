@@ -1,11 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Slot, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import { useAuthStore } from "../store/authStore";
 import { useProfileStore } from "../store/profileStore";
-import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text, Animated, Easing } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 // Import glass theme tokens
 import { paperTheme } from "../constants/theme";
@@ -13,15 +14,76 @@ import { darkBackground, glassAccent, glassText } from "../constants/glassTheme"
 import { offlineQueue } from "../utils/offlineQueue";
 import { ToastContainer } from "../components/ui";
 import { useAppFonts } from "../constants/fonts";
+import { MeshGradientBackground } from "../components/glass";
+
+// Custom animated loading screen with book icon
+function LoadingScreen({ fontError }: { fontError: Error | null }) {
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+    const progressAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        // Pulsing animation for book icon
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, {
+                    toValue: 1.1,
+                    duration: 800,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+                Animated.timing(pulseAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    easing: Easing.inOut(Easing.ease),
+                    useNativeDriver: true,
+                }),
+            ])
+        ).start();
+
+        // Progress line animation
+        Animated.loop(
+            Animated.timing(progressAnim, {
+                toValue: 1,
+                duration: 1500,
+                easing: Easing.inOut(Easing.ease),
+                useNativeDriver: false,
+            })
+        ).start();
+    }, []);
+
+    const progressWidth = progressAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: ['0%', '100%'],
+    });
+
+    return (
+        <View style={styles.loadingContainer}>
+            <MeshGradientBackground />
+            <Animated.View style={[styles.bookContainer, { transform: [{ scale: pulseAnim }] }]}>
+                <Ionicons name="book" size={48} color={glassAccent.mint} />
+            </Animated.View>
+            <Text style={styles.loadingText}>The Planner</Text>
+            <View style={styles.progressContainer}>
+                <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
+            </View>
+            {fontError && (
+                <Text style={styles.errorText}>Font loading error</Text>
+            )}
+        </View>
+    );
+}
 
 export default function RootLayout() {
     const { isLoading: authLoading, isAuthenticated, initialize } = useAuthStore();
-    const { hasCompletedOnboarding, checkOnboardingStatus } = useProfileStore();
+    const { hasCompletedOnboarding, checkOnboardingStatus, isLoading: profileLoading } = useProfileStore();
     const segments = useSegments();
     const router = useRouter();
 
     // Load custom fonts (Figtree)
     const { fontsLoaded, fontError } = useAppFonts();
+
+    // Track if we've checked onboarding status
+    const [onboardingChecked, setOnboardingChecked] = useState(false);
 
     useEffect(() => {
         initialize();
@@ -31,37 +93,52 @@ export default function RootLayout() {
         }, 5000); // 5s delay to allow connection
     }, []);
 
+    // Check onboarding status when user authenticates
+    useEffect(() => {
+        if (isAuthenticated && !onboardingChecked) {
+            checkOnboardingStatus().then(() => {
+                setOnboardingChecked(true);
+            });
+        }
+        if (!isAuthenticated) {
+            setOnboardingChecked(false);
+        }
+    }, [isAuthenticated]);
+
     useEffect(() => {
         if (authLoading || !fontsLoaded) return;
 
         const inAuthGroup = segments[0] === "(auth)";
         const inOnboarding = segments[0] === "onboarding";
 
-        // Simple auth redirection logic
+        // Not authenticated -> go to login
         if (!isAuthenticated && !inAuthGroup) {
             router.replace("/(auth)/login");
-        } else if (isAuthenticated && inAuthGroup) {
-            checkOnboardingStatus().then(completed => {
-                if (!completed) {
+            return;
+        }
+
+        // Authenticated and in auth group -> check onboarding and redirect
+        if (isAuthenticated && inAuthGroup) {
+            if (onboardingChecked) {
+                if (!hasCompletedOnboarding) {
                     router.replace("/onboarding");
                 } else {
                     router.replace("/(tabs)");
                 }
-            });
-        } else if (isAuthenticated && !inOnboarding && !hasCompletedOnboarding) {
+            }
+            return;
+        }
+
+        // Authenticated, not in auth or onboarding, but hasn't completed onboarding
+        if (isAuthenticated && !inOnboarding && onboardingChecked && !hasCompletedOnboarding) {
             router.replace("/onboarding");
         }
-    }, [isAuthenticated, segments, authLoading, hasCompletedOnboarding, fontsLoaded]);
+    }, [isAuthenticated, segments, authLoading, hasCompletedOnboarding, fontsLoaded, onboardingChecked]);
 
     // Show loading while fonts or auth are loading
     if (authLoading || !fontsLoaded) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={glassAccent.mint} />
-                {fontError && (
-                    <Text style={styles.errorText}>Font loading error</Text>
-                )}
-            </View>
+            <LoadingScreen fontError={fontError} />
         );
     }
 
@@ -88,10 +165,40 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: darkBackground.primary,
+        backgroundColor: 'transparent',
+    },
+    bookContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: `${glassAccent.mint}15`,
+        borderWidth: 1,
+        borderColor: `${glassAccent.mint}30`,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 24,
+    },
+    loadingText: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: glassText.primary,
+        marginBottom: 32,
+        letterSpacing: -0.5,
+    },
+    progressContainer: {
+        width: 200,
+        height: 4,
+        backgroundColor: `${glassAccent.mint}20`,
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    progressBar: {
+        height: '100%',
+        backgroundColor: glassAccent.mint,
+        borderRadius: 2,
     },
     errorText: {
-        marginTop: 12,
+        marginTop: 20,
         color: glassText.secondary,
         fontSize: 14,
     },

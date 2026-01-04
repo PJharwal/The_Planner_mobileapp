@@ -505,7 +505,15 @@ export default function HomeScreen() {
                             <Text variant="bodyMedium" style={{ color: glassText.secondary }}>
                                 {format(new Date(), "EEEE, MMMM d")}
                             </Text>
-                            <StreakIcon onPress={() => setStreakModalVisible(true)} />
+                            <View style={styles.headerIcons}>
+                                <StreakIcon onPress={() => setStreakModalVisible(true)} />
+                                <TouchableOpacity
+                                    onPress={() => router.push('/(tabs)/profile')}
+                                    style={styles.profileButton}
+                                >
+                                    <Ionicons name="person-circle-outline" size={28} color={glassText.secondary} />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                         <TouchableOpacity onPress={handleOpenNameModal} style={styles.greetingRow}>
                             <Text variant="headlineLarge" style={styles.greeting}>
@@ -659,20 +667,11 @@ export default function HomeScreen() {
                     <View style={styles.statsRow}>
                         <GlassCard style={styles.statCard} bordered={false} intensity="light">
                             <View style={styles.statHeader}>
-                                <Ionicons name="checkmark-circle" size={18} color={glassText.secondary} />
+                                <Ionicons name="checkmark-circle" size={18} color={glassAccent.mint} />
                                 <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Today</Text>
                             </View>
                             <Text variant="titleLarge" style={styles.statValue}>{completedCount}/{totalCount}</Text>
                             <ProgressBar progress={progress} color={glassAccent.mint} height={4} style={{ marginTop: 8 }} />
-                        </GlassCard>
-                        <GlassCard style={styles.statCard} bordered={false} intensity="light">
-                            <View style={styles.statHeader}>
-                                <Ionicons name="flame" size={18} color={glassAccent.warm} />
-                                <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Streak</Text>
-                            </View>
-                            <Text variant="titleLarge" style={styles.statValue}>
-                                {isLoadingStreak ? "-" : `${streak}d`}
-                            </Text>
                         </GlassCard>
                         <TouchableOpacity style={{ flex: 1 }} onPress={() => (router as any).push("/focus")}>
                             <GlassCard style={styles.statCard} bordered={false} intensity="medium">
@@ -891,6 +890,8 @@ const styles = StyleSheet.create({
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 16, paddingTop: 60, paddingBottom: 16 }, // ✅ Canonical inset
     headerTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+    headerIcons: { flexDirection: "row", alignItems: "center", gap: 8 },
+    profileButton: { padding: 4 },
     greetingRow: { flexDirection: "row", alignItems: "center" },
     greeting: { color: glassText.primary, fontWeight: "bold" },
     searchContainer: { paddingHorizontal: 16, marginBottom: 24, zIndex: 10 }, // ✅ Canonical inset

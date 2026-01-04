@@ -61,7 +61,7 @@ export function StreakIcon({ onPress }: StreakIconProps) {
     }, [streakDays, intensity]);
 
     const animatedStyle = useAnimatedStyle(() => ({
-        shadowOpacity: glowOpacity.value,
+        shadowOpacity: Math.min(glowOpacity.value, 0.25), // Max 0.25 per spec
         shadowRadius: 8 + glowOpacity.value * 8,
         shadowColor: flameColor,
         shadowOffset: { width: 0, height: 0 },
@@ -76,30 +76,20 @@ export function StreakIcon({ onPress }: StreakIconProps) {
             accessibilityHint="Tap to view streak details"
             accessibilityRole="button"
         >
-            <View style={[
-                styles.iconContainer,
-                isActive && { backgroundColor: `${flameColor}20` }
-            ]}>
-                <Ionicons
-                    name={isActive ? 'flame' : 'flame-outline'}
-                    size={22}
-                    color={flameColor}
-                />
-            </View>
+            <Ionicons
+                name={isActive ? 'flame' : 'flame-outline'}
+                size={22}
+                color={flameColor}
+            />
         </AnimatedPressable>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        padding: 4,
-    },
-    iconContainer: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 44,
+        height: 44,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'transparent',
     },
 });
