@@ -44,6 +44,11 @@ export default function AdvancedFocusScreen() {
     const breakDuration = (capacity?.default_break_minutes || 5) * 60;
     const taskTitle = params.taskTitle as string || 'Focus Session';
 
+    // Calculate remaining time (use duration if timer hasn't started yet)
+    const effectiveTarget = targetDuration > 0 ? targetDuration : duration;
+    const remaining = Math.max(0, effectiveTarget - elapsed);
+    const progress = effectiveTarget > 0 ? elapsed / effectiveTarget : 0;
+
     useEffect(() => {
         // Auto-start timer
         if (!isRunning && phase === 'focus') {
@@ -133,9 +138,6 @@ export default function AdvancedFocusScreen() {
             taskTitle: taskTitle,
         });
     };
-
-    const remaining = targetDuration - elapsed;
-    const progress = targetDuration > 0 ? elapsed / targetDuration : 0;
 
     // Check capacity warning
     const isOverCapacity = usage.isOverFocusLimit || usage.isOverTaskLimit;

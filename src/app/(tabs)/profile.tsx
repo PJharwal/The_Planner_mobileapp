@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     scrollContent: { paddingBottom: 100 },
     header: { paddingHorizontal: 24, paddingTop: 60, paddingBottom: 24 },
     title: { color: text.primary, fontWeight: "bold" },
-    userCard: { marginHorizontal: 24, marginBottom: 20, padding: 16 },
+    userCard: { marginHorizontal: 24, marginBottom: 20 },
     userContent: { flexDirection: "row", alignItems: "center" },
     userInfo: { marginLeft: 16, flex: 1 },
     userName: { color: text.primary, fontWeight: "600" },
@@ -273,7 +273,6 @@ const styles = StyleSheet.create({
     planCard: {
         marginHorizontal: 24,
         marginBottom: 20,
-        padding: 16
     },
     planContent: {
         flexDirection: "row",

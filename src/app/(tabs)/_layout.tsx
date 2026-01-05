@@ -10,9 +10,13 @@ import Animated, {
     useSharedValue,
     withTiming
 } from "react-native-reanimated";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 import { glassElevation } from "../../constants/glassElevation";
+import { StartSessionModal, SessionConfig } from "../../components/session/StartSessionModal";
+import { useProfileStore } from "../../store/profileStore";
+import { ADAPTIVE_PLANS } from "../../utils/adaptivePlans";
+import { useModalStore } from "../../store/modalStore";
 
 const ICON_SIZE = 25;
 const TAB_BAR_HEIGHT = 62;
@@ -25,6 +29,10 @@ export default function TabLayout() {
     const insets = useSafeAreaInsets();
     const { width: windowWidth } = useWindowDimensions();
     const router = useRouter();
+    const { profile } = useProfileStore();
+
+    // Start Session Modal - now using global store
+    const { openStartSession } = useModalStore();
 
     // Extract shadow properties without Android elevation to prevent black borders
     const { elevation, ...floatingShadow } = glassElevation.floating;
@@ -57,125 +65,127 @@ export default function TabLayout() {
     };
 
     return (
-        <Tabs
-            screenOptions={{
-                headerShown: false,
-                tabBarShowLabel: false,
-                tabBarStyle: {
-                    position: "absolute",
-                    bottom: TAB_BAR_BOTTOM_MARGIN + insets.bottom + 12,
-                    left: TAB_BAR_HORIZONTAL_PADDING,
-                    right: TAB_BAR_HORIZONTAL_PADDING,
-                    height: TAB_BAR_HEIGHT,
-                    borderRadius: TAB_BAR_RADIUS,
-                    backgroundColor: glass.background.strong, // Ensure opacity isn't too high to show pill
-                    borderWidth: 1,
-                    borderColor: glass.border.softBlue,
-                    overflow: 'hidden',
-                    paddingHorizontal: 0, // Ensure no native padding
-                    paddingTop: 0,
-                    paddingBottom: 0,
-                    ...floatingShadow, // ✅ Using unified shadow (no Android elevation)
-                },
-                tabBarItemStyle: {
-                    flex: 1,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: 5,
-                    margin: 5,
-                },
-                tabBarBackground: () => (
-                    Platform.OS !== 'web' ? (
-                        <BlurView
-                            intensity={30} // Lower intensity so pill is visible "inside" glass
-                            tint="dark"
-                            style={StyleSheet.absoluteFill}
-                        >
-                            <Animated.View style={[
-                                styles.pill,
-                                animatedPillStyle,
-                                { left: (tabSlotWidth - pillWidth) / 2 } // Center pill in first slot
-                            ]} />
-                        </BlurView>
-                    ) : null
-                ),
-                tabBarActiveTintColor: glassAccent.blue,
-                tabBarInactiveTintColor: glassText.muted,
-            }}
-        >
-            <Tabs.Screen
-                name="index"
-                options={{
-                    tabBarIcon: ({ focused, color }) => (
-                        <House size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
-                    ),
-                    tabBarAccessibilityLabel: "Home tab",
-                }}
-                listeners={{ focus: () => handleTabPress(0) }}
-            />
-
-            <Tabs.Screen
-                name="analytics"
-                options={{
-                    tabBarIcon: ({ focused, color }) => (
-                        <ChartBar size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
-                    ),
-                    tabBarAccessibilityLabel: "Analytics tab",
-                }}
-                listeners={{ focus: () => handleTabPress(1) }}
-            />
-
-            {/* Center Add Task Button - Matches other tab icons */}
-            <Tabs.Screen
-                name="add-task"
-                options={{
-                    tabBarIcon: ({ focused, color }) => (
-                        <Plus size={ICON_SIZE} color={focused ? glassAccent.mint : color} weight={focused ? "fill" : "bold"} />
-                    ),
-                    tabBarAccessibilityLabel: "Add Task",
-                }}
-                listeners={{
-                    tabPress: (e) => {
-                        e.preventDefault();
-                        if (Platform.OS !== 'web') {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                        }
-                        router.push('/focus/advanced');
+        <>
+            <Tabs
+                screenOptions={{
+                    headerShown: false,
+                    tabBarShowLabel: false,
+                    tabBarStyle: {
+                        position: "absolute",
+                        bottom: TAB_BAR_BOTTOM_MARGIN + insets.bottom + 12,
+                        left: TAB_BAR_HORIZONTAL_PADDING,
+                        right: TAB_BAR_HORIZONTAL_PADDING,
+                        height: TAB_BAR_HEIGHT,
+                        borderRadius: TAB_BAR_RADIUS,
+                        backgroundColor: glass.background.strong, // Ensure opacity isn't too high to show pill
+                        borderWidth: 1,
+                        borderColor: glass.border.softBlue,
+                        overflow: 'hidden',
+                        paddingHorizontal: 0, // Ensure no native padding
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        ...floatingShadow, // ✅ Using unified shadow (no Android elevation)
                     },
-                    focus: () => handleTabPress(2),
-                }}
-            />
-
-            <Tabs.Screen
-                name="subjects"
-                options={{
-                    tabBarIcon: ({ focused, color }) => (
-                        <Timer size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
+                    tabBarItemStyle: {
+                        flex: 1,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 5,
+                        margin: 5,
+                    },
+                    tabBarBackground: () => (
+                        Platform.OS !== 'web' ? (
+                            <BlurView
+                                intensity={30} // Lower intensity so pill is visible "inside" glass
+                                tint="dark"
+                                style={StyleSheet.absoluteFill}
+                            >
+                                <Animated.View style={[
+                                    styles.pill,
+                                    animatedPillStyle,
+                                    { left: (tabSlotWidth - pillWidth) / 2 } // Center pill in first slot
+                                ]} />
+                            </BlurView>
+                        ) : null
                     ),
-                    tabBarAccessibilityLabel: "Focus tab",
+                    tabBarActiveTintColor: glassAccent.blue,
+                    tabBarInactiveTintColor: glassText.muted,
                 }}
-                listeners={{ focus: () => handleTabPress(3) }}
-            />
+            >
+                <Tabs.Screen
+                    name="index"
+                    options={{
+                        tabBarIcon: ({ focused, color }) => (
+                            <House size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
+                        ),
+                        tabBarAccessibilityLabel: "Home tab",
+                    }}
+                    listeners={{ focus: () => handleTabPress(0) }}
+                />
 
-            <Tabs.Screen
-                name="notes"
-                options={{
-                    tabBarIcon: ({ focused, color }) => (
-                        <CalendarBlank size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
-                    ),
-                    tabBarAccessibilityLabel: "Calendar tab",
-                }}
-                listeners={{ focus: () => handleTabPress(4) }}
-            />
+                <Tabs.Screen
+                    name="analytics"
+                    options={{
+                        tabBarIcon: ({ focused, color }) => (
+                            <ChartBar size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
+                        ),
+                        tabBarAccessibilityLabel: "Analytics tab",
+                    }}
+                    listeners={{ focus: () => handleTabPress(1) }}
+                />
 
-            {/* Profile hidden from tab bar - accessed via header */}
-            <Tabs.Screen
-                name="profile"
-                options={{
-                    href: null, // Hide from tab bar
-                }}
-            />
-        </Tabs>
+                {/* Center Add Task Button - Matches other tab icons */}
+                <Tabs.Screen
+                    name="add-task"
+                    options={{
+                        tabBarIcon: ({ focused, color }) => (
+                            <Plus size={ICON_SIZE} color={focused ? glassAccent.mint : color} weight={focused ? "fill" : "bold"} />
+                        ),
+                        tabBarAccessibilityLabel: "Add Task",
+                    }}
+                    listeners={{
+                        tabPress: (e) => {
+                            e.preventDefault();
+                            if (Platform.OS !== 'web') {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                            }
+                            openStartSession();
+                        },
+                        focus: () => handleTabPress(2),
+                    }}
+                />
+
+                <Tabs.Screen
+                    name="subjects"
+                    options={{
+                        tabBarIcon: ({ focused, color }) => (
+                            <Timer size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
+                        ),
+                        tabBarAccessibilityLabel: "Focus tab",
+                    }}
+                    listeners={{ focus: () => handleTabPress(3) }}
+                />
+
+                <Tabs.Screen
+                    name="notes"
+                    options={{
+                        tabBarIcon: ({ focused, color }) => (
+                            <CalendarBlank size={ICON_SIZE} color={color} weight={focused ? "fill" : "regular"} />
+                        ),
+                        tabBarAccessibilityLabel: "Calendar tab",
+                    }}
+                    listeners={{ focus: () => handleTabPress(4) }}
+                />
+
+                {/* Profile hidden from tab bar - accessed via header */}
+                <Tabs.Screen
+                    name="profile"
+                    options={{
+                        href: null, // Hide from tab bar
+                    }}
+                />
+            </Tabs>
+        </>
     );
 }
 

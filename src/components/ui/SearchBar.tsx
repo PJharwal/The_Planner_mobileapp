@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { glassText } from '../../constants/glassTheme';
-import { GlassCard } from '../glass/GlassCard';
+
 import { GlassInput } from '../glass/GlassInput';
 
 interface SearchBarProps {
@@ -34,11 +34,7 @@ export function SearchBar({
     };
 
     return (
-        <GlassCard
-            intensity="light"
-            bordered={false}
-            style={[styles.container, style]}
-        >
+        <View style={[styles.container, style]}>
             <GlassInput
                 value={value}
                 onChangeText={onChangeText}
@@ -64,13 +60,12 @@ export function SearchBar({
                     <Ionicons name="close-circle" size={18} color={glassText.muted} />
                 </TouchableOpacity>
             )}
-        </GlassCard>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        borderRadius: 20, // Rounded for search bar
         padding: 0,
         overflow: 'hidden',
         justifyContent: 'center',

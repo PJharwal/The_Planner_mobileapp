@@ -138,7 +138,7 @@ export default function OnboardingScreen() {
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={[styles.sectionBadge, { backgroundColor: glassAccent.mintGlow }]}>
-                        <Ionicons name="sparkles" size={14} color={glassAccent.mint} />
+                        {/* <Ionicons name="sparkles" size={14} color={glassAccent.mint} /> */}
                         <Text variant="labelSmall" style={[styles.sectionText, { color: glassAccent.mint }]}>
                             {currentQuestion.section}
                         </Text>

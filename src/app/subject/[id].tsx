@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, TouchableOpacity } from "react-native";
-import { Text, Portal, Modal, TextInput, IconButton } from "react-native-paper";
+import { Text, Portal, Modal, IconButton } from "react-native-paper";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSubjectStore } from "../../store/subjectStore";
@@ -9,7 +9,7 @@ import { useSubjectStore } from "../../store/subjectStore";
 import { spacing, borderRadius, shadows } from "../../constants/theme";
 import { darkBackground, glassAccent, glassText, glass } from "../../constants/glassTheme";
 // UI Components
-import { GlassCard, GlassButton } from "../../components/glass";
+import { GlassCard, GlassButton, GlassInput, MeshGradientBackground } from "../../components/glass";
 
 export default function SubjectDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -55,7 +55,8 @@ export default function SubjectDetailScreen() {
                 <Stack.Screen
                     options={{
                         title: currentSubject.name,
-                        headerStyle: { backgroundColor: darkBackground.primary },
+                        headerStyle: { backgroundColor: 'transparent' },
+                        headerTransparent: true,
                         headerTintColor: glassText.primary,
                         headerShadowVisible: false,
                         headerBackVisible: false,
@@ -74,6 +75,8 @@ export default function SubjectDetailScreen() {
                         ),
                     }}
                 />
+
+                <MeshGradientBackground />
 
                 <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                     {/* Subject Header */}
@@ -142,16 +145,11 @@ export default function SubjectDetailScreen() {
                 <Portal>
                     <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modal}>
                         <Text variant="titleLarge" style={styles.modalTitle}>Add Topic</Text>
-                        <TextInput
+                        <GlassInput
                             label="Topic name"
                             value={newTopicName}
                             onChangeText={setNewTopicName}
-                            mode="outlined"
                             style={styles.modalInput}
-                            outlineColor={glass.border.light}
-                            activeOutlineColor={glassAccent.mint}
-                            textColor={glassText.primary}
-                            theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
                         <GlassButton variant="primary" onPress={handleCreateTopic} loading={isCreating} fullWidth>
                             Add Topic
@@ -169,7 +167,7 @@ const styles = StyleSheet.create({
     loading: { color: glassText.secondary },
     scrollContent: { paddingBottom: 100 },
     // Header Card
-    headerCard: { marginHorizontal: spacing.lg, marginTop: spacing.md },
+    headerCard: { marginHorizontal: 16, marginTop: 120 },
     subjectHeader: { flexDirection: "row", alignItems: "center", padding: spacing.md },
     iconContainer: { width: 56, height: 56, borderRadius: borderRadius.md, alignItems: "center", justifyContent: "center", marginRight: spacing.md },
     subjectIcon: { fontSize: 28 },
@@ -177,7 +175,7 @@ const styles = StyleSheet.create({
     subjectName: { color: glassText.primary, fontWeight: "600" },
     topicCount: { color: glassText.secondary, marginTop: 2 },
     // Section
-    section: { paddingHorizontal: spacing.lg, marginTop: spacing.lg },
+    section: { paddingHorizontal: 16, marginTop: spacing.lg },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.md },
     sectionTitle: { color: glassText.primary, fontWeight: "600" },
     // Empty State
@@ -188,7 +186,7 @@ const styles = StyleSheet.create({
     emptyHint: { color: glassText.secondary, marginTop: 4 },
     // Topic Cards
     topicCard: { marginBottom: spacing.sm, padding: 0 },
-    topicContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    topicContent: { flexDirection: "row", alignItems: "center", padding: 16 },
     topicNumber: { width: 40, height: 40, borderRadius: borderRadius.sm, alignItems: "center", justifyContent: "center", marginRight: spacing.md },
     topicNumberText: { fontWeight: "600", fontSize: 16 },
     topicInfo: { flex: 1 },

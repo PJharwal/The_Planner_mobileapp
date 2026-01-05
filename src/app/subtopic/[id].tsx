@@ -15,7 +15,7 @@ import { spacing, borderRadius, shadows } from "../../constants/theme";
 import { glassAccent, glassText, darkBackground, glass } from "../../constants/glassTheme";
 // UI Components
 import { Chip, Checkbox } from "../../components/ui";
-import { GlassCard, GlassButton } from "../../components/glass";
+import { GlassCard, GlassButton, MeshGradientBackground } from "../../components/glass";
 
 export default function SubTopicDetailScreen() {
     const { id } = useLocalSearchParams<{ id: string }>();
@@ -162,7 +162,8 @@ export default function SubTopicDetailScreen() {
                 <Stack.Screen
                     options={{
                         title: subTopic?.name || "Sub-Topic",
-                        headerStyle: { backgroundColor: darkBackground.primary },
+                        headerStyle: { backgroundColor: 'transparent' },
+                        headerTransparent: true,
                         headerTintColor: glassText.primary,
                         headerShadowVisible: false,
                         headerLeft: () => (
@@ -179,6 +180,8 @@ export default function SubTopicDetailScreen() {
                         ),
                     }}
                 />
+
+                <MeshGradientBackground />
 
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
@@ -322,13 +325,13 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { paddingBottom: 100 },
     // Header
-    headerCard: { marginHorizontal: spacing.md, marginTop: spacing.md, borderRadius: borderRadius.lg },
+    headerCard: { marginHorizontal: 16, marginTop: 120, borderRadius: borderRadius.lg },
     headerContent: { padding: spacing.md },
     breadcrumb: { color: glassText.secondary, marginBottom: 4 },
     title: { color: glassText.primary, fontWeight: "600" },
     statsRow: { flexDirection: "row", alignItems: "center", marginTop: spacing.sm, gap: spacing.sm },
     // Section
-    section: { paddingHorizontal: spacing.md, marginTop: spacing.lg },
+    section: { paddingHorizontal: 16, marginTop: spacing.lg },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
     sectionTitle: { color: glassText.primary, fontWeight: "600" },
     // Empty State
@@ -341,7 +344,7 @@ const styles = StyleSheet.create({
     // Task Cards
     taskCard: { marginBottom: spacing.sm, padding: 0 },
     taskCompleted: { opacity: 0.6 },
-    taskContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    taskContent: { flexDirection: "row", alignItems: "center", padding: 16 },
     taskInfo: { flex: 1, marginLeft: spacing.xs },
     taskTitle: { color: glassText.primary },
     taskTitleCompleted: { color: glassText.muted, textDecorationLine: "line-through" },

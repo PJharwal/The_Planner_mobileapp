@@ -141,9 +141,11 @@ export default function SubjectsScreen() {
                                 <Text variant="bodyMedium" style={{ color: glassText.secondary, textAlign: "center", marginTop: 12 }}>
                                     No subjects yet.{"\n"}Start by adding your first subject.
                                 </Text>
-                                <GlassButton onPress={() => setModalVisible(true)} style={{ marginTop: 20 }}>
-                                    Add Subject
-                                </GlassButton>
+                                <View style={{display: "flex", justifyContent: "center", alignItems: "center", marginTop: 20}}>
+                                    <GlassButton onPress={() => setModalVisible(true)}>
+                                        Add Subject
+                                    </GlassButton>  
+                                </View>
                             </View>
                         </GlassCard>
                     ) : (

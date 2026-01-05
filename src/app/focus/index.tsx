@@ -17,6 +17,7 @@ import { darkBackground, glass, glassAccent, glassText } from "../../constants/g
 // UI Components
 import { Chip, SessionQualityModal } from "../../components/ui";
 // Note: We use GlassCard/GlassButton instead of Card/Button
+import { MeshGradientBackground } from "../../components/glass";
 import { GlassCard, GlassButton } from "../../components/glass";
 import { saveFocusSession } from "../../utils/sessionTaskLinker";
 import { SessionQualityPrompt } from "../../components/session/SessionQualityPrompt";
@@ -213,10 +214,12 @@ export default function FocusModeScreen() {
 
     return (
         <View style={styles.container}>
+            <MeshGradientBackground />
             <Stack.Screen
                 options={{
                     title: "Focus Mode",
-                    headerStyle: { backgroundColor: darkBackground.primary },
+                    headerStyle: { backgroundColor: 'transparent' },
+                    headerTransparent: true,
                     headerTintColor: glassText.primary,
                     headerShadowVisible: false,
                     headerLeft: () => (
@@ -529,7 +532,7 @@ export default function FocusModeScreen() {
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { paddingBottom: 100 },
-    timerSection: { alignItems: "center", paddingTop: 40, paddingBottom: spacing.lg },
+    timerSection: { alignItems: "center", paddingTop: 150, paddingBottom: spacing.lg },
     timerRing: {
         width: 200,
         height: 200,

@@ -1,7 +1,7 @@
 // Topic Detail Screen - Shows Sub-Topics
 import { useEffect, useState, useCallback } from "react";
 import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, RefreshControl, TouchableOpacity } from "react-native";
-import { Text, Portal, Modal, TextInput, IconButton, Snackbar } from "react-native-paper";
+import { Text, Portal, Modal, IconButton, Snackbar } from "react-native-paper";
 import { useLocalSearchParams, Stack, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
@@ -14,7 +14,7 @@ import { spacing, borderRadius, shadows } from "../../constants/theme";
 import { glassAccent, glassText, darkBackground, glass } from "../../constants/glassTheme";
 // UI Components
 import { Chip, ProgressBar } from "../../components/ui";
-import { GlassCard, GlassButton } from "../../components/glass";
+import { GlassCard, GlassButton, GlassInput, MeshGradientBackground } from "../../components/glass";
 
 interface SubTopicWithCount extends SubTopic {
     taskCount: number;
@@ -138,7 +138,8 @@ export default function TopicDetailScreen() {
                 <Stack.Screen
                     options={{
                         title: topicName || "Topic",
-                        headerStyle: { backgroundColor: darkBackground.primary },
+                        headerStyle: { backgroundColor: 'transparent' },
+                        headerTransparent: true,
                         headerTintColor: glassText.primary,
                         headerShadowVisible: false,
                         headerLeft: () => (
@@ -155,6 +156,8 @@ export default function TopicDetailScreen() {
                         ),
                     }}
                 />
+
+                <MeshGradientBackground />
 
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
@@ -249,17 +252,12 @@ export default function TopicDetailScreen() {
                 <Portal>
                     <Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modal}>
                         <Text variant="titleLarge" style={styles.modalTitle}>Add Sub-Topic</Text>
-                        <TextInput
+                        <GlassInput
                             label="Sub-topic name"
                             value={newSubTopicName}
                             onChangeText={setNewSubTopicName}
-                            mode="outlined"
                             style={styles.modalInput}
                             placeholder="e.g., Quadratic Equations"
-                            outlineColor={glass.border.light}
-                            activeOutlineColor={glassAccent.mint}
-                            textColor={glassText.primary}
-                            theme={{ colors: { background: darkBackground.primary, placeholder: glassText.secondary, text: glassText.primary } }}
                         />
                         <View style={styles.modalButtons}>
                             <GlassButton variant="ghost" onPress={() => setModalVisible(false)} style={{ flex: 1 }}>
@@ -289,7 +287,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: darkBackground.primary },
     scrollContent: { paddingBottom: 100 },
     // Header
-    headerCard: { marginHorizontal: spacing.md, marginTop: spacing.md, borderRadius: borderRadius.lg },
+    headerCard: { marginHorizontal: 16, marginTop: 120, borderRadius: borderRadius.lg },
     headerContent: { padding: spacing.md },
     breadcrumb: { color: glassText.secondary, marginBottom: 4 },
     title: { color: glassText.primary, fontWeight: "600" },
@@ -297,7 +295,7 @@ const styles = StyleSheet.create({
     progressBar: { height: 6, borderRadius: 3 },
     addAllButton: { marginTop: spacing.sm },
     // Section
-    section: { paddingHorizontal: spacing.md, marginTop: spacing.lg },
+    section: { paddingHorizontal: 16, marginTop: spacing.lg },
     sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
     sectionTitle: { color: glassText.primary, fontWeight: "600" },
     // Empty State
@@ -309,7 +307,7 @@ const styles = StyleSheet.create({
     emptyButton: { marginTop: spacing.md },
     // Sub-Topic Cards
     subTopicCard: { marginBottom: spacing.sm, padding: 0 },
-    subTopicContent: { padding: spacing.md },
+    subTopicContent: { padding: 16 },
     subTopicHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     subTopicInfo: { flex: 1 },
     subTopicName: { color: glassText.primary },

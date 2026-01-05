@@ -56,7 +56,7 @@ export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
         question: 'How hard is it for you to stay focused?',
         helper: 'Be honest - this helps us adjust session lengths.',
         type: 'multiple_choice',
-        layout: 'scale',
+        layout: 'card',
         field: 'focus_difficulty',
         options: [
             { value: 'easy', label: 'Easy' },
@@ -102,7 +102,7 @@ export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
         question: 'How much focused work can you realistically do per day?',
         helper: 'Think about your actual capacity.',
         type: 'multiple_choice',
-        layout: 'scale',
+        layout: 'card',
         field: 'daily_focus_capacity',
         options: [
             { value: 'less_1h', label: '< 1h' },
@@ -133,7 +133,7 @@ export const ONBOARDING_QUESTIONS: OnboardingQuestion[] = [
         question: 'How long do you usually follow a plan before breaking it?',
         helper: 'No judgment.',
         type: 'multiple_choice',
-        layout: 'scale',
+        layout: 'card',
         field: 'consistency_span',
         options: [
             { value: '1_2_days', label: '1-2d' },

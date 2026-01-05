@@ -346,7 +346,7 @@ export function StartSessionModal({
 
 const styles = StyleSheet.create({
     content: {
-        flex: 1,
+        // Removed flex: 1 - ScrollView should grow with content
     },
     header: {
         flexDirection: 'row',

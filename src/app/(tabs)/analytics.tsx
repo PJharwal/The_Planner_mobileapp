@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     statValue: { color: glassText.primary, fontWeight: "bold", marginTop: 4 },
 
     // Reviews
-    reviewCard: { marginHorizontal: 24, marginBottom: 16, padding: 16 },
+    reviewCard: { marginHorizontal: 16, marginBottom: 24, padding: 16 },
     reviewHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
     reviewTitleRow: { flexDirection: "row", alignItems: "center" },
     reviewStats: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
     insightText: { color: glassText.secondary, marginLeft: 8 },
 
     // Charts
-    chartCard: { marginHorizontal: 24, marginBottom: 16, padding: 16 },
+    chartCard: { marginHorizontal: 16, marginBottom: 24, padding: 16 },
     chartTitle: { color: glassText.primary, fontWeight: "600", marginBottom: 16, marginLeft: 8 },
     chartContainer: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", height: 120 },
     barContainer: { flex: 1, alignItems: "center" },
