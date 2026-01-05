@@ -44,6 +44,7 @@ export function QuestionCard({ question, value, onAnswer }: QuestionCardProps) {
                                         isSelected && styles.scaleOptionSelected
                                     ]}
                                 >
+                                    
                                     <TouchableOpacity
                                         onPress={() => onAnswer(option.value)}
                                         activeOpacity={0.7}
@@ -126,7 +127,10 @@ const styles = StyleSheet.create({
     },
     scaleOptionSelected: {
         borderColor: glassAccent.blue, // Scale uses Blue usually or Mint? User said "Type B - Scale Selector".
-        backgroundColor: glassAccent.blue + '20', // transparent blue
+
+        // this removes the onPress bgColor effect on onboarding questions 
+
+        // backgroundColor: glassAccent.blue + '20', // transparent blue
     },
     scaleTouchable: {
         paddingVertical: 12,

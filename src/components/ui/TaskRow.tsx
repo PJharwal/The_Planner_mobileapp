@@ -36,50 +36,52 @@ export function TaskRow({
 
     const content = (
         <GlassCard style={[styles.container, completed && styles.completed, style]} intensity="light" bordered={!completed}>
-            <Checkbox checked={completed} onToggle={onToggle} />
-            <View style={styles.content}>
-                <Text
-                    style={[
-                        styles.title,
-                        completed && styles.titleCompleted,
-                    ]}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                >
-                    {title}
-                </Text>
-                {subtitle && (
-                    <Text style={styles.subtitle} numberOfLines={1}>
-                        {subtitle}
+            <View style={styles.row}>
+                <Checkbox checked={completed} onToggle={onToggle} />
+                <View style={styles.content}>
+                    <Text
+                        style={[
+                            styles.title,
+                            completed && styles.titleCompleted,
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                    >
+                        {title}
                     </Text>
-                )}
-            </View>
-            <View style={styles.actions}>
-                <Chip variant={getPriorityVariant()} size="sm">
-                    {priority}
-                </Chip>
-                {(onEdit || onDelete) && (
-                    <View style={styles.iconActions}>
-                        {onEdit && (
-                            <TouchableOpacity
-                                onPress={onEdit}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                style={styles.iconButton}
-                            >
-                                <Ionicons name="pencil-outline" size={18} color={glassText.secondary} />
-                            </TouchableOpacity>
-                        )}
-                        {onDelete && (
-                            <TouchableOpacity
-                                onPress={onDelete}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                style={styles.iconButton}
-                            >
-                                <Ionicons name="trash-outline" size={18} color={glassAccent.warm} />
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                )}
+                    {subtitle && (
+                        <Text style={styles.subtitle} numberOfLines={1}>
+                            {subtitle}
+                        </Text>
+                    )}
+                </View>
+                <View style={styles.actions}>
+                    <Chip variant={getPriorityVariant()} size="sm">
+                        {priority}
+                    </Chip>
+                    {(onEdit || onDelete) && (
+                        <View style={styles.iconActions}>
+                            {onEdit && (
+                                <TouchableOpacity
+                                    onPress={onEdit}
+                                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    style={styles.iconButton}
+                                >
+                                    <Ionicons name="pencil-outline" size={18} color={glassText.secondary} />
+                                </TouchableOpacity>
+                            )}
+                            {onDelete && (
+                                <TouchableOpacity
+                                    onPress={onDelete}
+                                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                    style={styles.iconButton}
+                                >
+                                    <Ionicons name="trash-outline" size={18} color={glassAccent.warm} />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    )}
+                </View>
             </View>
         </GlassCard>
     );
@@ -97,10 +99,14 @@ export function TaskRow({
 
 const styles = StyleSheet.create({
     container: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        // flexDirection: 'row', // Removed from container
+        // alignItems: 'center', // Removed from container
         padding: spacing.md,
         marginBottom: spacing.sm,
+    },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     completed: {
         opacity: 0.6,

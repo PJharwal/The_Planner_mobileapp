@@ -668,14 +668,16 @@ export default function HomeScreen() {
 
                     {/* Stats Cards */}
                     <View style={styles.statsRow}>
-                        <GlassCard style={styles.statCard} bordered={false} intensity="medium">
-                            <View style={styles.statHeader}>
-                                <Ionicons name="checkmark-circle" size={18} color={glassAccent.mint} />
-                                <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Today</Text>
-                            </View>
-                            <Text variant="titleLarge" style={styles.statValue}>{completedCount}/{totalCount}</Text>
-                            <ProgressBar progress={progress} color={glassAccent.mint} height={4} style={{ marginTop: 8 }} />
-                        </GlassCard>
+                        <View style={{ flex: 1 }}>
+                            <GlassCard style={styles.statCard} bordered={false} intensity="medium">
+                                <View style={styles.statHeader}>
+                                    <Ionicons name="checkmark-circle" size={18} color={glassAccent.mint} />
+                                    <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Today</Text>
+                                </View>
+                                <Text variant="titleLarge" style={styles.statValue}>{completedCount}/{totalCount}</Text>
+                                <ProgressBar progress={progress} color={glassAccent.mint} height={4} style={{ marginTop: 8 }} />
+                            </GlassCard>
+                        </View>
                         <TouchableOpacity style={{ flex: 1 }} onPress={() => (router as any).push("/focus")}>
                             <GlassCard style={styles.statCard} bordered={false} intensity="medium">
                                 <View style={styles.statHeader}>
@@ -683,7 +685,8 @@ export default function HomeScreen() {
                                     <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Focus</Text>
                                 </View>
                                 <Text variant="titleLarge" style={styles.statValue}>Start</Text>
-                                <View style={{ height: 12, marginTop: 8 }} />
+                                {/* Spacer matching ProgressBar height */}
+                                <View style={{ height: 4, marginTop: 8, width: '100%' }} />
                             </GlassCard>
                         </TouchableOpacity>
                     </View>
@@ -890,14 +893,14 @@ const styles = StyleSheet.create({
     headerIcons: { flexDirection: "row", alignItems: "center", gap: 8 },
     profileButton: { padding: 4 },
     greetingRow: { flexDirection: "row", alignItems: "center" },
-    greeting: { color: glassText.primary, fontWeight: "bold" },
+    greeting: { color: glassText.primary, fontWeight: "bold", fontSize: 24 },
     searchContainer: { paddingHorizontal: 16, marginBottom: 24, zIndex: 10 }, // ✅ Canonical inset
     searchResults: { position: "absolute", top: 56, left: 16, right: 16, zIndex: 100, maxHeight: 300 }, // ✅ Aligned
     searchResultItem: { flexDirection: "row", alignItems: "center", padding: 12, borderBottomWidth: 0.5, borderBottomColor: glass.border.light },
     searchResultInfo: { flex: 1, marginLeft: 12 },
     searchResultMeta: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 8 },
     startSessionCard: { marginHorizontal: 16, marginBottom: 24, padding: 0 }, // ✅ Canonical margin
-    sessionCardContent: { flexDirection: "row", alignItems: "center", padding: 16 },
+    sessionCardContent: { flexDirection: "row", alignItems: "center" },
     sessionIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: glassAccent.mint + "20", alignItems: "center", justifyContent: "center", marginRight: 16 },
     sessionInfo: { flex: 1 },
     sessionTitle: { color: glassText.primary, fontWeight: "600" },
@@ -911,14 +914,14 @@ const styles = StyleSheet.create({
     capacityCard: { marginHorizontal: 16, marginBottom: 24 }, // ✅ Canonical margin
     capacityHeader: { marginBottom: 16 },
     capacityTitleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
-    capacityTitle: { color: glassText.primary },
-    capacityHint: { color: glassText.secondary },
+    capacityTitle: { color: glassText.primary, fontSize: 12 },
+    capacityHint: { color: glassText.secondary, fontSize: 10 },
     capacityMetrics: { flexDirection: "row", gap: 16 },
     capacityMetric: { flex: 1 },
     capacityValue: { fontWeight: "bold" },
     capacityLabel: { color: glassText.secondary },
     capacityDivider: { width: 1, backgroundColor: glass.border.light },
-    statsRow: { flexDirection: "row", paddingHorizontal: 16, gap: 12, marginBottom: 24 }, // ✅ Canonical padding
+    statsRow: { flexDirection: "row", paddingHorizontal: 16, gap: 12, marginBottom: 24, alignItems: "stretch" }, // ✅ Canonical padding
     statCard: { flex: 1, padding: 16 },
     statHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
     statValue: { color: glassText.primary, fontWeight: "bold" },
@@ -933,7 +936,7 @@ const styles = StyleSheet.create({
     quickAddContainer: { paddingHorizontal: 16, paddingBottom: 20 }, // ✅ Canonical padding
     quickAddCard: { borderRadius: borderRadius.pill || 30 },
     quickAddRow: { flexDirection: "row", alignItems: "center", paddingLeft: 16, paddingRight: 8, paddingVertical: 4 },
-    quickAddInput: { flex: 1, backgroundColor: "transparent", fontSize: 16 },
+    quickAddInput: { flex: 1, backgroundColor: "transparent", fontSize: 14 },
     quickAddBtn: { padding: 4 },
     smartCard: { marginHorizontal: 16, marginBottom: 16 }, // ✅ Canonical margin
     smartContent: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
