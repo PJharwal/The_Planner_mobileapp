@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
     timerSeparator: { fontSize: 28, fontWeight: "600", color: glassText.muted, marginHorizontal: 4 },
     // Cards
     focusCard: { marginBottom: spacing.md, padding: 0 },
-    focusContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    focusContent: { flexDirection: "row", alignItems: "center", padding: 16 },
     focusIconContainer: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
     focusText: { marginLeft: spacing.md, flex: 1 },
     // Setup Styles
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     pastSection: { marginTop: spacing.xl },
     pastTitle: { color: glassText.primary, fontWeight: "600", marginBottom: spacing.md },
     pastCard: { marginBottom: spacing.sm, padding: 0 },
-    pastContent: { flexDirection: "row", alignItems: "center", padding: spacing.md },
+    pastContent: { flexDirection: "row", alignItems: "center", padding: 16 },
     pastIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     pastInfo: { marginLeft: spacing.sm, flex: 1 },
 });

@@ -262,6 +262,9 @@ const styles = StyleSheet.create({
         flex: 1, // GlassCard flex works if container allows
         padding: 0,
     },
+    insightCardContent: {
+        padding: 16,
+    },
     statContent: {
         alignItems: "center",
         padding: spacing.md,
@@ -278,6 +281,11 @@ const styles = StyleSheet.create({
     revisionCard: {
         marginBottom: spacing.xs,
         padding: 0,
+    },
+    actionContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
     },
     revisionContent: {
         flexDirection: "row",

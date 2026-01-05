@@ -24,7 +24,10 @@ import { darkBackground, glass, glassAccent, glassText } from "../../constants/g
 // UI Components
 import { Checkbox, Chip, SearchBar, ProgressBar, TaskRow, TaskLimitModal } from "../../components/ui";
 import { GlassCard, GlassButton, MeshGradientBackground } from "../../components/glass";
-import { StartSessionModal, SessionConfig } from "../../components/session/StartSessionModal";
+import { saveFocusSession } from "../../utils/sessionTaskLinker";
+import { SessionQualityPrompt } from "../../components/session/SessionQualityPrompt";
+import { useModalStore } from "../../store/modalStore";
+import { SessionConfig } from "../../components/session/StartSessionModal";
 import { StreakIcon } from "../../components/home/StreakIcon";
 import { StreakModal } from "../../components/home/StreakModal";
 import { useStreakStore } from "../../store/streakStore";
@@ -112,8 +115,8 @@ export default function HomeScreen() {
     const [editName, setEditName] = useState("");
     const [isSavingName, setIsSavingName] = useState(false);
 
-    // Start Session modal
-    const [startSessionModalVisible, setStartSessionModalVisible] = useState(false);
+    // Start Session modal - now using global store
+    const { openStartSession } = useModalStore();
     const { profile, fetchProfile } = useProfileStore();
 
     // Task edit modal
@@ -560,7 +563,7 @@ export default function HomeScreen() {
                     {profile && (
                         <GlassCard style={styles.startSessionCard} intensity="medium">
                             <TouchableOpacity
-                                onPress={() => setStartSessionModalVisible(true)}
+                                onPress={openStartSession}
                                 style={styles.sessionCardContent}
                                 activeOpacity={0.7}
                             >
@@ -665,7 +668,7 @@ export default function HomeScreen() {
 
                     {/* Stats Cards */}
                     <View style={styles.statsRow}>
-                        <GlassCard style={styles.statCard} bordered={false} intensity="light">
+                        <GlassCard style={styles.statCard} bordered={false} intensity="medium">
                             <View style={styles.statHeader}>
                                 <Ionicons name="checkmark-circle" size={18} color={glassAccent.mint} />
                                 <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Today</Text>
@@ -680,6 +683,7 @@ export default function HomeScreen() {
                                     <Text variant="labelSmall" style={{ color: glassText.muted, marginLeft: 4 }}>Focus</Text>
                                 </View>
                                 <Text variant="titleLarge" style={styles.statValue}>Start</Text>
+                                <View style={{ height: 12, marginTop: 8 }} />
                             </GlassCard>
                         </TouchableOpacity>
                     </View>
@@ -848,13 +852,6 @@ export default function HomeScreen() {
                     </Modal>
                 </Portal>
 
-                <StartSessionModal
-                    visible={startSessionModalVisible}
-                    onDismiss={() => setStartSessionModalVisible(false)}
-                    onStart={handleStartSession}
-                    defaultDuration={ADAPTIVE_PLANS.find(p => p.id === profile?.selected_plan_id)?.default_session_length || 25}
-                />
-
                 <StreakModal
                     visible={streakModalVisible}
                     onClose={() => setStreakModalVisible(false)}
@@ -922,7 +919,7 @@ const styles = StyleSheet.create({
     capacityLabel: { color: glassText.secondary },
     capacityDivider: { width: 1, backgroundColor: glass.border.light },
     statsRow: { flexDirection: "row", paddingHorizontal: 16, gap: 12, marginBottom: 24 }, // ✅ Canonical padding
-    statCard: { flex: 1, padding: 12 },
+    statCard: { flex: 1, padding: 16 },
     statHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
     statValue: { color: glassText.primary, fontWeight: "bold" },
     section: { paddingHorizontal: 16, marginBottom: 24 }, // ✅ Canonical padding

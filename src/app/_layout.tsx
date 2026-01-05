@@ -15,6 +15,7 @@ import { offlineQueue } from "../utils/offlineQueue";
 import { ToastContainer } from "../components/ui";
 import { useAppFonts } from "../constants/fonts";
 import { MeshGradientBackground } from "../components/glass";
+import { GlobalModals } from "../components/GlobalModals";
 
 // Custom animated loading screen with book icon
 function LoadingScreen({ fontError }: { fontError: Error | null }) {
@@ -151,6 +152,7 @@ export default function RootLayout() {
                 <StatusBar style="light" />
                 <Slot />
                 <ToastContainer />
+                <GlobalModals />
             </GestureHandlerRootView>
         </PaperProvider>
     );

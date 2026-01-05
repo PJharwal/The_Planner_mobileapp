@@ -1,8 +1,11 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { UserProfileInsights, StudyPersona } from '../types/profile';
 import { deriveStudyPersona } from '../utils/personaDerivation';
 import { selectBestPlan } from '../utils/adaptivePlans';
+
+const ONBOARDING_KEY = '@onboarding_completed';
 
 interface ProfileStore {
     profile: UserProfileInsights | null;
@@ -84,6 +87,13 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
                 profile: savedProfile,
                 hasCompletedOnboarding: true,
             });
+
+            // Save to local storage for instant check on next launch
+            try {
+                await AsyncStorage.setItem(ONBOARDING_KEY, 'true');
+            } catch (error) {
+                console.warn('Error saving onboarding status to AsyncStorage:', error);
+            }
         } catch (error: any) {
             set({ error: error.message });
             throw error;
@@ -133,6 +143,20 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     },
 
     checkOnboardingStatus: async () => {
+        // Check local storage first for instant result
+        try {
+            const localStatus = await AsyncStorage.getItem(ONBOARDING_KEY);
+            if (localStatus === 'true') {
+                set({ hasCompletedOnboarding: true });
+                // Still fetch profile in background to sync
+                get().fetchProfile();
+                return true;
+            }
+        } catch (error) {
+            console.warn('Error reading onboarding status from AsyncStorage:', error);
+        }
+
+        // Fallback to network check
         await get().fetchProfile();
         return get().hasCompletedOnboarding;
     },
