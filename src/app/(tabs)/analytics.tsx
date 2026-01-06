@@ -4,6 +4,7 @@ import { Text } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../../lib/supabase";
 import { useAuthStore } from "../../store/authStore";
+import { useSubscriptionStore } from "../../store/subscriptionStore";
 import { format, subDays } from "date-fns";
 import { generateWeeklyReview, WeeklyReview } from "../../utils/weeklyReview";
 import { formatMinutes } from "../../store/timerStore";
@@ -13,6 +14,9 @@ import { getAllInsights } from "../../utils/studyInsights";
 import { getRevisionSuggestions } from "../../utils/revisionEngine";
 import { StudyInsight, RevisionSuggestion } from "../../types";
 import { LinearGradient } from "expo-linear-gradient";
+
+// Feature Gating
+import { gateFeature, ProFeature } from "../../lib/featureGate";
 
 // Design tokens
 import { pastel, background, text, semantic, spacing, borderRadius, shadows, gradients } from "../../constants/theme";
@@ -243,6 +247,10 @@ export default function AnalyticsScreen() {
     };
 
     const toggleTab = (tab: "progress" | "insights") => {
+        // Gate Insights tab for Pro users
+        if (tab === "insights") {
+            if (!gateFeature(ProFeature.DEEP_ANALYTICS)) return;
+        }
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setActiveTab(tab);
     };

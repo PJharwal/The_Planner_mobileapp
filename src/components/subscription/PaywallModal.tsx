@@ -1,351 +1,418 @@
-// Paywall Modal - Premium Upgrade Screen
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Modal, TouchableOpacity, Alert, Platform } from 'react-native';
-import { Text, Portal, IconButton, ActivityIndicator } from 'react-native-paper';
-import { LinearGradient } from 'expo-linear-gradient';
+/**
+ * PaywallModal - Premium Upgrade Screen
+ * 
+ * Glassmorphism design with dark theme.
+ * Uses RevenueCat for subscriptions.
+ */
+import React, { useState, useEffect } from 'react';
+import {
+    View,
+    ScrollView,
+    StyleSheet,
+    Modal,
+    TouchableOpacity,
+    Alert,
+    Dimensions,
+} from 'react-native';
+import { Text } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import { useStripe } from '../../lib/stripe';
-import { useSubscriptionStore } from '../../store/subscriptionStore';
-import { useAuthStore } from '../../store/authStore';
-import { supabase } from '../../lib/supabase';
 
-// Design tokens
-import { pastel, background, text, spacing, borderRadius, gradients } from '../../constants/theme';
-// Card, Button removed
-import { GlassCard, GlassButton } from "../glass";
+// Glass components
+import { GlassButton } from '../glass';
+
+// RevenueCat (dynamically loaded)
+import { getOfferings, purchasePackage, restorePurchases } from '../../lib/revenuecat';
+import { useSubscriptionStore } from '../../store/subscriptionStore';
+
+// Theme
+import {
+    darkBackground,
+    glass,
+    glassAccent,
+    glassText,
+} from '../../constants/glassTheme';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface PaywallModalProps {
     visible: boolean;
     onDismiss: () => void;
-    triggerFeature?: string; // Which feature triggered the paywall
+    triggerFeature?: string | null;
 }
 
+// Pro features list
+const PRO_FEATURES = [
+    {
+        icon: 'flash-outline',
+        title: 'Unlimited Tasks',
+        description: 'No daily limits on tasks',
+    },
+    {
+        icon: 'analytics-outline',
+        title: 'Deep Analytics',
+        description: 'Track patterns and progress',
+    },
+    {
+        icon: 'bulb-outline',
+        title: 'Smart Suggestions',
+        description: 'AI-powered study planning',
+    },
+    {
+        icon: 'time-outline',
+        title: 'Advanced Focus',
+        description: 'Custom focus plans',
+    },
+];
+
+// Package type placeholder
+type PackageType = any;
+
 export function PaywallModal({ visible, onDismiss, triggerFeature }: PaywallModalProps) {
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+    const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('yearly');
     const [isLoading, setIsLoading] = useState(false);
-    const { initPaymentSheet, presentPaymentSheet } = useStripe();
-    const { startTrial, fetchSubscription } = useSubscriptionStore();
-    const { user } = useAuthStore();
+    const [monthlyPackage, setMonthlyPackage] = useState<PackageType | null>(null);
+    const [yearlyPackage, setYearlyPackage] = useState<PackageType | null>(null);
 
-    const BENEFITS = [
-        { icon: 'bulb', text: 'Smart AI Study Insights' },
-        { icon: 'trending-up', text: 'Advanced Analytics' },
-        { icon: 'repeat', text: 'Smart Revision Engine' },
-        { icon: 'cloud-upload', text: 'Data Backup & Export' },
-        { icon: 'school', text: 'Unlimited Subjects & Topics' },
-    ];
+    const { refreshSubscription } = useSubscriptionStore();
 
-    const PRICE_MONTHLY = '$4.99';
-    const PRICE_YEARLY = '$39.99';
-    const SAVINGS = '33%';
+    // Debug log when visibility changes
+    useEffect(() => {
+        console.log('[PaywallModal] visible:', visible, 'triggerFeature:', triggerFeature);
+    }, [visible, triggerFeature]);
 
-    const handleSubscribe = async () => {
-        if (!user) return;
-        setIsLoading(true);
+    // Fetch offerings on mount
+    useEffect(() => {
+        if (visible) {
+            loadOfferings();
+        }
+    }, [visible]);
 
+    const loadOfferings = async () => {
         try {
-            // 1. Fetch PaymentIntent from our Edge Function
-            const { data, error } = await supabase.functions.invoke('payment-sheet', {
-                body: {
-                    plan: billingCycle === 'yearly' ? 'premium_yearly' : 'premium_monthly',
-                    is_trial: true // Logic handled by backend whether to charge 0 or full
-                }
-            });
-
-            if (error || !data) throw new Error('Could not initialize payment');
-
-            const { paymentIntent, ephemeralKey, customer } = data;
-
-            // 2. Initialize Payment Sheet
-            const { error: initError } = await initPaymentSheet({
-                merchantDisplayName: 'The Planner',
-                customerId: customer,
-                customerEphemeralKeySecret: ephemeralKey,
-                paymentIntentClientSecret: paymentIntent,
-                defaultBillingDetails: {
-                    name: 'Student',
-                },
-                googlePay: {
-                    merchantCountryCode: 'US',
-                    testEnv: true, // Set to false for production
-                },
-                applePay: {
-                    merchantCountryCode: 'US',
-                }
-            });
-
-            if (initError) throw new Error(initError.message);
-
-            // 3. Present Payment Sheet
-            const { error: presentError } = await presentPaymentSheet();
-
-            if (presentError) {
-                if (presentError.code === 'Canceled') {
-                    // User canceled, do nothing
-                    setIsLoading(false);
-                    return;
-                }
-                throw new Error(presentError.message);
+            const offering = await getOfferings();
+            if (offering) {
+                const monthly = offering.availablePackages.find(
+                    (pkg: PackageType) => pkg.packageType === 'MONTHLY' ||
+                        pkg.identifier.toLowerCase().includes('monthly')
+                );
+                const yearly = offering.availablePackages.find(
+                    (pkg: PackageType) => pkg.packageType === 'ANNUAL' ||
+                        pkg.identifier.toLowerCase().includes('yearly') ||
+                        pkg.identifier.toLowerCase().includes('annual')
+                );
+                setMonthlyPackage(monthly || null);
+                setYearlyPackage(yearly || null);
             }
+        } catch (error) {
+            console.error('Failed to load offerings:', error);
+        }
+    };
 
-            // 4. Success!
-            Alert.alert('Success', 'Welcome to Premium! Your trial has started.');
+    const handlePurchase = async () => {
+        const pkg = selectedPlan === 'yearly' ? yearlyPackage : monthlyPackage;
+        if (!pkg) {
+            Alert.alert('Not Available', 'Subscriptions are not available in Expo Go. Please use a development build.');
+            return;
+        }
 
-            // Refresh subscription status
-            await fetchSubscription();
-            onDismiss();
-
+        setIsLoading(true);
+        try {
+            const result = await purchasePackage(pkg);
+            if (result.success) {
+                await refreshSubscription();
+                Alert.alert('Success!', 'Welcome to Tasky Pro!', [{ text: 'OK', onPress: onDismiss }]);
+            } else if (result.error !== 'cancelled') {
+                Alert.alert('Error', result.error || 'Purchase failed.');
+            }
         } catch (error: any) {
-            console.error(error);
-            Alert.alert('Payment Error', error.message || 'Something went wrong');
+            Alert.alert('Error', error.message || 'Purchase failed.');
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleStartFreeTrial = async () => {
+    const handleRestore = async () => {
         setIsLoading(true);
-        const result = await startTrial();
-        setIsLoading(false);
-
-        if (result.success) {
-            Alert.alert('Trial Started!', 'You now have 7 days of full Premium access.');
-            onDismiss();
-        } else {
-            // If trial failed (already used), suggest subscribing
-            Alert.alert('Trial Unavailable', 'You have already used your trial. Please subscribe to continue.');
+        try {
+            const result = await restorePurchases();
+            if (result.success && result.isPro) {
+                await refreshSubscription();
+                Alert.alert('Restored!', 'Your Pro access has been restored.', [{ text: 'OK', onPress: onDismiss }]);
+            } else if (result.success) {
+                Alert.alert('No Purchases Found', 'No previous subscriptions were found.');
+            } else {
+                Alert.alert('Restore Failed', result.error || 'Could not restore purchases.');
+            }
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Restore failed.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
+    const monthlyPrice = monthlyPackage?.product?.priceString || '₹299';
+    const yearlyPrice = yearlyPackage?.product?.priceString || '₹1,999';
+
     return (
-        <Portal>
-            <Modal visible={visible} onDismiss={onDismiss} animationType="slide" transparent>
-                <View style={styles.container}>
-                    <View style={styles.content}>
-                        {/* Close Button */}
-                        <TouchableOpacity style={styles.closeButton} onPress={onDismiss}>
-                            <Ionicons name="close" size={24} color={text.secondary} />
-                        </TouchableOpacity>
+        <Modal
+            visible={visible}
+            onRequestClose={onDismiss}
+            animationType="slide"
+            presentationStyle="fullScreen"
+        >
+            <View style={styles.container}>
+                {/* Close Button */}
+                <TouchableOpacity
+                    onPress={onDismiss}
+                    style={styles.closeButton}
+                >
+                    <Ionicons name="close" size={28} color={glassText.primary} />
+                </TouchableOpacity>
 
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            {/* Header Image/Gradient */}
-                            <LinearGradient
-                                colors={gradients.mint as any}
-                                style={styles.header}
-                            >
-                                <Ionicons name="diamond" size={48} color={text.primary} />
-                                <Text variant="headlineMedium" style={styles.title}>Unlock Full Potential</Text>
-                                <Text variant="bodyMedium" style={styles.subtitle}>
-                                    Your personal study intelligence system
-                                </Text>
-                            </LinearGradient>
-
-                            {/* Trigger Context */}
-                            {triggerFeature && (
-                                <View style={styles.triggerContainer}>
-                                    <Text variant="bodySmall" style={styles.triggerText}>
-                                        <Ionicons name="lock-closed" size={12} /> {triggerFeature} is a Premium feature
-                                    </Text>
-                                </View>
-                            )}
-
-                            {/* Benefits List */}
-                            <View style={styles.benefitsContainer}>
-                                {BENEFITS.map((b, index) => (
-                                    <View key={index} style={styles.benefitRow}>
-                                        <View style={styles.benefitIcon}>
-                                            <Ionicons name="checkmark" size={16} color={pastel.mint} />
-                                        </View>
-                                        <Text variant="bodyLarge" style={styles.benefitText}>{b.text}</Text>
-                                    </View>
-                                ))}
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <View style={styles.iconContainer}>
+                            <Ionicons name="diamond" size={56} color={glassAccent.blue} />
+                        </View>
+                        <Text style={styles.title}>Upgrade to Tasky Pro</Text>
+                        <Text style={styles.subtitle}>
+                            Unlock unlimited tasks, deep analytics, and more
+                        </Text>
+                        {triggerFeature && (
+                            <View style={styles.triggerBadge}>
+                                <Ionicons name="lock-closed" size={12} color={glassAccent.warm} />
+                                <Text style={styles.triggerText}>{triggerFeature} requires Pro</Text>
                             </View>
-
-                            {/* Plans Toggle */}
-                            <View style={styles.toggleContainer}>
-                                <TouchableOpacity
-                                    style={[styles.toggleOption, billingCycle === 'monthly' && styles.toggleActive]}
-                                    onPress={() => setBillingCycle('monthly')}
-                                >
-                                    <Text style={[styles.toggleText, billingCycle === 'monthly' && styles.toggleTextActive]}>Monthly</Text>
-                                    <Text style={styles.priceText}>{PRICE_MONTHLY}/mo</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={[styles.toggleOption, billingCycle === 'yearly' && styles.toggleActive]}
-                                    onPress={() => setBillingCycle('yearly')}
-                                >
-                                    {billingCycle === 'yearly' && (
-                                        <View style={styles.savingsBadge}>
-                                            <Text style={styles.savingsText}>SAVE {SAVINGS}</Text>
-                                        </View>
-                                    )}
-                                    <Text style={[styles.toggleText, billingCycle === 'yearly' && styles.toggleTextActive]}>Yearly</Text>
-                                    <Text style={styles.priceText}>{PRICE_YEARLY}/yr</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Actions */}
-                            <View style={styles.actions}>
-                                <GlassButton
-                                    variant="primary"
-                                    onPress={handleStartFreeTrial}
-                                    loading={isLoading}
-                                    fullWidth
-                                    style={styles.mainButton}
-                                >
-                                    Start 7-Day Free Trial
-                                </GlassButton>
-
-                                <Text variant="bodySmall" style={styles.termsText}>
-                                    Then {billingCycle === 'yearly' ? PRICE_YEARLY : PRICE_MONTHLY}, auto-renews. Cancel anytime.
-                                </Text>
-
-                                <TouchableOpacity onPress={handleSubscribe} style={styles.secondaryLink}>
-                                    <Text style={styles.linkText}>Already had a trial? Subscribe now</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </ScrollView>
+                        )}
                     </View>
-                </View>
-            </Modal>
-        </Portal>
+
+                    {/* Features */}
+                    <View style={styles.featuresCard}>
+                        {PRO_FEATURES.map((feature, index) => (
+                            <View key={index} style={styles.featureRow}>
+                                <View style={styles.featureIcon}>
+                                    <Ionicons name={feature.icon as any} size={20} color={glassAccent.blue} />
+                                </View>
+                                <View style={styles.featureText}>
+                                    <Text style={styles.featureTitle}>{feature.title}</Text>
+                                    <Text style={styles.featureDesc}>{feature.description}</Text>
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+
+                    {/* Pricing */}
+                    <View style={styles.pricingRow}>
+                        <TouchableOpacity
+                            onPress={() => setSelectedPlan('monthly')}
+                            style={[
+                                styles.pricingCard,
+                                selectedPlan === 'monthly' && styles.pricingCardSelected
+                            ]}
+                        >
+                            <Text style={styles.pricingTitle}>Monthly</Text>
+                            <Text style={styles.pricingPrice}>{monthlyPrice}</Text>
+                            <Text style={styles.pricingPeriod}>/month</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setSelectedPlan('yearly')}
+                            style={[
+                                styles.pricingCard,
+                                selectedPlan === 'yearly' && styles.pricingCardSelected
+                            ]}
+                        >
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>BEST VALUE</Text>
+                            </View>
+                            <Text style={styles.pricingTitle}>Yearly</Text>
+                            <Text style={styles.pricingPrice}>{yearlyPrice}</Text>
+                            <Text style={styles.pricingPeriod}>/year</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* CTA */}
+                    <GlassButton
+                        onPress={handlePurchase}
+                        fullWidth
+                        glow
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Processing...' : 'Start Free Trial'}
+                    </GlassButton>
+
+                    {/* Secondary */}
+                    <TouchableOpacity onPress={handleRestore} style={styles.secondaryButton}>
+                        <Text style={styles.secondaryText}>Restore Purchase</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={onDismiss} style={styles.secondaryButton}>
+                        <Text style={styles.secondaryText}>Not now</Text>
+                    </TouchableOpacity>
+
+                    <Text style={styles.legalText}>
+                        Subscription auto-renews. Cancel anytime.
+                    </Text>
+                </ScrollView>
+            </View>
+        </Modal>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
-    },
-    content: {
-        backgroundColor: background.primary,
-        borderTopLeftRadius: borderRadius.xl,
-        borderTopRightRadius: borderRadius.xl,
-        height: '90%',
-        overflow: 'hidden',
+        backgroundColor: darkBackground.primary,
     },
     closeButton: {
         position: 'absolute',
-        top: spacing.md,
-        right: spacing.md,
-        zIndex: 10,
-        backgroundColor: 'rgba(255,255,255,0.5)',
-        borderRadius: 20,
-        padding: 4,
+        top: 50,
+        right: 20,
+        zIndex: 100,
+        padding: 10,
+    },
+    scrollContent: {
+        paddingTop: 90,
+        paddingHorizontal: 24,
+        paddingBottom: 40,
+        alignItems: 'center',
     },
     header: {
         alignItems: 'center',
-        paddingVertical: spacing.xl,
-        paddingHorizontal: spacing.lg,
+        marginBottom: 32,
+    },
+    iconContainer: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: glassAccent.blue + '15',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 20,
     },
     title: {
+        fontSize: 26,
         fontWeight: 'bold',
-        marginTop: spacing.md,
-        color: text.primary,
+        color: glassText.primary,
         textAlign: 'center',
     },
     subtitle: {
-        marginTop: spacing.xs,
-        color: text.secondary,
+        fontSize: 15,
+        color: glassText.secondary,
         textAlign: 'center',
-        opacity: 0.8,
+        marginTop: 8,
     },
-    triggerContainer: {
-        backgroundColor: `${pastel.peach}20`,
-        padding: spacing.sm,
+    triggerBadge: {
+        flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: glassAccent.warm + '20',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        marginTop: 16,
+        gap: 6,
     },
     triggerText: {
-        color: text.primary,
-        fontWeight: '600',
+        color: glassAccent.warm,
+        fontSize: 13,
+        fontWeight: '500',
     },
-    benefitsContainer: {
-        padding: spacing.xl,
+    featuresCard: {
+        width: '100%',
+        backgroundColor: glass.background.default,
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 24,
     },
-    benefitRow: {
+    featureRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: spacing.md,
+        paddingVertical: 12,
     },
-    benefitIcon: {
-        width: 24,
-        height: 24,
+    featureIcon: {
+        width: 40,
+        height: 40,
         borderRadius: 12,
-        backgroundColor: `${pastel.mint}30`,
+        backgroundColor: glassAccent.blue + '20',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: spacing.md,
+        marginRight: 14,
     },
-    benefitText: {
-        color: text.primary,
-        fontSize: 16,
-    },
-    toggleContainer: {
-        flexDirection: 'row',
-        backgroundColor: `${pastel.slate}10`,
-        marginHorizontal: spacing.xl,
-        borderRadius: borderRadius.lg,
-        padding: 4,
-        marginBottom: spacing.lg,
-    },
-    toggleOption: {
+    featureText: {
         flex: 1,
-        alignItems: 'center',
-        paddingVertical: spacing.md,
-        borderRadius: borderRadius.md,
     },
-    toggleActive: {
-        backgroundColor: background.primary,
-        shadowColor: '#4DA3FF',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.12,
-        shadowRadius: 4,
-    },
-    toggleText: {
+    featureTitle: {
+        color: glassText.primary,
+        fontSize: 15,
         fontWeight: '600',
-        color: text.secondary,
-        marginBottom: 2,
     },
-    toggleTextActive: {
-        color: text.primary,
+    featureDesc: {
+        color: glassText.muted,
+        fontSize: 13,
+        marginTop: 2,
     },
-    priceText: {
-        fontSize: 12,
-        color: text.muted,
+    pricingRow: {
+        flexDirection: 'row',
+        gap: 12,
+        width: '100%',
+        marginBottom: 24,
     },
-    savingsBadge: {
+    pricingCard: {
+        flex: 1,
+        padding: 20,
+        borderRadius: 16,
+        backgroundColor: glass.background.light,
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'transparent',
+    },
+    pricingCardSelected: {
+        backgroundColor: glassAccent.blue + '15',
+        borderColor: glassAccent.blue,
+    },
+    badge: {
         position: 'absolute',
         top: -10,
-        backgroundColor: pastel.mint,
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
+        backgroundColor: glassAccent.warm,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 10,
     },
-    savingsText: {
+    badgeText: {
+        color: '#fff',
         fontSize: 10,
+        fontWeight: '700',
+    },
+    pricingTitle: {
+        color: glassText.primary,
+        fontSize: 15,
+        fontWeight: '600',
+        marginTop: 4,
+    },
+    pricingPrice: {
+        color: glassText.primary,
+        fontSize: 24,
         fontWeight: 'bold',
-        color: text.primary,
+        marginTop: 8,
     },
-    actions: {
-        padding: spacing.xl,
-        paddingTop: 0,
-        alignItems: 'center',
+    pricingPeriod: {
+        color: glassText.muted,
+        fontSize: 13,
     },
-    mainButton: {
-        marginBottom: spacing.sm,
+    secondaryButton: {
+        marginTop: 16,
+        padding: 8,
     },
-    termsText: {
-        color: text.muted,
+    secondaryText: {
+        color: glassText.muted,
+        fontSize: 14,
+    },
+    legalText: {
+        color: glassText.muted,
+        fontSize: 12,
         textAlign: 'center',
-        marginBottom: spacing.lg,
-    },
-    secondaryLink: {
-        padding: spacing.sm,
-    },
-    linkText: {
-        color: text.secondary,
-        textDecorationLine: 'underline',
+        marginTop: 24,
     },
 });

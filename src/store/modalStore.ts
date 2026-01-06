@@ -11,6 +11,13 @@ interface ModalStore {
     // Session handler
     sessionHandler: ((config: SessionConfig) => void) | null;
     setSessionHandler: (handler: (config: SessionConfig) => void) => void;
+
+    // Paywall Modal
+    paywallOpen: boolean;
+    paywallTriggerFeature: string | null;
+    lastPaywallShownAt: number | null;
+    openPaywall: (triggerFeature?: string) => void;
+    closePaywall: () => void;
 }
 
 export const useModalStore = create<ModalStore>((set, get) => ({
@@ -23,4 +30,18 @@ export const useModalStore = create<ModalStore>((set, get) => ({
     // Session handler
     sessionHandler: null,
     setSessionHandler: (handler) => set({ sessionHandler: handler }),
+
+    // Paywall Modal
+    paywallOpen: false,
+    paywallTriggerFeature: null,
+    lastPaywallShownAt: null,
+    openPaywall: (triggerFeature?: string) => set({
+        paywallOpen: true,
+        paywallTriggerFeature: triggerFeature || null,
+        lastPaywallShownAt: Date.now(),
+    }),
+    closePaywall: () => set({
+        paywallOpen: false,
+        paywallTriggerFeature: null
+    }),
 }));

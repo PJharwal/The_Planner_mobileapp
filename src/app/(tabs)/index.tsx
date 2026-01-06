@@ -34,6 +34,10 @@ import { useStreakStore } from "../../store/streakStore";
 import { useHealthStore } from "../../store/healthStore";
 import { HealthService } from "../../services/HealthService";
 
+// Feature Gating
+import { gateFeature, gateLimitedFeature, ProFeature } from "../../lib/featureGate";
+import { useSubscriptionStore } from "../../store/subscriptionStore";
+
 // Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -451,6 +455,12 @@ export default function HomeScreen() {
     };
 
     const handleAddAnyway = async () => {
+        // Gate task limit override for Pro users
+        if (!gateFeature(ProFeature.UNLIMITED_TASKS)) {
+            setTaskLimitModalVisible(false);
+            return;
+        }
+
         if (!user) return;
         await logOverride('task_limit');
         setTaskLimitModalVisible(false);
