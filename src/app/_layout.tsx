@@ -5,6 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { PaperProvider } from "react-native-paper";
 import { useAuthStore } from "../store/authStore";
 import { useProfileStore } from "../store/profileStore";
+import { useSubscriptionStore } from "../store/subscriptionStore";
 import { View, StyleSheet, Text, Animated, Easing } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -16,6 +17,8 @@ import { ToastContainer } from "../components/ui";
 import { useAppFonts } from "../constants/fonts";
 import { MeshGradientBackground } from "../components/glass";
 import { GlobalModals } from "../components/GlobalModals";
+
+// RevenueCat is dynamically imported to avoid Expo Go crash
 
 // Custom animated loading screen with book icon
 function LoadingScreen({ fontError }: { fontError: Error | null }) {
@@ -87,6 +90,11 @@ export default function RootLayout() {
     const [onboardingChecked, setOnboardingChecked] = useState(false);
 
     useEffect(() => {
+        // Initialize RevenueCat (dynamic import for Expo Go safety)
+        import('../lib/revenuecat').then(({ configureRevenueCat }) => {
+            configureRevenueCat();
+        }).catch(console.warn);
+
         initialize();
         // Try to process offline queue on startup
         setTimeout(() => {
@@ -94,12 +102,22 @@ export default function RootLayout() {
         }, 5000); // 5s delay to allow connection
     }, []);
 
-    // Check onboarding status when user authenticates
+    // Check onboarding status and identify user when authenticated
     useEffect(() => {
         if (isAuthenticated && !onboardingChecked) {
             checkOnboardingStatus().then(() => {
                 setOnboardingChecked(true);
             });
+
+            // Identify user with RevenueCat and refresh subscription
+            const { user } = useAuthStore.getState();
+            if (user?.id) {
+                import('../lib/revenuecat').then(({ identifyUser }) => {
+                    identifyUser(user.id).then(() => {
+                        useSubscriptionStore.getState().refreshSubscription();
+                    });
+                }).catch(console.warn);
+            }
         }
         if (!isAuthenticated) {
             setOnboardingChecked(false);

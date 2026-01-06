@@ -5,6 +5,8 @@ import { useRouter } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 import { useProfileStore } from "../../store/profileStore";
 import { useHealthStore } from "../../store/healthStore";
+import { useModalStore } from "../../store/modalStore";
+import { useSubscriptionStore } from "../../store/subscriptionStore";
 import { Switch } from "react-native-paper";
 import { ADAPTIVE_PLANS } from "../../utils/adaptivePlans";
 import { useEffect, useState } from "react";
@@ -15,7 +17,6 @@ import { exportAndShare } from "../../utils/dataExport";
 import { text } from "../../constants/theme";
 import { darkBackground, glass, glassAccent, glassText } from "../../constants/glassTheme";
 // UI Components
-// Button removed
 import { GlassCard, GlassButton, MeshGradientBackground } from "../../components/glass";
 
 interface UserStats {
@@ -29,6 +30,8 @@ export default function ProfileScreen() {
     const { user, logout, isLoading } = useAuthStore();
     const { profile, fetchProfile } = useProfileStore();
     const { hasPermissions, healthInfluenceMode, setInfluenceMode } = useHealthStore();
+    const { openPaywall } = useModalStore();
+    const { isPro } = useSubscriptionStore();
     const [stats, setStats] = useState<UserStats>({ totalTasks: 0, completedTasks: 0, totalSubjects: 0 });
     const [loadingStats, setLoadingStats] = useState(true);
     const [isExporting, setIsExporting] = useState(false);
@@ -185,6 +188,28 @@ export default function ProfileScreen() {
                     </GlassCard>
                 )}
 
+                {/* Upgrade to Pro Card */}
+                {!isPro && (
+                    <TouchableOpacity onPress={() => openPaywall('Profile')} activeOpacity={0.8}>
+                        <GlassCard style={styles.planCard} intensity="medium">
+                            <View style={styles.planContent}>
+                                <View style={[styles.proIconContainer, { backgroundColor: glassAccent.blue + '30' }]}>
+                                    <Ionicons name="star" size={24} color={glassAccent.blue} />
+                                </View>
+                                <View style={styles.planInfo}>
+                                    <Text variant="titleSmall" style={{ color: glassText.primary, fontWeight: '600' }}>
+                                        Upgrade to Pro
+                                    </Text>
+                                    <Text variant="bodySmall" style={{ color: glassText.secondary }}>
+                                        Unlock all features & unlimited tasks
+                                    </Text>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color={glassText.muted} />
+                            </View>
+                        </GlassCard>
+                    </TouchableOpacity>
+                )}
+
                 {/* Health Sync Card */}
                 {hasPermissions && (
                     <GlassCard style={styles.menuCard} padding={0}>
@@ -296,5 +321,13 @@ const styles = StyleSheet.create({
     },
     planDescription: {
         color: text.secondary
+    },
+    proIconContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        alignItems: 'center' as const,
+        justifyContent: 'center' as const,
+        marginRight: 12,
     },
 });

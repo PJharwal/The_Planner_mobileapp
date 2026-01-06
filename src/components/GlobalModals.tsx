@@ -1,5 +1,6 @@
 import React from 'react';
 import { StartSessionModal, SessionConfig } from './session/StartSessionModal';
+import { PaywallModal } from './subscription/PaywallModal';
 import { useModalStore } from '../store/modalStore';
 import { useProfileStore } from '../store/profileStore';
 import { ADAPTIVE_PLANS } from '../utils/adaptivePlans';
@@ -14,7 +15,17 @@ import { useRouter } from 'expo-router';
 export function GlobalModals() {
     const router = useRouter();
     const { profile } = useProfileStore();
-    const { startSessionModalOpen, closeStartSession, sessionHandler } = useModalStore();
+    const {
+        startSessionModalOpen,
+        closeStartSession,
+        sessionHandler,
+        paywallOpen,
+        paywallTriggerFeature,
+        closePaywall,
+    } = useModalStore();
+
+    // Debug log
+    console.log('[GlobalModals] paywallOpen:', paywallOpen, 'trigger:', paywallTriggerFeature);
 
     const handleStartSession = (config: SessionConfig) => {
         // Use custom handler if set, otherwise default navigation
@@ -56,7 +67,12 @@ export function GlobalModals() {
                 defaultDuration={getDefaultDuration}
             />
 
-            {/* Add other global modals here */}
+            {/* Paywall Modal - Above all other UI */}
+            <PaywallModal
+                visible={paywallOpen}
+                onDismiss={closePaywall}
+                triggerFeature={paywallTriggerFeature}
+            />
         </>
     );
 }

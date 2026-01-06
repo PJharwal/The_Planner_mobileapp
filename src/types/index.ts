@@ -261,3 +261,16 @@ export interface Subscription {
     created_at: string;
     updated_at: string;
 }
+
+// ============================================
+// REVENUECAT TYPES
+// ============================================
+
+export type SubscriptionType = 'free' | 'monthly' | 'yearly';
+
+export interface ProEntitlement {
+    isActive: boolean;
+    expiresAt: Date | null;
+    productIdentifier: string | null;
+}
+

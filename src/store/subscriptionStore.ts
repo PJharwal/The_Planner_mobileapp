@@ -1,92 +1,143 @@
-// Subscription Store - Manages Plan Status & Feature Gating
+// Subscription Store - Manages Plan Status & Feature Gating (RevenueCat)
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { Subscription, PlanType, SubscriptionStatus } from '../types';
+
+export type SubscriptionType = 'free' | 'monthly' | 'yearly';
 
 interface SubscriptionState {
-    subscription: Subscription | null;
+    // Core state
+    isPro: boolean;
+    subscriptionType: SubscriptionType;
+    expiresAt: Date | null;
     isLoading: boolean;
-    isPremium: boolean;
+
+    // Legacy compatibility
     isTrialing: boolean;
 
     // Actions
-    fetchSubscription: () => Promise<void>;
-    startTrial: () => Promise<{ success: boolean; message?: string }>;
+    refreshSubscription: () => Promise<void>;
+    restorePurchases: () => Promise<{ success: boolean; message?: string }>;
+    syncToSupabase: () => Promise<void>;
     checkAccess: (feature: 'insights' | 'smart_today' | 'exam_mode' | 'export') => boolean;
+
+    // Internal
+    _setProState: (isPro: boolean, type: SubscriptionType, expires: Date | null) => void;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
-    subscription: null,
+    isPro: false,
+    subscriptionType: 'free',
+    expiresAt: null,
     isLoading: true,
-    isPremium: false,
     isTrialing: false,
 
-    fetchSubscription: async () => {
+    /**
+     * Refresh subscription status from RevenueCat
+     * Falls back to cached state on failure
+     */
+    refreshSubscription: async () => {
         try {
             set({ isLoading: true });
 
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                set({ subscription: null, isPremium: false, isTrialing: false, isLoading: false });
-                return;
-            }
+            // Dynamically import to avoid crash in Expo Go
+            const { checkProStatus, getCachedProStatus } = await import('../lib/revenuecat');
+            const { isPro, subscriptionType, expiresAt } = await checkProStatus();
 
-            const { data, error } = await supabase
-                .from('subscriptions')
-                .select('*')
-                .eq('user_id', user.id)
-                .single();
+            set({
+                isPro,
+                subscriptionType,
+                expiresAt,
+                isTrialing: false,
+                isLoading: false
+            });
 
-            if (data) {
-                const sub = data as Subscription;
-                const isTrialing = sub.status === 'trialing';
-                // Active or Trialing = Premium Access
-                // (Also handle past_due gracefully for a few days if needed, but strict for now)
-                const isPremium = sub.status === 'active' || isTrialing;
-
-                // Check if trial expired 
-                // (Supabase row level updates might delay, so client-side check is good backup)
-                if (isTrialing && sub.trial_ends_at && new Date(sub.trial_ends_at) < new Date()) {
-                    set({ subscription: sub, isPremium: false, isTrialing: false, isLoading: false });
-                } else {
-                    set({ subscription: sub, isPremium, isTrialing, isLoading: false });
-                }
-            } else {
-                set({ subscription: null, isPremium: false, isTrialing: false, isLoading: false });
-            }
+            // Sync to Supabase in background
+            get().syncToSupabase();
 
         } catch (error) {
-            console.error('Error fetching subscription:', error);
-            set({ isLoading: false });
-        }
-    },
+            console.error('[SubscriptionStore] Refresh failed:', error);
 
-    startTrial: async () => {
-        try {
-            const { data, error } = await supabase.rpc('start_trial');
-
-            if (error) throw error;
-
-            if (data && data.success) {
-                // Refresh local state
-                await get().fetchSubscription();
-                return { success: true };
-            } else {
-                return { success: false, message: data?.message || 'Could not start trial' };
+            // Use cached state on failure
+            try {
+                const { getCachedProStatus } = await import('../lib/revenuecat');
+                const cached = await getCachedProStatus();
+                set({
+                    isPro: cached,
+                    subscriptionType: cached ? 'monthly' : 'free',
+                    isLoading: false
+                });
+            } catch {
+                set({ isLoading: false });
             }
-        } catch (error: any) {
-            console.error('Error starting trial:', error);
-            return { success: false, message: error.message };
         }
     },
 
+    /**
+     * Restore previous purchases via RevenueCat
+     */
+    restorePurchases: async () => {
+        try {
+            const { restorePurchases: rcRestorePurchases } = await import('../lib/revenuecat');
+            const result = await rcRestorePurchases();
+
+            if (result.success) {
+                // Refresh our state
+                await get().refreshSubscription();
+
+                if (result.isPro) {
+                    return { success: true, message: 'Purchases restored successfully!' };
+                } else {
+                    return { success: true, message: 'No previous purchases found.' };
+                }
+            }
+
+            return { success: false, message: result.error || 'Restore failed' };
+        } catch (error: any) {
+            console.error('[SubscriptionStore] Restore failed:', error);
+            return { success: false, message: error.message || 'Restore failed' };
+        }
+    },
+
+    /**
+     * Sync subscription state to Supabase user_profile_insights table
+     */
+    syncToSupabase: async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { isPro, subscriptionType, expiresAt } = get();
+
+            await supabase
+                .from('user_profile_insights')
+                .update({
+                    is_pro: isPro,
+                    subscription_type: subscriptionType,
+                    subscription_expires_at: expiresAt?.toISOString() || null,
+                })
+                .eq('user_id', user.id);
+
+        } catch (error) {
+            console.error('[SubscriptionStore] Supabase sync failed:', error);
+            // Non-blocking, don't throw
+        }
+    },
+
+    /**
+     * Legacy feature access check (for backward compatibility)
+     */
     checkAccess: (feature) => {
-        const { isPremium } = get();
-        // Free features (always allowed if not listed here)
-        // Gated features:
+        const { isPro } = get();
         if (['insights', 'smart_today', 'exam_mode', 'export'].includes(feature)) {
-            return isPremium;
+            return isPro;
         }
         return true;
+    },
+
+    /**
+     * Internal state setter
+     */
+    _setProState: (isPro, type, expires) => {
+        set({ isPro, subscriptionType: type, expiresAt: expires });
     },
 }));
